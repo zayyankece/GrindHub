@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function LoginScreen() {
+export default function LoginScreen({navigation}) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>GrindHub</Text>
@@ -20,7 +20,7 @@ export default function LoginScreen() {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => {navigation.navigate('HomePage')}}>
           <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
 

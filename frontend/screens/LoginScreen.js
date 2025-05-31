@@ -1,7 +1,11 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
 
 export default function LoginScreen({navigation}) {
+
+  const [inputEmail, setInputEmail] = useState('')
+  const [inputPassword, setInputPassword] = useState('')
+
   return (
     <View style={styles.container}>
 
@@ -15,10 +19,14 @@ export default function LoginScreen({navigation}) {
         <Text style={styles.subText}>Please log in to continue</Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" />
+        <TextInput style={styles.input} keyboardType="email-address" 
+        value = {inputEmail}
+        onChangeText={setInputEmail}/>
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} secureTextEntry />
+        <TextInput style={styles.input} secureTextEntry 
+        value= {inputPassword}
+        onChangeText={setInputPassword}/>
 
         <TouchableOpacity onPress={() => {navigation.navigate("ForgotPassword")}}>
           <Text style={styles.forgotText}>Forgot password?</Text>

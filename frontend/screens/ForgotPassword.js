@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 export default function ForgotPassword({navigation}) {
+
+  const [inputEmail, setInputEmail] = useState('')
+
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -14,7 +17,9 @@ export default function ForgotPassword({navigation}) {
         <Text style={styles.subText}>Please write your email, we will send a confirmation email!</Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" />
+        <TextInput style={styles.input} keyboardType="email-address" 
+        value = {inputEmail}
+        onChangeText={setInputEmail}/>
 
         <TouchableOpacity style={styles.sendButton} onPress={() => {navigation.navigate('ConfirmationForgotPassword')}}>
           <Text style={styles.sendText}>Send</Text>

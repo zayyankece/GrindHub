@@ -1,7 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 export default function SignUp({navigation}) {
+
+  const [inputEmail, setInputEmail] = useState('')
+  const [inputPassword, setInputPassword] = useState('')
+  const [inputConfirmPassword, setInputConfirmPassword] = useState('')
+
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -14,13 +19,19 @@ export default function SignUp({navigation}) {
         <Text style={styles.subText}>Please sign up to continue</Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" />
+        <TextInput style={styles.input} keyboardType="email-address" 
+        value = {inputEmail}
+        onChangeText={setInputEmail}/>
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} secureTextEntry />
+        <TextInput style={styles.input} secureTextEntry 
+        value= {inputPassword}
+        onChangeText={setInputPassword}/>
 
         <Text style={styles.label}>Confirm Password</Text>
-        <TextInput style={styles.input} secureTextEntry />
+        <TextInput style={styles.input} secureTextEntry 
+        value = {inputConfirmPassword} 
+        onChangeText={setInputConfirmPassword}/>
 
         <TouchableOpacity style={styles.signupButton} onPress={() => {navigation.navigate('ConfirmationSignUp')}}>
           <Text style={styles.signupText}>Sign Up</Text>

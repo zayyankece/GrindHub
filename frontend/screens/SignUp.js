@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function LoginScreen({navigation}) {
+export default function SignUp({navigation}) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>GrindHub</Text>
 
       <View style={styles.formCard}>
         <Text style={styles.welcomeText}>Welcome!</Text>
-        <Text style={styles.subText}>Please log in to continue</Text>
+        <Text style={styles.subText}>Please sign up to continue</Text>
 
         <Text style={styles.label}>Email</Text>
         <TextInput style={styles.input} keyboardType="email-address" />
@@ -16,20 +16,12 @@ export default function LoginScreen({navigation}) {
         <Text style={styles.label}>Password</Text>
         <TextInput style={styles.input} secureTextEntry />
 
-        <TouchableOpacity onPress={() => {navigation.navigate("ForgotPassword")}}>
-          <Text style={styles.forgotText}>Forgot password?</Text>
-        </TouchableOpacity>
+        <Text style={styles.label}>Confirm Password</Text>
+        <TextInput style={styles.input} secureTextEntry />
 
-        <TouchableOpacity style={styles.loginButton} onPress={() => {navigation.navigate('HomePage')}}>
-          <Text style={styles.loginText}>Login</Text>
+        <TouchableOpacity style={styles.signupButton} onPress={() => {navigation.navigate('ConfirmationSignUp')}}>
+          <Text style={styles.signupText}>Sign Up</Text>
         </TouchableOpacity>
-
-        <View style={styles.signupRow}>
-          <Text>Don’t have an account? </Text>
-          <TouchableOpacity onPress={() => {navigation.navigate("SignUp")}}>
-            <Text style={styles.signupText}>Sign up</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -85,29 +77,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 12,
   },
-  forgotText: {
-    color: '#f27d42',
-    marginBottom: 16,
-    textAlign: 'right',
-  },
-  loginButton: {
+  signupButton: {
     backgroundColor: '#ffd23f',
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop : 16,
     marginBottom: 16,
   },
-  loginText: {
+  signupText: {
     fontWeight: 'bold',
     color: '#333',
-  },
-  signupRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  signupText: {
-    color: '#f27d42',
-    fontWeight: 'bold',
-  },
+  }
 });
 

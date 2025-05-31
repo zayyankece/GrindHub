@@ -4,7 +4,10 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'reac
 export default function ChangePassword({navigation}) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>GrindHub</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image source={require("../assets/Group 9.png")} style={{marginBottom:20, marginRight:10}}/>
+        <Text style={styles.title}>GrindHub</Text>
+      </View>
 
       <View style={styles.formCard}>
         <Text style={styles.welcomeText}>Welcome!</Text>

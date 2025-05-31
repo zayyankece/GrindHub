@@ -6,6 +6,35 @@ export default function LoginScreen({navigation}) {
   const [inputEmail, setInputEmail] = useState('')
   const [inputPassword, setInputPassword] = useState('')
 
+  const handleLoginButton = async () => {
+    console.log(inputEmail + "//" + inputPassword)
+
+    try {
+      const response = await fetch("http://192.168.1.6:3000/api/auth/login", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+        email : inputEmail,
+        password : inputPassword
+      }),
+    });
+  
+    console.log("hihi")
+    const data = await response.json()
+    if (data.success){
+      navigation.navigate("HomePage")
+      console.log("success")
+    }
+    else {
+      console.log(data)
+      console.log("error")
+    }
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
   return (
     <View style={styles.container}>
 
@@ -32,7 +61,7 @@ export default function LoginScreen({navigation}) {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton} onPress={() => {navigation.navigate('HomePage')}}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => handleLoginButton()}>
           <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
 
@@ -46,6 +75,7 @@ export default function LoginScreen({navigation}) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

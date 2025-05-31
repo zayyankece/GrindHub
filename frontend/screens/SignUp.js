@@ -7,6 +7,27 @@ export default function SignUp({navigation}) {
   const [inputPassword, setInputPassword] = useState('')
   const [inputConfirmPassword, setInputConfirmPassword] = useState('')
 
+  const handleSignUpButton = async () => {
+    console.log('ha1')
+    const response = await fetch("http://localhost:3000/api/auth/signup", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+        email : inputEmail,
+        password : inputPassword
+      }),
+    });
+    console.log("hihi")
+    const data = await response.json()
+    if (data.success){
+      navigation.navigate("HomePage")
+      console.log("success")
+    }
+    else {
+      console.log("error")
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -33,7 +54,7 @@ export default function SignUp({navigation}) {
         value = {inputConfirmPassword} 
         onChangeText={setInputConfirmPassword}/>
 
-        <TouchableOpacity style={styles.signupButton} onPress={() => {navigation.navigate('ConfirmationSignUp')}}>
+        <TouchableOpacity style={styles.signupButton} onPress={() => handleSignUpButton()}>
           <Text style={styles.signupText}>Sign Up</Text>
         </TouchableOpacity>
       </View>

@@ -6,7 +6,7 @@ export default function LoginScreen({navigation}) {
     <View style={styles.container}>
 
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image source={require("../assets/Group 9.png")} style={{marginBottom:20, marginRight:10}}/>
+        <Image source={require("../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
         <Text style={styles.title}>GrindHub</Text>
       </View>
 

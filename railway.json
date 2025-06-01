@@ -1,7 +1,7 @@
 {
     "$schema": "https://railway.com/railway.schema.json",
     "build": {
-      "builder": "nixpacks",
+      "builder": "NIXPACKS",
       "buildCommand": "echo building!"
       },
     "deploy": {
@@ -9,6 +9,6 @@
       "startCommand": "echo starting!",
       "healthcheckPath": "/",
       "healthcheckTimeout": 100,
-      "restartPolicyType": "never"
+      "restartPolicyType": "NEVER"
       }
   }

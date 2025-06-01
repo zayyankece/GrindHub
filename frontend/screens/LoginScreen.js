@@ -44,6 +44,9 @@ export default function LoginScreen({navigation}) {
   
     const data = await response.json()
     if (data.success){
+      setInputColorPassword("#e0e0e0")
+      setInputColorEmail("#e0e0e0")
+      setInvalidInput("")
       navigation.navigate("HomePage")
     }
     else {

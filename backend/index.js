@@ -1,19 +1,19 @@
-require('dotenv').config();
+require('dotenv').config();          // Load .env variables
 const express = require('express');
 const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');  // Your auth routes file
+
 const app = express();
-const authRoutes = require('./routes/authRoutes'); 
-const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: ['http://192.168.1.6:8081', 'exp://192.168.1.6:8081']
+  origin: '*'  // Change this to your frontend URL or '*' for testing
 }));
+app.use(express.json());             // Parse JSON request bodies
 
-app.use(express.json());
+// Routes prefix
+app.use('/api/auth', authRoutes);
 
-// Register the route
-app.use('/api/auth', authRoutes); // <<--- mount the router here
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

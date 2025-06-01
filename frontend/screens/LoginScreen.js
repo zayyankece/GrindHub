@@ -10,7 +10,7 @@ export default function LoginScreen({navigation}) {
     console.log(inputEmail + "//" + inputPassword)
 
     try {
-      const response = await fetch("http://192.168.1.6:3000/api/auth/login", {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/login", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({

@@ -10,7 +10,7 @@ export default function LoginScreen({navigation}) {
     console.log(inputEmail + "//" + inputPassword)
 
     try {
-      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/login", {
+      const response = await fetch("https://postgres-production-8f15.up.railway.app/users", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({

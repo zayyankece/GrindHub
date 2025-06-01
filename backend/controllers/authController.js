@@ -33,7 +33,7 @@ exports.signup = async (req, res) => {
   try {
     // Check if user exists
     console.log("testsasasassasa")
-    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const existingUser = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -45,7 +45,7 @@ exports.signup = async (req, res) => {
     console.log("hihihi")
 
     // Insert new user
-    const newUser = await pool.query(
+    const newUser = await db.query(
       'INSERT INTO users (email, password) VALUES ($1, $2)',
       [email, hashedPassword]
     );

@@ -5,9 +5,32 @@ export default function LoginScreen({navigation}) {
 
   const [inputEmail, setInputEmail] = useState('')
   const [inputPassword, setInputPassword] = useState('')
+  const [inputColorEmail, setInputColorEmail] = useState('#e0e0e0');
+  const [inputColorPassword, setInputColorPassword] = useState('#e0e0e0');
+  const [invalidInput, setInvalidInput] = useState('')
 
   const handleLoginButton = async () => {
-    console.log(inputEmail + "//" + inputPassword)
+    isValid = true
+    if (inputEmail == ""){
+      setInputColorEmail("#ffb09c")
+      isValid = false
+    }
+    else{
+      setInputColorEmail("#e0e0e0")
+    }
+
+    if (inputPassword == ""){
+      setInputColorPassword("#ffb09c")
+      isValid = false
+    }
+    else{
+      setInputColorPassword("#e0e0e0")
+    }
+
+    if (isValid == false){
+      setInvalidInput("Please don't leave email/password empty")
+      return
+    }
 
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/login", {
@@ -19,15 +42,15 @@ export default function LoginScreen({navigation}) {
       }),
     });
   
-    console.log("hihi")
     const data = await response.json()
     if (data.success){
       navigation.navigate("HomePage")
-      console.log("success")
     }
     else {
-      console.log(data)
-      console.log("error")
+      console.log("test")
+      setInputColorPassword("#ffb09c")
+      setInputColorEmail("#ffb09c")
+      setInvalidInput("Invalid username or password.")
     }
     }
     catch (error){
@@ -48,14 +71,16 @@ export default function LoginScreen({navigation}) {
         <Text style={styles.subText}>Please log in to continue</Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" 
+        <TextInput style={[styles.input, {backgroundColor:inputColorEmail}]} keyboardType="email-address" 
         value = {inputEmail}
         onChangeText={setInputEmail}/>
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} secureTextEntry 
+        <TextInput style={[styles.input, {backgroundColor:inputColorPassword}]} secureTextEntry 
         value= {inputPassword}
         onChangeText={setInputPassword}/>
+
+        <Text style={[styles.subText, {marginBottom : 5, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
 
         <TouchableOpacity onPress={() => {navigation.navigate("ForgotPassword")}}>
           <Text style={styles.forgotText}>Forgot password?</Text>

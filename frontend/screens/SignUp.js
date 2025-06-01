@@ -25,6 +25,7 @@ export default function SignUp({navigation}) {
     }
     else {
       console.log("error")
+      console.log(data)
     }
   }
 

@@ -14,7 +14,7 @@ exports.login = async (req, res) => {
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials', result:result });
+      return res.status(401).json({ success: false, message: 'Invalid credentials (beda pass)', result:result });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });

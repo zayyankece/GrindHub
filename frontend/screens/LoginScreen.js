@@ -9,6 +9,12 @@ export default function LoginScreen({navigation}) {
   const [inputColorPassword, setInputColorPassword] = useState('#e0e0e0');
   const [invalidInput, setInvalidInput] = useState('')
 
+  const resetToDefault = () =>{
+    setInputColorPassword("#e0e0e0")
+    setInputColorEmail("#e0e0e0")
+    setInvalidInput("")
+  }
+
   const handleLoginButton = async () => {
     isValid = true
     if (inputEmail == ""){
@@ -44,9 +50,7 @@ export default function LoginScreen({navigation}) {
   
     const data = await response.json()
     if (data.success){
-      setInputColorPassword("#e0e0e0")
-      setInputColorEmail("#e0e0e0")
-      setInvalidInput("")
+      resetToDefault()
       navigation.navigate("HomePage")
     }
     else {
@@ -85,7 +89,7 @@ export default function LoginScreen({navigation}) {
 
         <Text style={[styles.subText, {marginBottom : 5, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
 
-        <TouchableOpacity onPress={() => {navigation.navigate("ForgotPassword")}}>
+        <TouchableOpacity onPress={() => {resetToDefault();navigation.navigate("ForgotPassword")}}>
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
@@ -95,7 +99,7 @@ export default function LoginScreen({navigation}) {
 
         <View style={styles.signupRow}>
           <Text>Don’t have an account? </Text>
-          <TouchableOpacity onPress={() => {navigation.navigate("SignUp")}}>
+          <TouchableOpacity onPress={() => {resetToDefault();navigation.navigate("SignUp")}}>
             <Text style={styles.signupText}>Sign up</Text>
           </TouchableOpacity>
         </View>

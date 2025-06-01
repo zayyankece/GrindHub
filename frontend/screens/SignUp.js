@@ -6,9 +6,56 @@ export default function SignUp({navigation}) {
   const [inputEmail, setInputEmail] = useState('')
   const [inputPassword, setInputPassword] = useState('')
   const [inputConfirmPassword, setInputConfirmPassword] = useState('')
+  const [inputColorEmail, setInputColorEmail] = useState('#e0e0e0');
+  const [inputColorPassword, setInputColorPassword] = useState('#e0e0e0');
+  const [inputColorConfirmPassword, setInputColorConfirmPassword] = useState('#e0e0e0');
+  const [invalidInput, setInvalidInput] = useState('')
+
+  const resetToDefault = () =>{
+    setInputColorPassword("#e0e0e0")
+    setInputColorEmail("#e0e0e0")
+    setInvalidInput("")
+  }
 
   const handleSignUpButton = async () => {
-    console.log('ha1')
+    isValid = true
+    if (inputEmail == ""){
+      setInputColorEmail("#ffb09c")
+      isValid = false
+    }
+    else{
+      setInputColorEmail("#e0e0e0")
+    }
+
+    if (inputPassword == ""){
+      setInputColorPassword("#ffb09c")
+      isValid = false
+    }
+    else{
+      setInputColorPassword("#e0e0e0")
+    }
+
+    if (inputConfirmPassword == ""){
+      setInputColorConfirmPassword("#ffb09c")
+      isValid = false
+    }
+    else{
+      setInputColorConfirmPassword("#e0e0e0")
+    }
+
+    if (isValid == false){
+      setInvalidInput("Please don't leave email/password empty")
+      return
+    }
+
+    if (inputConfirmPassword != inputPassword){
+      setInvalidInput("Password and Confirm Password is different")
+      setInputColorPassword("#ffb09c")
+      setInputColorConfirmPassword("#ffb09c")
+      return
+    }
+
+
     const response = await fetch("https://grindhub-production.up.railway.app/api/auth/signup", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
@@ -17,15 +64,17 @@ export default function SignUp({navigation}) {
         password : inputPassword
       }),
     });
-    console.log("hihi")
     const data = await response.json()
+    console.log(data)
     if (data.success){
-      navigation.navigate("HomePage")
-      console.log("success")
+      resetToDefault();
+      navigation.navigate("ConfirmationSignUp")
     }
     else {
-      console.log("error")
-      console.log(data)
+      setInputColorEmail("#ffb09c")
+      // setInputColorPassword("#ffb09c")
+      // setInputColorConfirmPassword("#ffb09c")
+      setInvalidInput("The email has been used. Please use another email.")
     }
   }
 
@@ -41,19 +90,21 @@ export default function SignUp({navigation}) {
         <Text style={styles.subText}>Please sign up to continue</Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" 
+        <TextInput style={[styles.input, {backgroundColor:inputColorEmail}]} keyboardType="email-address" 
         value = {inputEmail}
         onChangeText={setInputEmail}/>
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} secureTextEntry 
+        <TextInput style={[styles.input, {backgroundColor:inputColorPassword}]} secureTextEntry 
         value= {inputPassword}
         onChangeText={setInputPassword}/>
 
         <Text style={styles.label}>Confirm Password</Text>
-        <TextInput style={styles.input} secureTextEntry 
+        <TextInput style={[styles.input, {backgroundColor:inputColorConfirmPassword}]} secureTextEntry 
         value = {inputConfirmPassword} 
         onChangeText={setInputConfirmPassword}/>
+
+        <Text style={[styles.subText, {marginBottom : 5, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
 
         <TouchableOpacity style={styles.signupButton} onPress={() => handleSignUpButton()}>
           <Text style={styles.signupText}>Sign Up</Text>

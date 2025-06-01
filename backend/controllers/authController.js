@@ -33,7 +33,7 @@ exports.signup = async (req, res) => {
     // Check if user exists
     const existingUser = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'User already exists' , success : false});
     }
 
     // Hash the password
@@ -45,9 +45,9 @@ exports.signup = async (req, res) => {
       [email, hashedPassword]
     );
 
-    res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
+    res.status(201).json({ message: 'User created successfully', user: newUser.rows[0], success : true });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Something went wrong', error:error });
+    res.status(500).json({ message: 'Something went wrong', success : false});
   }
 };

@@ -2,7 +2,8 @@
     "$schema": "https://railway.com/railway.schema.json",
     "build": {
       "builder": "nixpacks",
-      "buildCommand": "echo building!"
+      "buildCommand": "echo building!",
+      "root": "backend"
       },
     "deploy": {
       "preDeployCommand": ["npm run db:migrate"],

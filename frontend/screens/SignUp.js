@@ -9,7 +9,7 @@ export default function SignUp({navigation}) {
 
   const handleSignUpButton = async () => {
     console.log('ha1')
-    const response = await fetch("https://postgres-production-8f15.up.railway.app", {
+    const response = await fetch("https://grindhub-production.up.railway.app/api/auth/signup", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({

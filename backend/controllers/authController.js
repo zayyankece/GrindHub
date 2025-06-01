@@ -1,30 +1,25 @@
-const db = require('../db');  // Import your db.js file
+const db = require('../db.js');  // Import your db.js file
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  
+
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     const user = result.rows[0];
-
-    // Compare hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Create JWT token
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
     res.json({ success: true, message: 'Login success!', token });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);  // <-- Log full error here
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

@@ -1,14 +1,14 @@
-require('dotenv').config();          // Load .env variables
+require('dotenv').config();          
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/authRoutes');  // Your auth routes file
+const authRoutes = require('./routes/authRoutes'); 
 
 const app = express();
 
 app.use(cors({
-  origin: '*'  // Change this to your frontend URL or '*' for testing
+  origin: '*'  
 }));
-app.use(express.json());             // Parse JSON request bodies
+app.use(express.json());             
 
 // Routes prefix
 app.use('/api/auth', authRoutes);

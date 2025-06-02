@@ -10,7 +10,6 @@ app.use(cors({
 }));
 app.use(express.json());             
 
-// Routes prefix
 app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 3000;

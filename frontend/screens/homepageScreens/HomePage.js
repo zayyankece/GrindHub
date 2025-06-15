@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function GrindHub() {
+export default function GrindHub({navigation}) {
   const [activeTimer, setActiveTimer] = useState(null);
 
   const scheduleItems = [
@@ -70,7 +70,7 @@ export default function GrindHub() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FB923C" barStyle="light-content" />
+      <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -80,13 +80,15 @@ export default function GrindHub() {
           </View>
           <Text style={styles.headerTitle}>GrindHub</Text>
         </View>
-        <Ionicons name="person-outline" size={24} color="white" />
+        <TouchableOpacity onPress={() => {navigation.navigate("UserProfile")}}>
+            <Ionicons name="person-outline" size={24} color="white" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Greeting */}
         <View style={styles.greetingContainer}>
-          <Text style={styles.greetingText}>Hello, Alex!</Text>
+          <Text style={styles.greetingText}>Hello, Sanny!</Text>
           <Ionicons name="search-outline" size={24} color="#374151" />
         </View>
 
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FED7AA',
   },
   header: {
-    backgroundColor: '#FB923C',
+    backgroundColor: '#FF8400',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   card: {
-    backgroundColor: '#FDBA74',
+    backgroundColor: '#FFA333',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -281,7 +283,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   scheduleItem: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
   },
   timerButton: {
     flex: 1,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFD93D',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -334,7 +336,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   groupItem: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
   },
@@ -370,7 +372,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   assignmentItem: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
   },
@@ -442,7 +444,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bottomNav: {
-    backgroundColor: '#FB923C',
+    backgroundColor: '#FF8400',
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,

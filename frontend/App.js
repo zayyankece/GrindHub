@@ -9,6 +9,7 @@ import ConfirmationSignUp from './screens/loginScreens/ConfirmationSignUp';
 import ForgotPassword from './screens/loginScreens/ForgotPassword';
 import ConfirmationForgotPassword from './screens/loginScreens/ConfirmationForgotPassword';
 import ChangePassword from './screens/loginScreens/ChangePassword';
+import UserProfile from './screens/homepageScreens/userProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="LoginScreen"
       screenOptions={{headerShown : false}}>
 
+        <Stack.Screen name="UserProfile" component={UserProfile}/>
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUp}/>
         <Stack.Screen name="ConfirmationSignUp" component={ConfirmationSignUp}/>

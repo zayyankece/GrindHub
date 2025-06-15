@@ -9,7 +9,10 @@ import ConfirmationSignUp from './screens/loginScreens/ConfirmationSignUp';
 import ForgotPassword from './screens/loginScreens/ForgotPassword';
 import ConfirmationForgotPassword from './screens/loginScreens/ConfirmationForgotPassword';
 import ChangePassword from './screens/loginScreens/ChangePassword';
-import UserProfile from './screens/homepageScreens/userProfile';
+import UserProfile from './screens/homepageScreens/UserProfile';
+import GroupChat from './screens/homepageScreens/groupChat/GroupChat';
+import ChatScreen from './screens/homepageScreens/groupChat/ChatScreen';
+import GroupDescription from './screens/homepageScreens/groupChat/GroupDescription';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +22,9 @@ export default function App() {
       <Stack.Navigator initialRouteName="LoginScreen"
       screenOptions={{headerShown : false}}>
 
+        <Stack.Screen name="ChatScreen" component={ChatScreen}/>
+        <Stack.Screen name="GroupDescription" component={GroupDescription}/>
+        <Stack.Screen name="GroupChat" component={GroupChat} />
         <Stack.Screen name="UserProfile" component={UserProfile}/>
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUp}/>

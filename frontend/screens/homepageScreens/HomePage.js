@@ -203,7 +203,7 @@ export default function GrindHub({navigation}) {
         <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
           <Ionicons name="people" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("Timetable")}}>
           <Ionicons name="calendar" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>

@@ -13,6 +13,7 @@ import UserProfile from './screens/homepageScreens/UserProfile';
 import GroupChat from './screens/homepageScreens/groupChat/GroupChat';
 import ChatScreen from './screens/homepageScreens/groupChat/ChatScreen';
 import GroupDescription from './screens/homepageScreens/groupChat/GroupDescription';
+import Timetable from './screens/homepageScreens/Timetable';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="LoginScreen"
       screenOptions={{headerShown : false}}>
 
+        <Stack.Screen name="Timetable" component={Timetable}/>
         <Stack.Screen name="ChatScreen" component={ChatScreen}/>
         <Stack.Screen name="GroupDescription" component={GroupDescription}/>
         <Stack.Screen name="GroupChat" component={GroupChat} />

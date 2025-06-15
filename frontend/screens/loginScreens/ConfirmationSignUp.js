@@ -1,22 +1,21 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function ConfirmationForgotPassword({navigation}) {
+export default function ConfirmationSignUp({navigation}) {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image source={require("../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
+        <Image source={require("../../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
         <Text style={styles.title}>GrindHub</Text>
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.welcomeText}>You have successfully changed your password!</Text>
-        <Text style={styles.subText}>Please go back to login page</Text>
+        <Text style={styles.welcomeText}>Your Account Has Been Created!</Text>
+        <Text style={styles.subText}>Please proceed to the login page to continue</Text>
 
-        <TouchableOpacity style={styles.goToLoginButton} onPress={() => {navigation.navigate('LoginScreen')}}>
-          <Text style={styles.goToLoginText}>Login Page</Text>
+        <TouchableOpacity style={styles.confirmButton} onPress={() => {navigation.navigate('LoginScreen')}}>
+          <Text style={styles.confirmText}>Login Page</Text>
         </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -61,14 +60,15 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
   },
-  goToLoginButton: {
+  confirmButton: {
     backgroundColor: '#ffd23f',
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop : 16,
     marginBottom: 16,
   },
-  goToLoginText: {
+  confirmText: {
     fontWeight: 'bold',
     color: '#333',
   }

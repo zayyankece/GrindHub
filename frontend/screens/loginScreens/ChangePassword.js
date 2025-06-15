@@ -1,25 +1,23 @@
 import React, {useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function ForgotPassword({navigation}) {
-
-  const [inputEmail, setInputEmail] = useState('')
-
+export default function ChangePassword({navigation}) {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image source={require("../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
+        <Image source={require("../../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
         <Text style={styles.title}>GrindHub</Text>
       </View>
 
       <View style={styles.formCard}>
         <Text style={styles.welcomeText}>Welcome!</Text>
-        <Text style={styles.subText}>Please write your email, we will send a confirmation email!</Text>
+        <Text style={styles.subText}>Please write your new password</Text>
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} keyboardType="email-address" 
-        value = {inputEmail}
-        onChangeText={setInputEmail}/>
+        <Text style={styles.label}>Password</Text>
+        <TextInput style={styles.input} secureTextEntry />
+
+        <Text style={styles.label}>Confirm Password</Text>
+        <TextInput style={styles.input} secureTextEntry />
 
         <TouchableOpacity style={styles.sendButton} onPress={() => {navigation.navigate('ConfirmationForgotPassword')}}>
           <Text style={styles.sendText}>Send</Text>

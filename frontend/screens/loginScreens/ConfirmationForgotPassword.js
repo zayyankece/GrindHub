@@ -1,26 +1,20 @@
-import React, {useState} from 'react';
+import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function ChangePassword({navigation}) {
+export default function ConfirmationForgotPassword({navigation}) {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image source={require("../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
+        <Image source={require("../../assets/GrindHub Logo.png")} style={{marginBottom:20, marginRight:10}}/>
         <Text style={styles.title}>GrindHub</Text>
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.welcomeText}>Welcome!</Text>
-        <Text style={styles.subText}>Please write your new password</Text>
+        <Text style={styles.welcomeText}>You have successfully changed your password!</Text>
+        <Text style={styles.subText}>Please go back to login page</Text>
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} secureTextEntry />
-
-        <Text style={styles.label}>Confirm Password</Text>
-        <TextInput style={styles.input} secureTextEntry />
-
-        <TouchableOpacity style={styles.sendButton} onPress={() => {navigation.navigate('ConfirmationForgotPassword')}}>
-          <Text style={styles.sendText}>Send</Text>
+        <TouchableOpacity style={styles.goToLoginButton} onPress={() => {navigation.navigate('LoginScreen')}}>
+          <Text style={styles.goToLoginText}>Login Page</Text>
         </TouchableOpacity>
 
       </View>
@@ -67,25 +61,14 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
   },
-  label: {
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  input: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  sendButton: {
+  goToLoginButton: {
     backgroundColor: '#ffd23f',
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
   },
-  sendText: {
+  goToLoginText: {
     fontWeight: 'bold',
     color: '#333',
   }

@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GrindHubHeader from '../constant';
 
 const ChatScreen = ({navigation}) => {
   const [message, setMessage] = useState('');
@@ -50,18 +51,7 @@ const ChatScreen = ({navigation}) => {
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.backButton} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
-          <View style={styles.logoContainer}>
-            <Ionicons name="time" size={20} color="white" />
-          </View>
-          <Text style={styles.headerTitle}>GrindHub</Text>
-        </View>
-        <Ionicons name="person" size={24} color="black" />
-      </View>
+      <GrindHubHeader navigation={navigation}/>
 
       {/* Group Info Card */}
       <TouchableOpacity onPress={() => {navigation.navigate("GroupDescription")}}>
@@ -116,20 +106,20 @@ const ChatScreen = ({navigation}) => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="home" size={24} color="black" />
+        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
+          <Ionicons name="home" size={24} color="white"/>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]} activeOpacity={0.7}>
-          <Ionicons name="people" size={24} color="black" />
+        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
+          <Ionicons name="people" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="calendar" size={24} color="black" />
+        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("Timetable")}}>
+          <Ionicons name="calendar" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="time" size={24} color="black" />
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="notifications" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="bag" size={24} color="black" />
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="bag" size={24} color="white" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -140,23 +130,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFE5B4',
-  },
-  header: {
-    backgroundColor: '#FF8C42',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   backButton: {
     marginRight: 8,
@@ -291,20 +264,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   bottomNav: {
-    backgroundColor: '#FF8C42',
+    backgroundColor: '#FF8400',
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
   },
   navItem: {
-    padding: 8,
+    flex: 1,
+    alignItems: 'center',
   },
   activeNavItem: {
     backgroundColor: 'rgba(0,0,0,0.1)',

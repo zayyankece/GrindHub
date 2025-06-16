@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GrindHubHeader from './constant';
 
 export default function GrindHub({navigation}) {
   const [activeTimer, setActiveTimer] = useState(null);
@@ -72,18 +74,7 @@ export default function GrindHub({navigation}) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Ionicons name="time-outline" size={20} color="white" />
-          </View>
-          <Text style={styles.headerTitle}>GrindHub</Text>
-        </View>
-        <TouchableOpacity onPress={() => {navigation.navigate("UserProfile")}}>
-            <Ionicons name="person-outline" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+      <GrindHubHeader navigation={navigation}/>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Greeting */}
@@ -196,9 +187,10 @@ export default function GrindHub({navigation}) {
       </View>
 
       {/* Bottom Navigation */}
+      {/* <GrindHubFooter navigation={navigation} activeTab="HomePage"/> */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home" size={24} color="white" />
+        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
+          <Ionicons name="home" size={24} color="white"/>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
           <Ionicons name="people" size={24} color="white" />
@@ -221,32 +213,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FED7AA',
-  },
-  header: {
-    backgroundColor: '#FF8400',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#EA580C',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
   },
   content: {
     flex: 1,

@@ -12,7 +12,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubHeader from '../constant';
+import GrindHubHeader from '../components/GrindHubHeader';
+import GrindHubFooter from '../components/GrindHubFooter';
 
 const ChatScreen = ({navigation}) => {
   const [message, setMessage] = useState('');

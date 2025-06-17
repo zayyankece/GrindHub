@@ -10,7 +10,8 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubHeader from './constant';
+import GrindHubFooter from './components/GrindHubFooter';
+import GrindHubHeader from './components/GrindHubHeader';
 
 export default function GrindHub({navigation}) {
   const [activeTimer, setActiveTimer] = useState(null);
@@ -187,8 +188,8 @@ export default function GrindHub({navigation}) {
       </View>
 
       {/* Bottom Navigation */}
-      {/* <GrindHubFooter navigation={navigation} activeTab="HomePage"/> */}
-      <View style={styles.bottomNav}>
+      <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+      {/* <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
           <Ionicons name="home" size={24} color="white"/>
         </TouchableOpacity>
@@ -204,7 +205,7 @@ export default function GrindHub({navigation}) {
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="bag" size={24} color="white" />
         </TouchableOpacity>
-      </View>
+      </View> */}
     </SafeAreaView>
   );
 }
@@ -408,15 +409,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bottomNav: {
-    backgroundColor: '#FF8400',
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  }
 });

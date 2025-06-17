@@ -124,23 +124,8 @@ const Timetable = ({navigation}) => {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
-          <Ionicons name="home" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
-          <Ionicons name="people" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("Timetable")}}>
-          <Ionicons name="calendar" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="bag" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+      {/* Bottom Navigation */}
+      <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
     </SafeAreaView>
   );
 };
@@ -259,17 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     fontStyle: 'italic',
-  },
-  bottomNav: {
-    backgroundColor: '#FF8400',
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  }
 });
 
 export default Timetable;

@@ -189,23 +189,7 @@ export default function GrindHub({navigation}) {
 
       {/* Bottom Navigation */}
       <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
-      {/* <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
-          <Ionicons name="home" size={24} color="white"/>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
-          <Ionicons name="people" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("Timetable")}}>
-          <Ionicons name="calendar" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="bag" size={24} color="white" />
-        </TouchableOpacity>
-      </View> */}
+      
     </SafeAreaView>
   );
 }

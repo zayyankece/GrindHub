@@ -118,23 +118,7 @@ const GroupChat = ({navigation}) => {
       </View>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("HomePage")}}>
-          <Ionicons name="home" size={24} color="white"/>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("GroupChat")}}>
-          <Ionicons name="people" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {navigation.navigate("Timetable")}}>
-          <Ionicons name="calendar" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="bag" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+      <GrindHubFooter navigation={navigation} activeTab="GroupChat"/>
     </SafeAreaView>
   );
 };
@@ -253,21 +237,7 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
-  },
-  bottomNav: {
-    backgroundColor: '#FF8400',
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  activeNavItem: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 8,
-  },
+  }
 });
 
 export default GroupChat;

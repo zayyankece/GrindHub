@@ -6,8 +6,11 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Ionicons } from '@expo/vector-icons';
+import GrindHubHeader from './components/GrindHubHeader';
+import GrindHubFooter from './components/GrindHubFooter';
 
 const ProgressBar = ({ percentage }) => (
   <View style={styles.progressBarContainer}>
@@ -52,31 +55,13 @@ const DateSection = ({ date, children }) => (
   </View>
 );
 
-const BottomNavigation = () => (
-  <View style={styles.bottomNav}>
-    <Icon name="home" size={28} color="#333" />
-    <Icon name="people" size={28} color="#666" />
-    <Icon name="calendar-today" size={28} color="#666" />
-    <Icon name="access-time" size={28} color="#666" />
-    <Icon name="shopping-cart" size={28} color="#666" />
-  </View>
-);
-
-const Timetable = () => {
+const Timetable = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Icon name="schedule" size={24} color="#333" />
-          </View>
-          <Text style={styles.appName}>GrindHub</Text>
-        </View>
-        <Icon name="person" size={28} color="#333" />
-      </View>
+      <GrindHubHeader navigation={navigation}/>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sunday, 25th May 2025 */}
@@ -139,7 +124,8 @@ const Timetable = () => {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      <BottomNavigation />
+      {/* Bottom Navigation */}
+      <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
     </SafeAreaView>
   );
 };
@@ -148,27 +134,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FF8C42',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
   },
   appName: {
     fontSize: 24,
@@ -279,18 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     fontStyle: 'italic',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#FF8C42',
-    paddingVertical: 15,
-    paddingBottom: 20,
-  },
-  bottomPadding: {
-    height: 20,
-  },
+  }
 });
 
 export default Timetable;

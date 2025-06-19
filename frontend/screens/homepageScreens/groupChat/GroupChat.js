@@ -10,6 +10,8 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GrindHubHeader from '../components/GrindHubHeader';
+import GrindHubFooter from '../components/GrindHubFooter';
 
 const GroupChat = ({navigation}) => {
   const groups = [
@@ -84,15 +86,7 @@ const GroupChat = ({navigation}) => {
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Ionicons name="time" size={20} color="white" />
-          </View>
-          <Text style={styles.headerTitle}>GrindHub</Text>
-        </View>
-        <Ionicons name="person" size={24} color="black" />
-      </View>
+      <GrindHubHeader navigation={navigation}/>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -124,23 +118,7 @@ const GroupChat = ({navigation}) => {
       </View>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="home" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]} activeOpacity={0.7}>
-          <Ionicons name="people" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="calendar" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="time" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="bag" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
+      <GrindHubFooter navigation={navigation} activeTab="GroupChat"/>
     </SafeAreaView>
   );
 };
@@ -149,37 +127,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFE5B4',
-  },
-  header: {
-    backgroundColor: '#FF8C42',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 32,
-    height: 32,
-    backgroundColor: 'black',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'black',
   },
   searchContainer: {
     paddingHorizontal: 16,
@@ -290,27 +237,7 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
-  },
-  bottomNav: {
-    backgroundColor: '#FF8C42',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  navItem: {
-    padding: 8,
-  },
-  activeNavItem: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 8,
-  },
+  }
 });
 
 export default GroupChat;

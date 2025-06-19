@@ -9,8 +9,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GrindHubHeader from './components/GrindHubHeader';
+import GrindHubFooter from './components/GrindHubFooter';
 
-const UserProfile = () => {
+const UserProfile = ({navigation}) => {
   const [notifications, setNotifications] = useState({
     notifications: true,
     taskDeadline: true,
@@ -63,15 +65,7 @@ const UserProfile = () => {
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Ionicons name="time-outline" size={20} color="white" />
-          </View>
-          <Text style={styles.headerTitle}>GrindHub</Text>
-        </View>
-        <Ionicons name="person-outline" size={24} color="white" />
-      </View>
+      <GrindHubHeader navigation={navigation}/>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
@@ -126,23 +120,8 @@ const UserProfile = () => {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="home" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="people" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="calendar" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="time" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Ionicons name="bag" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+      <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+      
     </SafeAreaView>
   );
 };
@@ -151,32 +130,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFE5B4',
-  },
-  header: {
-    backgroundColor: '#FF8400',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#EA580C',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
   },
   scrollContainer: {
     flex: 1,
@@ -271,27 +224,7 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 80,
-  },
-  bottomNav: {
-    backgroundColor: '#FF8C42',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  navItem: {
-    padding: 8,
-  },
+  }
 });
 
 export default UserProfile;

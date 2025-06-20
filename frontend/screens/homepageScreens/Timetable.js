@@ -55,6 +55,24 @@ const DateSection = ({ date, children }) => (
 );
 
 const Timetable = ({navigation}) => {
+
+  const handleGetAssignments = async ({userid}) => {
+    console.log("pressed!")
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+        userid : userid,
+      }),
+    });
+  
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
@@ -65,11 +83,13 @@ const Timetable = ({navigation}) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sunday, 25th May 2025 */}
         <DateSection date="Sun, 25th May 2025">
-          <AssignmentCard
-            title="CS1010s - Mission 1"
-            percentage={20}
-            dueDate="Due 25 May - 23:00"
-          />
+          <TouchableOpacity onPress={() => handleGetAssignments("TEST_USER")}>
+            <AssignmentCard
+              title="CS1010s - Mission 1"
+              percentage={20}
+              dueDate="Due 25 May - 23:00"
+            />
+          </TouchableOpacity>
           <AssignmentCard
             title="MA2108S - Assignment 1"
             percentage={20}

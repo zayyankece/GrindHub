@@ -57,7 +57,7 @@ const DateSection = ({ date, children }) => (
 const Timetable = ({navigation}) => {
 
   const handleGetAssignments = async ({userid}) => {
-    console.log("pressed!")
+    console.log("pressed1!")
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
@@ -66,6 +66,8 @@ const Timetable = ({navigation}) => {
         userid : userid,
       }),
     });
+
+    console.log("done")
   
     }
     catch (error){

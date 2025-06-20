@@ -126,7 +126,7 @@ const GroupChat = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFE5B4',
+    backgroundColor: '#FED7AA',
   },
   searchContainer: {
     paddingHorizontal: 16,

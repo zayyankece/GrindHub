@@ -114,7 +114,7 @@ const ChatScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFE5B4',
+    backgroundColor: '#FED7AA',
   },
   backButton: {
     marginRight: 8,

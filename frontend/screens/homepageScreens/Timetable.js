@@ -8,7 +8,6 @@ import {
   StatusBar,
   TouchableOpacity
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 
@@ -133,7 +132,7 @@ const Timetable = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FED7AA',
   },
   appName: {
     fontSize: 24,

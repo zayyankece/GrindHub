@@ -44,9 +44,9 @@ const GrindHubFooter = ({ navigation, activeTab }) => {
         
         <TouchableOpacity style={styles.navItem}>
           <Ionicons 
-            name="notifications" 
+            name="time" 
             size={24} 
-            color={getIconColor("Notifications")} 
+            color={getIconColor("TimeTracker")} 
           />
         </TouchableOpacity>
         

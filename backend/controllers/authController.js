@@ -66,3 +66,20 @@ exports.getAssignments = async(req, res) => {
   }
 
 }
+
+exports.setAssignments
+
+exports.setClass
+exports.getClass
+
+exports.setModule
+exports.getModule
+
+exports.setChats
+exports.getChats
+
+exports.setGroups
+exports.getGroups
+
+exports.setUsers
+exports.getUsers

@@ -57,12 +57,13 @@ const DateSection = ({ date, children }) => (
 const Timetable = ({navigation}) => {
 
   const getAssignments = async ({userid}) => {
+    console.log(userid)
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-        userid : userid,
+        userid : "TEST_USER",
       }),
     });
 

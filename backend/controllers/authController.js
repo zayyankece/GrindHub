@@ -24,8 +24,6 @@ exports.login = async (req, res) => {
   }
 };
 
-
-
 exports.signup = async (req, res) => {
   const { email, password } = req.body;
 
@@ -67,19 +65,19 @@ exports.getAssignments = async(req, res) => {
 
 }
 
-exports.setAssignments
+// exports.setAssignments
 
-exports.setClass
-exports.getClass
+// exports.setClass
+// exports.getClass
 
-exports.setModule
-exports.getModule
+// exports.setModule
+// exports.getModule
 
-exports.setChats
-exports.getChats
+// exports.setChats
+// exports.getChats
 
-exports.setGroups
-exports.getGroups
+// exports.setGroups
+// exports.getGroups
 
-exports.setUsers
-exports.getUsers
+// exports.setUsers
+// exports.getUsers

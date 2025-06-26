@@ -55,14 +55,14 @@ exports.getAssignments = async(req, res) => {
   try{
     const existingAssignment = await db.query('SELECT * FROM assignments WHERE userid = $1', [userid])
     if (existingAssignment.rows.length == 0){
-      console.log("ini berhasil kesini")
       return res.status(404).json({message: "No assignment found!", success: false})
     }
+    return res.status(200).json({message: "Assignments retrieved!", success:true, assignment:existingAssignment})
   }
 
   catch (error) {
-
-
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong', success : false});
   }
 
 }

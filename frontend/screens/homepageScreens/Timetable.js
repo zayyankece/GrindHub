@@ -69,7 +69,8 @@ const Timetable = ({navigation}) => {
 
     const data = await response.json()
     console.log(data)
-  
+    console.log(data.assignment.rows)
+
     }
     catch (error){
       console.error(error)

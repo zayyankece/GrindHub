@@ -55,7 +55,7 @@ exports.getAssignments = async(req, res) => {
     if (existingAssignment.rows.length == 0){
       return res.status(404).json({message: "No assignment found!", success: false})
     }
-    return res.status(200).json({message: "Assignments retrieved!", success:true, assignment:existingAssignment})
+    return res.status(200).json({message: "Assignments retrieved!", success:true, assignment:existingAssignment, rows:existingAssignment.rows})
   }
 
   catch (error) {

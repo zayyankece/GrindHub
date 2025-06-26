@@ -56,8 +56,7 @@ const DateSection = ({ date, children }) => (
 
 const Timetable = ({navigation}) => {
 
-  const handleGetAssignments = async ({userid}) => {
-    console.log("pressed1!")
+  const getAssignments = async ({userid}) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
@@ -68,8 +67,6 @@ const Timetable = ({navigation}) => {
     });
 
     const data = await response.json()
-
-    console.log("done")
     console.log(data)
   
     }
@@ -90,7 +87,7 @@ const Timetable = ({navigation}) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sunday, 25th May 2025 */}
         <DateSection date="Sun, 25th May 2025">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => getAssignments("TEST_USER")}>
             <AssignmentCard
               title="CS1010s - Mission 1"
               percentage={20}

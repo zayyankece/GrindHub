@@ -17,9 +17,24 @@ export default function GrindHub({navigation}) {
 
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
+  const [combinedData, setCombinedData] = useState([])
+
+  function formatTimeToHHMM(dateInput, timeZone) {
+    // Ensure we are working with a Date object
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  
+    // Formatting options to get HH:mm in 24-hour format
+    const options = {
+      timeZone: timeZone,
+      hour: '2-digit',   // Ensures the hour is always two digits (e.g., 07)
+      minute: '2-digit', // Ensures the minute is always two digits (e.g., 00)
+      hour12: false      // CRITICAL: Use 24-hour clock (19:00 instead of 7:00 PM)
+    };
+  
+    return date.toLocaleTimeString('en-GB', options);
+  }
 
   const getAssignments = async ({userid}) => {
-    console.log(userid)
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
@@ -34,8 +49,6 @@ export default function GrindHub({navigation}) {
     if (data.success == false){
       return []
     }
-    // assignments = data.assignments
-    // console.log(assignments)
     return data.assignments
     }
     catch (error){
@@ -58,7 +71,6 @@ export default function GrindHub({navigation}) {
     if (data.success == false){
       return []
     }
-    console.log(data.classes)
     return data.classes
 
     }
@@ -67,31 +79,58 @@ export default function GrindHub({navigation}) {
     }
   }
 
-  // classes = getClass({userid: "TEST_USER"})
-
   useEffect(() => {
-    const fetchAndSetAssignments = async () => {
-      // Set loading to true in case you want a pull-to-refresh feature later
-      const fetchedAssignments = await getAssignments({ userid: "TEST_USER" });
-      setAssignments(fetchedAssignments);
+    const fetchAndCombineData = async () => {
+      try {
+        const [fetchedAssignments, fetchedClasses] = await Promise.all([
+          getAssignments({ userid: "TEST_USER" }),
+          getClass({ userid: "TEST_USER" })
+        ]);
+
+        setAssignments(fetchedAssignments);
+        setClasses(fetchedClasses);
+
+        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
+        setCombinedData(combinedData);
+
+      } catch (error) {
+        console.error("Failed to fetch or combine data:", error);
+      }
     };
+    fetchAndCombineData();
 
-    const fecthAndSetClasses = async () => {
-      const fetchedClasses = await getClass({userid: "TEST_USER"});
-      setClasses(fetchedClasses)
-    }
+  }, []); 
 
-    fetchAndSetAssignments();
-    fecthAndSetClasses();
-  }, []);
+  function combineAndExtract(classesArray, assignmentsArray) {
+    // Process the classes array using map to transform each item
+    const extractedClasses = classesArray.map(classItem => ({
+      code: classItem.module,
+      type: classItem.classname,
+      location: classItem.classlocation,
+      time: formatTimeToHHMM(classItem.startdate, "Asia/Singapore") // Using startdate as the primary time
+    }));
+  
+    // Process the assignments array
+    const extractedAssignments = assignmentsArray.map(assignmentItem => ({
+      code: assignmentItem.assignmentmodule,
+      type: "Assignment", // Explicitly defining the type
+      location: null,     // Assignments don't have a physical location
+      time: formatTimeToHHMM(assignmentItem.assignmentduedate, "Asia/Singapore")
+    }));
+  
+    // Combine both transformed arrays into one
+    const combinedList = [...extractedClasses, ...extractedAssignments];
+  
+    return combinedList;
+  }
 
   const [activeTimer, setActiveTimer] = useState(null);
 
-  const scheduleItems = [
-    { code: 'MA2104', type: 'Lecture', room: 'LT27', time: '9.00 - 11.00' },
-    { code: 'IT1244', type: 'Tutorial', room: 'S16 0204', time: '13.00 - 14.00' },
-    { code: 'CS2030', type: 'Lab Assignment', time: '23.59' }
-  ];
+  // const scheduleItems = [
+  //   { code: 'MA2104', type: 'Lecture', room: 'LT27', time: '9.00 - 11.00' },
+  //   { code: 'IT1244', type: 'Tutorial', room: 'S16 0204', time: '13.00 - 14.00' },
+  //   { code: 'CS2030', type: 'Lab Assignment', time: '23.59' }
+  // ];
 
   const groups = [
     { 
@@ -159,12 +198,12 @@ export default function GrindHub({navigation}) {
         <View style={styles.card}>
           <Text style={styles.dateText}> Mon, 26 May 2025 </Text>
           <View style={styles.scheduleList}>
-            {scheduleItems.map((item, index) => (
+            {combinedData.map((item, index) => (
               <View key={index} style={styles.scheduleItem}>
                 <View style={styles.scheduleItemLeft}>
                   <Text style={styles.scheduleItemText}>
                     {item.code} {item.type}
-                    {item.room && ` - ${item.room}`}
+                    {item.location && ` - ${item.location}`}
                   </Text>
                 </View>
                 <Text style={styles.scheduleTime}>{item.time}</Text>
@@ -237,7 +276,7 @@ export default function GrindHub({navigation}) {
                   <Text style={styles.assignmentTitle}>
                     {assignment.assignmentmodule} - {assignment.assignmentname}
                   </Text>
-                  <Text style={styles.assignmentDue}>Due {assignment.assignmentduedate}</Text>
+                  <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
                 </View>
                 <ProgressBar progress={assignment.assignmentpercentage} />
               </View>

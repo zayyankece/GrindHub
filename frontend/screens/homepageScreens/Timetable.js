@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -56,6 +56,10 @@ const DateSection = ({ date, children }) => (
 
 const Timetable = ({navigation}) => {
 
+  const [assignments, setAssignments] = useState([])
+  const [classes, setClasses] = useState([])
+  const [combinedData, setCombinedData] = useState([])
+
   const getAssignments = async ({userid}) => {
     console.log(userid)
     try {
@@ -106,10 +110,50 @@ const Timetable = ({navigation}) => {
     }
   }
 
-  assignments = getAssignments({userid: "TEST_USER"})
-  classes = getClass({userid: "TEST_USER"})
+  useEffect(() => {
+    const fetchAndCombineData = async () => {
+      try {
+        const [fetchedAssignments, fetchedClasses] = await Promise.all([
+          getAssignments({ userid: "TEST_USER" }),
+          getClass({ userid: "TEST_USER" })
+        ]);
 
-  // put handle get class here
+        setAssignments(fetchedAssignments);
+        setClasses(fetchedClasses);
+
+        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
+        setCombinedData(combinedData);
+
+      } catch (error) {
+        console.error("Failed to fetch or combine data:", error);
+      }
+    };
+    fetchAndCombineData();
+
+  }, []); 
+
+  function combineAndExtract(classesArray, assignmentsArray) {
+    // Process the classes array using map to transform each item
+    const extractedClasses = classesArray.map(classItem => ({
+      module_code: classItem.module,
+      type: classItem.classname,
+      location: classItem.classlocation,
+      time: classItem.startdate // Using startdate as the primary time
+    }));
+  
+    // Process the assignments array
+    const extractedAssignments = assignmentsArray.map(assignmentItem => ({
+      module_code: assignmentItem.assignmentmodule,
+      type: "Assignment", // Explicitly defining the type
+      location: null,     // Assignments don't have a physical location
+      time: assignmentItem.assignmentduedate
+    }));
+  
+    // Combine both transformed arrays into one
+    const combinedList = [...extractedClasses, ...extractedAssignments];
+  
+    return combinedList;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -121,13 +165,11 @@ const Timetable = ({navigation}) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sunday, 25th May 2025 */}
         <DateSection date="Sun, 25th May 2025">
-          <TouchableOpacity onPress={() => getAssignments({userid: "TEST_USER"})}>
-            <AssignmentCard
-              title="CS1010s - Mission 1"
-              percentage={20}
-              dueDate="Due 25 May - 23:00"
-            />
-          </TouchableOpacity>
+          <AssignmentCard
+            title="CS1010s - Mission 1"
+            percentage={20}
+            dueDate="Due 25 May - 23:00"
+          />
           <AssignmentCard
             title="MA2108S - Assignment 1"
             percentage={20}
@@ -151,13 +193,11 @@ const Timetable = ({navigation}) => {
 
         {/* Thursday, 29th May 2025 */}
         <DateSection date="Thu, 29th May 2025">
-          <TouchableOpacity onPress={() => getClass({userid: "TEST_USER"})}>
           <LectureCard
             title="CS2109S - Lecture"
             room="LT27"
             time="13:00 - 15:00"
           />
-          </TouchableOpacity>
           <LectureCard
             title="MA2108S - Tutorial"
             room="S16-0204"

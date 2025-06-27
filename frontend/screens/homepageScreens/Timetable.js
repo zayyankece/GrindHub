@@ -202,29 +202,29 @@ const Timetable = ({navigation}) => {
         }, {});
     }, []);
 
-  const renderDays = () => {
-    const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
-    const dayOfWeek = today.getDay(); // For Friday, this is 5
+  const renderDays = ({mondayDate}) => {
+    // const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
+    // const dayOfWeek = today.getDay(); // For Friday, this is 5
 
-    // Calculate how many days to go back to get to Monday
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    // // Calculate how many days to go back to get to Monday
+    // const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-    // Create the date for the Monday of this week
-    const mondayDate = new Date(today); // Start with a copy of today
-    mondayDate.setDate(today.getDate() - daysToSubtract);
+    // // Create the date for the Monday of this week
+    // const mondayDate = new Date(today); // Start with a copy of today
+    // mondayDate.setDate(today.getDate() - daysToSubtract);
 
-    // Best Practice: Normalize the start date to the beginning of the day (midnight)
-    // This avoids any potential bugs related to the time of day.
-    mondayDate.setHours(0, 0, 0, 0);
+    // // Best Practice: Normalize the start date to the beginning of the day (midnight)
+    // // This avoids any potential bugs related to the time of day.
+    // mondayDate.setHours(0, 0, 0, 0);
 
     // --- END: New Logic ---
     const days = [];
-    const startDate = mondayDate; // Use our calculated Monday as the start date
+    // const startDate = mondayDate; // Use our calculated Monday as the start date
     const numberOfDaysToShow = 7;
 
     for (let i = 0; i < numberOfDaysToShow; i++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
+      const currentDate = new Date(mondayDate);
+      currentDate.setDate(mondayDate.getDate() + i);
 
       const dateKey = getDateKey(currentDate.toISOString());
       const eventsForDay = groupedEvents[dateKey] || [];
@@ -355,7 +355,7 @@ const Timetable = ({navigation}) => {
     </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {renderDays()}
+        {renderDays({mondayDate: weekStartDate})}
       </ScrollView>
 
       {/* Bottom Navigation */}

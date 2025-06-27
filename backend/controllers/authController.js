@@ -73,7 +73,7 @@ exports.getClass = async(req, res) => {
     if (existingClass.rows.length == 0){
       return res.status(404).json({message: "No class found!", success: false})
     }
-    return res.status(200).json({message: "Class retrieved!", success:true, class:existingClass.rows})
+    return res.status(200).json({message: "Class retrieved!", success:true, classes:existingClass.rows})
   }
 
   catch (error) {

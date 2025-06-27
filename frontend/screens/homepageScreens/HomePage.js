@@ -199,79 +199,86 @@ export default function GrindHub({navigation}) {
         </View>
 
         {/* Schedule Card */}
-        <View style={styles.card}>
-          <Text style={styles.dateText}> Mon, 26 May 2025 </Text>
-          <View style={styles.scheduleList}>
-            {combinedData.map((item, index) => (
-              <View key={index} style={styles.scheduleItem}>
-                <View style={styles.scheduleItemLeft}>
-                  <Text style={styles.scheduleItemText}>
-                    {item.code} {item.type}
-                    {item.location && ` - ${item.location}`}
-                  </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("Timetable")}>
+          <View style={styles.card}>
+            <Text style={styles.dateText}> Mon, 26 May 2025 </Text>
+            <View style={styles.scheduleList}>
+              {combinedData.map((item, index) => (
+                <View key={index} style={styles.scheduleItem}>
+                  <View style={styles.scheduleItemLeft}>
+                    <Text style={styles.scheduleItemText}>
+                      {item.code} {item.type}
+                      {item.location && ` - ${item.location}`}
+                    </Text>
+                  </View>
+                  <Text style={styles.scheduleTime}>{formatTimeToHHMM(item.time)}</Text>
                 </View>
-                <Text style={styles.scheduleTime}>{formatTimeToHHMM(item.time)}</Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Study Timer */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Study Timer</Text>
-          <View style={styles.timerButtons}>
-            <TouchableOpacity 
-              style={[
-                styles.timerButton,
-                activeTimer === 'CS2030' && styles.timerButtonActive
-              ]}
-              onPress={() => startTimer('CS2030')}
-            >
-              <Text style={[
-                styles.timerButtonText,
-                activeTimer === 'CS2030' && styles.timerButtonTextActive
-              ]}>
-                Start CS2030 Timer
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[
-                styles.timerButton,
-                activeTimer === 'Other' && styles.timerButtonActive
-              ]}
-              onPress={() => startTimer('Other')}
-            >
-              <Text style={[
-                styles.timerButtonText,
-                activeTimer === 'Other' && styles.timerButtonTextActive
-              ]}>
-                Start Other Timer
-              </Text>
-            </TouchableOpacity>
+        <TouchableOpacity>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Study Timer</Text>
+            <View style={styles.timerButtons}>
+              <TouchableOpacity 
+                style={[
+                  styles.timerButton,
+                  activeTimer === 'CS2030' && styles.timerButtonActive
+                ]}
+                onPress={() => startTimer('CS2030')}
+              >
+                <Text style={[
+                  styles.timerButtonText,
+                  activeTimer === 'CS2030' && styles.timerButtonTextActive
+                ]}>
+                  Start CS2030 Timer
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.timerButton,
+                  activeTimer === 'Other' && styles.timerButtonActive
+                ]}
+                onPress={() => startTimer('Other')}
+              >
+                <Text style={[
+                  styles.timerButtonText,
+                  activeTimer === 'Other' && styles.timerButtonTextActive
+                ]}>
+                  Start Other Timer
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Your Groups */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Your Groups</Text>
-          <View style={styles.groupsList}>
-            {groups.map((group, index) => (
-              <View key={index} style={styles.groupItem}>
-                <View style={styles.groupHeader}>
-                  <Text style={styles.groupName}>{group.name}</Text>
-                  <Text style={styles.groupTime}>{group.time}</Text>
+        <TouchableOpacity>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Your Groups</Text>
+            <View style={styles.groupsList}>
+              {groups.map((group, index) => (
+                <View key={index} style={styles.groupItem}>
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupTime}>{group.time}</Text>
+                  </View>
+                  <View style={styles.groupMessage}>
+                    <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                    <Text style={styles.groupMessageText}>{group.message}</Text>
+                  </View>
                 </View>
-                <View style={styles.groupMessage}>
-                  <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-                  <Text style={styles.groupMessageText}>{group.message}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Your Assignments */}
-        <View style={[styles.card, styles.lastCard]}>
+        <TouchableOpacity>
+          <View style={[styles.card, styles.lastCard]}>
           <Text style={styles.cardTitle}>Your Assignments</Text>
           <View style={styles.assignmentsList}>
             {assignments.map((assignment, index) => (
@@ -287,6 +294,8 @@ export default function GrindHub({navigation}) {
             ))}
           </View>
         </View>
+        </TouchableOpacity>
+        
       </ScrollView>
 
       {/* Floating Action Buttons */}

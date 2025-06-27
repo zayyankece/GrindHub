@@ -6,7 +6,8 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity
+  TouchableOpacity,
+  Image
 } from 'react-native';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
@@ -83,6 +84,15 @@ const Timetable = ({navigation}) => {
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
   const [combinedData, setCombinedData] = useState([])
+  const [weekStartDate, setWeekStartDate] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mondayDate = new Date(today);
+    mondayDate.setDate(today.getDate() - daysToSubtract);
+    mondayDate.setHours(0, 0, 0, 0);
+    return mondayDate;
+  });
 
   const getAssignments = async ({userid}) => {
     try {
@@ -90,7 +100,7 @@ const Timetable = ({navigation}) => {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-      userid : "TEST_USER",
+      userid : userid,
       }),
     });
     
@@ -263,58 +273,58 @@ const Timetable = ({navigation}) => {
       );
   }
   return days;
-  
-      // for (let i = 0; i < numberOfDaysToShow; i++) {
-      //     const currentDate = new Date(today);
-      //     currentDate.setDate(today.getDate() + i);
-  
-      //     const dateKey = getDateKey(currentDate.toISOString());
-      //     const eventsForDay = groupedEvents[dateKey] || [];
-  
-      //     // The main logic change is here:
-      //     // We ALWAYS push a DateSection for every day in our loop.
-      //     days.push(
-      //         <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
-      //             {/*
-      //               Then, INSIDE the section, we decide what to show.
-      //               If there are events, map them. If not, show the FreeTimeCard.
-      //             */}
-      //             {eventsForDay.length > 0 ? (
-      //                 eventsForDay.map((event, index) => {
-      //                     // The same switch logic as before
-      //                     switch (event.type) {
-      //                         case 'Lecture':
-      //                         case 'Tutorial':
-      //                             return (
-      //                                 <LectureCard
-      //                                     key={index}
-      //                                     title={`${event.module_code} - ${event.type}`}
-      //                                     room={event.location}
-      //                                     time={formatTime(event.time)}
-      //                                 />
-      //                             );
-      //                         case 'Assignment':
-      //                             return (
-      //                                 <AssignmentCard
-      //                                     key={index}
-      //                                     title={`${event.module_code} - ${event.name}`}
-      //                                     percentage={event.percentage}
-      //                                     dueDate={`Due at ${formatTime(event.time)}`}
-      //                                 />
-      //                             );
-      //                         default:
-      //                             return null;
-      //                     }
-      //                 })
-      //             ) : (
-      //                 // This is what renders when eventsForDay is empty
-      //                 <FreeTimeCard />
-      //             )}
-      //         </DateSection>
-      //     );
-      // }
-      // return days;
   };
+
+  // const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
+  // const dayOfWeek = today.getDay(); // For Friday, this is 5
+  // const daysToSubtract = dayOfWeek - 1;
+  // const mondayDate = new Date(today); // Start with a copy of today
+  // mondayDate.setDate(today.getDate() - daysToSubtract);
+  // mondayDate.setHours(0, 0, 0, 0);
+
+  // const rightArrowPressed = async () => {
+  //   mondayDate.setDate(mondayDate.getDate() + 7)
+  //   mondayDate.setHours(0, 0, 0, 0)
+  //   console.log("right arrow pressed")
+  //   console.log(mondayDate)
+  // }
+
+  // const leftArrowPressed = async () => {
+  //   mondayDate.setDate(mondayDate.getDate() - 7)
+  //   mondayDate.setHours(0, 0, 0, 0)
+  //   console.log("left arrow pressed")
+  //   console.log(mondayDate)
+  // }
+
+  const leftArrowPressed = () => {
+    setWeekStartDate(currentMonday => {
+      const newMonday = new Date(currentMonday);
+      newMonday.setDate(currentMonday.getDate() - 7);
+      return newMonday;
+    });
+
+    console.log("left arrow pressed")
+    console.log(weekStartDate)
+  };
+  
+  const rightArrowPressed = () => {
+    setWeekStartDate(currentMonday => {
+      const newMonday = new Date(currentMonday);
+      newMonday.setDate(currentMonday.getDate() + 7);
+      return newMonday;
+    });
+
+    console.log("right arrow pressed")
+    console.log(weekStartDate)
+  };
+
+  const sundayDate = new Date(weekStartDate);
+  sundayDate.setDate(weekStartDate.getDate() + 6);
+  
+  const options = { month: 'long', day: 'numeric', year: 'numeric' };
+  const formattedMonday = weekStartDate.toLocaleDateString('en-US', options);
+  const formattedSunday = sundayDate.toLocaleDateString('en-US', options);
+  const displayRange = `${formattedMonday} - ${formattedSunday}`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -322,6 +332,27 @@ const Timetable = ({navigation}) => {
       
       {/* Header */}
       <GrindHubHeader navigation={navigation}/>
+
+      <View style={styles.container2}>
+      {/* Interactive Left Arrow */}
+      <TouchableOpacity onPress={() => leftArrowPressed()}>
+        <Image
+          source={require("../../assets/Arrow to left.png")}
+          style={styles.arrowIcon}
+        />
+      </TouchableOpacity>
+
+      {/* Date Range Text */}
+      <Text style={styles.dateText}>{displayRange}</Text>
+
+      {/* Interactive Right Arrow */}
+      <TouchableOpacity onPress={() => rightArrowPressed()}>
+        <Image
+          source={require("../../assets/Arrow to right.png")}
+          style={styles.arrowIcon}
+        />
+      </TouchableOpacity>
+    </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderDays()}
@@ -337,6 +368,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FED7AA',
+  },
+  container2: {
+    marginTop:15,
+    marginBottom:10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f2f5', // A light, neutral background
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30, // Creates the pill shape
+    marginHorizontal: 16, // Adds space on the sides of the screen
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    // Shadow for Android
+    elevation: 5,
+  },
+  arrowIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#4A4A4A', // Tints the icon to a professional dark gray
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600', // Semi-bold for emphasis
+    color: '#1C1C1E', // A dark, modern text color
   },
   appName: {
     fontSize: 24,

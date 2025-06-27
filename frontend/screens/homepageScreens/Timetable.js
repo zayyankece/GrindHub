@@ -155,17 +155,21 @@ const Timetable = ({navigation}) => {
     // Process the classes array using map to transform each item
     const extractedClasses = classesArray.map(classItem => ({
       module_code: classItem.module,
+      name: classItem.classname,
       type: classItem.classname,
       location: classItem.classlocation,
-      time: classItem.startdate // Using startdate as the primary time
+      time: classItem.startdate, // Using startdate as the primary time
+      percentage: null
     }));
   
     // Process the assignments array
     const extractedAssignments = assignmentsArray.map(assignmentItem => ({
       module_code: assignmentItem.assignmentmodule,
+      name: assignmentItem.assignmentname,
       type: "Assignment", // Explicitly defining the type
       location: null,     // Assignments don't have a physical location
-      time: assignmentItem.assignmentduedate
+      time: assignmentItem.assignmentduedate,
+      percentage: assignmentItem.assignmentpercentage
     }));
   
     // Combine both transformed arrays into one
@@ -188,62 +192,128 @@ const Timetable = ({navigation}) => {
         }, {});
     }, []);
 
-    const renderDays = () => {
-      const days = [];
-      // For this example, let's start today, June 27, 2025, to show some free time
-      const today = new Date('2025-06-27T00:00:00.000Z');
-      const numberOfDaysToShow = 7;
+  const renderDays = () => {
+    const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
+    const dayOfWeek = today.getDay(); // For Friday, this is 5
+
+    // Calculate how many days to go back to get to Monday
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+    // Create the date for the Monday of this week
+    const mondayDate = new Date(today); // Start with a copy of today
+    mondayDate.setDate(today.getDate() - daysToSubtract);
+
+    // Best Practice: Normalize the start date to the beginning of the day (midnight)
+    // This avoids any potential bugs related to the time of day.
+    mondayDate.setHours(0, 0, 0, 0);
+
+    // --- END: New Logic ---
+    const days = [];
+    const startDate = mondayDate; // Use our calculated Monday as the start date
+    const numberOfDaysToShow = 7;
+
+    for (let i = 0; i < numberOfDaysToShow; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+
+      const dateKey = getDateKey(currentDate.toISOString());
+      const eventsForDay = groupedEvents[dateKey] || [];
+
+      days.push(
+          <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
+              {eventsForDay.length > 0 ? (
+                  eventsForDay.map((event, index) => {
+                      // ... switch statement to render cards (no change here)
+                      switch (event.type) {
+                          case 'Lecture':
+                            return (
+                              <LectureCard
+                                  key={index}
+                                  title={`${event.module_code} - ${event.type}`}
+                                  room={event.location}
+                                  time={formatTime(event.time)}
+                              />
+                              );  
+                          case 'Tutorial':
+                            return (
+                                    <LectureCard
+                                        key={index}
+                                        title={`${event.module_code} - ${event.type}`}
+                                        room={event.location}
+                                        time={formatTime(event.time)}
+                                    />
+                                    );    
+                          case 'Assignment':
+                            return (
+                                    <AssignmentCard
+                                        key={index}
+                                        title={`${event.module_code} - ${event.name}`}
+                                        percentage={event.percentage}
+                                        dueDate={`Due at ${formatTime(event.time)}`}
+                                    />
+                                  );  
+                          default:
+                              return null;
+                      }
+                  })
+              ) : (
+                  <FreeTimeCard />
+              )}
+          </DateSection>
+      );
+  }
+  return days;
   
-      for (let i = 0; i < numberOfDaysToShow; i++) {
-          const currentDate = new Date(today);
-          currentDate.setDate(today.getDate() + i);
+      // for (let i = 0; i < numberOfDaysToShow; i++) {
+      //     const currentDate = new Date(today);
+      //     currentDate.setDate(today.getDate() + i);
   
-          const dateKey = getDateKey(currentDate.toISOString());
-          const eventsForDay = groupedEvents[dateKey] || [];
+      //     const dateKey = getDateKey(currentDate.toISOString());
+      //     const eventsForDay = groupedEvents[dateKey] || [];
   
-          // The main logic change is here:
-          // We ALWAYS push a DateSection for every day in our loop.
-          days.push(
-              <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
-                  {/*
-                    Then, INSIDE the section, we decide what to show.
-                    If there are events, map them. If not, show the FreeTimeCard.
-                  */}
-                  {eventsForDay.length > 0 ? (
-                      eventsForDay.map((event, index) => {
-                          // The same switch logic as before
-                          switch (event.type) {
-                              case 'Lecture':
-                              case 'Tutorial':
-                                  return (
-                                      <LectureCard
-                                          key={index}
-                                          title={`${event.module_code} - ${event.type}`}
-                                          room={event.location}
-                                          time={formatTime(event.time)}
-                                      />
-                                  );
-                              case 'Assignment':
-                                  return (
-                                      <AssignmentCard
-                                          key={index}
-                                          title={`${event.module_code} - ${event.type}`}
-                                          percentage={event.percentage}
-                                          dueDate={`Due at ${formatTime(event.time)}`}
-                                      />
-                                  );
-                              default:
-                                  return null;
-                          }
-                      })
-                  ) : (
-                      // This is what renders when eventsForDay is empty
-                      <FreeTimeCard />
-                  )}
-              </DateSection>
-          );
-      }
-      return days;
+      //     // The main logic change is here:
+      //     // We ALWAYS push a DateSection for every day in our loop.
+      //     days.push(
+      //         <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
+      //             {/*
+      //               Then, INSIDE the section, we decide what to show.
+      //               If there are events, map them. If not, show the FreeTimeCard.
+      //             */}
+      //             {eventsForDay.length > 0 ? (
+      //                 eventsForDay.map((event, index) => {
+      //                     // The same switch logic as before
+      //                     switch (event.type) {
+      //                         case 'Lecture':
+      //                         case 'Tutorial':
+      //                             return (
+      //                                 <LectureCard
+      //                                     key={index}
+      //                                     title={`${event.module_code} - ${event.type}`}
+      //                                     room={event.location}
+      //                                     time={formatTime(event.time)}
+      //                                 />
+      //                             );
+      //                         case 'Assignment':
+      //                             return (
+      //                                 <AssignmentCard
+      //                                     key={index}
+      //                                     title={`${event.module_code} - ${event.name}`}
+      //                                     percentage={event.percentage}
+      //                                     dueDate={`Due at ${formatTime(event.time)}`}
+      //                                 />
+      //                             );
+      //                         default:
+      //                             return null;
+      //                     }
+      //                 })
+      //             ) : (
+      //                 // This is what renders when eventsForDay is empty
+      //                 <FreeTimeCard />
+      //             )}
+      //         </DateSection>
+      //     );
+      // }
+      // return days;
   };
 
   return (

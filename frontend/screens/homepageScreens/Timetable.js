@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,30 @@ import {
 } from 'react-native';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
+
+// --- HELPER FUNCTIONS ---
+
+// Gets the date part of an ISO string (e.g., "2025-05-29")
+const getDateKey = (isoString) => isoString.substring(0, 10);
+
+// Formats a Date object into "Tue, 27th May 2025"
+const formatSectionDate = (date) => {
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    const day = date.getDate();
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
+    return formatted;
+}
+
+// Formats a time string into "13:00"
+const formatTime = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
 
 const ProgressBar = ({ percentage }) => (
   <View style={styles.progressBarContainer}>
@@ -61,7 +85,6 @@ const Timetable = ({navigation}) => {
   const [combinedData, setCombinedData] = useState([])
 
   const getAssignments = async ({userid}) => {
-    console.log(userid)
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
@@ -147,9 +170,81 @@ const Timetable = ({navigation}) => {
   
     // Combine both transformed arrays into one
     const combinedList = [...extractedClasses, ...extractedAssignments];
+
+    combinedList.sort((a, b) => {
+      return new Date(a.time) - new Date(b.time); // Just swap a and b
+    });
   
     return combinedList;
   }
+
+  const groupedEvents = useMemo(() => {
+        const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
+        return sorted.reduce((acc, event) => {
+            const dateKey = getDateKey(event.time);
+            if (!acc[dateKey]) acc[dateKey] = [];
+            acc[dateKey].push(event);
+            return acc;
+        }, {});
+    }, []);
+
+    const renderDays = () => {
+      const days = [];
+      // For this example, let's start today, June 27, 2025, to show some free time
+      const today = new Date('2025-06-27T00:00:00.000Z');
+      const numberOfDaysToShow = 7;
+  
+      for (let i = 0; i < numberOfDaysToShow; i++) {
+          const currentDate = new Date(today);
+          currentDate.setDate(today.getDate() + i);
+  
+          const dateKey = getDateKey(currentDate.toISOString());
+          const eventsForDay = groupedEvents[dateKey] || [];
+  
+          // The main logic change is here:
+          // We ALWAYS push a DateSection for every day in our loop.
+          days.push(
+              <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
+                  {/*
+                    Then, INSIDE the section, we decide what to show.
+                    If there are events, map them. If not, show the FreeTimeCard.
+                  */}
+                  {eventsForDay.length > 0 ? (
+                      eventsForDay.map((event, index) => {
+                          // The same switch logic as before
+                          switch (event.type) {
+                              case 'Lecture':
+                              case 'Tutorial':
+                                  return (
+                                      <LectureCard
+                                          key={index}
+                                          title={`${event.module_code} - ${event.type}`}
+                                          room={event.location}
+                                          time={formatTime(event.time)}
+                                      />
+                                  );
+                              case 'Assignment':
+                                  return (
+                                      <AssignmentCard
+                                          key={index}
+                                          title={`${event.module_code} - ${event.type}`}
+                                          percentage={event.percentage}
+                                          dueDate={`Due at ${formatTime(event.time)}`}
+                                      />
+                                  );
+                              default:
+                                  return null;
+                          }
+                      })
+                  ) : (
+                      // This is what renders when eventsForDay is empty
+                      <FreeTimeCard />
+                  )}
+              </DateSection>
+          );
+      }
+      return days;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -159,64 +254,7 @@ const Timetable = ({navigation}) => {
       <GrindHubHeader navigation={navigation}/>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Sunday, 25th May 2025 */}
-        <DateSection date="Sun, 25th May 2025">
-          <AssignmentCard
-            title="CS1010s - Mission 1"
-            percentage={20}
-            dueDate="Due 25 May - 23:00"
-          />
-          <AssignmentCard
-            title="MA2108S - Assignment 1"
-            percentage={20}
-            dueDate="Due 25 May - 23:00"
-          />
-        </DateSection>
-
-        {/* Monday, 26th May 2025 */}
-        <DateSection date="Mon, 26th May 2025">
-          <AssignmentCard
-            title="ES1103 - CA1"
-            percentage={20}
-            dueDate="Due 26 May - 21:00"
-          />
-        </DateSection>
-
-        {/* Tuesday, 27th May 2025 - Wednesday, 28th May 2025 */}
-        <DateSection date="Tue, 27th May 2025 - Wed, 28th May 2025">
-          <FreeTimeCard />
-        </DateSection>
-
-        {/* Thursday, 29th May 2025 */}
-        <DateSection date="Thu, 29th May 2025">
-          <LectureCard
-            title="CS2109S - Lecture"
-            room="LT27"
-            time="13:00 - 15:00"
-          />
-          <LectureCard
-            title="MA2108S - Tutorial"
-            room="S16-0204"
-            time="17:00 - 18:00"
-          />
-          <AssignmentCard
-            title="CS3244 - Group Project 2"
-            percentage={90}
-            dueDate="Due 29 May - 21:00"
-            type="project"
-          />
-        </DateSection>
-
-        {/* Friday, 30th May 2025 */}
-        <DateSection date="Fri, 30th May 2025">
-          <LectureCard
-            title="MA1100T - Lecture"
-            room="LT27"
-            time="13:00 - 15:00"
-          />
-        </DateSection>
-
-        <View style={styles.bottomPadding} />
+        {renderDays()}
       </ScrollView>
 
       {/* Bottom Navigation */}

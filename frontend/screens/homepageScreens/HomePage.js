@@ -107,7 +107,7 @@ export default function GrindHub({navigation}) {
       code: classItem.module,
       type: classItem.classname,
       location: classItem.classlocation,
-      time: formatTimeToHHMM(classItem.startdate, "Asia/Singapore") // Using startdate as the primary time
+      time: classItem.startdate // Using startdate as the primary time
     }));
   
     // Process the assignments array
@@ -115,11 +115,15 @@ export default function GrindHub({navigation}) {
       code: assignmentItem.assignmentmodule,
       type: "Assignment", // Explicitly defining the type
       location: null,     // Assignments don't have a physical location
-      time: formatTimeToHHMM(assignmentItem.assignmentduedate, "Asia/Singapore")
+      time: assignmentItem.assignmentduedate
     }));
   
     // Combine both transformed arrays into one
     const combinedList = [...extractedClasses, ...extractedAssignments];
+
+    combinedList.sort((a, b) => {
+      return new Date(a.time) - new Date(b.time); // Just swap a and b
+    });
   
     return combinedList;
   }
@@ -206,7 +210,7 @@ export default function GrindHub({navigation}) {
                     {item.location && ` - ${item.location}`}
                   </Text>
                 </View>
-                <Text style={styles.scheduleTime}>{item.time}</Text>
+                <Text style={styles.scheduleTime}>{formatTimeToHHMM(item.time)}</Text>
               </View>
             ))}
           </View>

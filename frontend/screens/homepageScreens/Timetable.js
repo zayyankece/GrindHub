@@ -106,6 +106,9 @@ const Timetable = ({navigation}) => {
     }
   }
 
+  assignments = getAssignments({userid: "TEST_USER"})
+  classes = getClass({userid: "TEST_USER"})
+
   // put handle get class here
 
   return (

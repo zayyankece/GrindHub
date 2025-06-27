@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,77 @@ import GrindHubFooter from './components/GrindHubFooter';
 import GrindHubHeader from './components/GrindHubHeader';
 
 export default function GrindHub({navigation}) {
+
+  const [assignments, setAssignments] = useState([])
+  const [classes, setClasses] = useState([])
+
+  const getAssignments = async ({userid}) => {
+    console.log(userid)
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+      userid : "TEST_USER",
+      }),
+    });
+    
+    const data = await response.json()
+
+    if (data.success == false){
+      return []
+    }
+    // assignments = data.assignments
+    // console.log(assignments)
+    return data.assignments
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
+  const getClass = async ({userid}) =>{
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getClass", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+      userid : userid,
+      }),
+    });
+    
+    const data = await response.json()
+
+    if (data.success == false){
+      return []
+    }
+    console.log(data.classes)
+    return data.classes
+
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
+  // classes = getClass({userid: "TEST_USER"})
+
+  useEffect(() => {
+    const fetchAndSetAssignments = async () => {
+      // Set loading to true in case you want a pull-to-refresh feature later
+      const fetchedAssignments = await getAssignments({ userid: "TEST_USER" });
+      setAssignments(fetchedAssignments);
+    };
+
+    const fecthAndSetClasses = async () => {
+      const fetchedClasses = await getClass({userid: "TEST_USER"});
+      setClasses(fetchedClasses)
+    }
+
+    fetchAndSetAssignments();
+    fecthAndSetClasses();
+  }, []);
+
   const [activeTimer, setActiveTimer] = useState(null);
 
   const scheduleItems = [
@@ -35,20 +106,20 @@ export default function GrindHub({navigation}) {
     }
   ];
 
-  const assignments = [
-    { 
-      code: 'HSI2010', 
-      name: 'Workshop 1 Assignment', 
-      progress: 60, 
-      due: '5 June - 21:00' 
-    },
-    { 
-      code: 'CS1010s', 
-      name: 'Mission 1', 
-      progress: 20, 
-      due: '9 June' 
-    }
-  ];
+  // const assignments = [
+  //   { 
+  //     code: 'HSI2010', 
+  //     name: 'Workshop 1 Assignment', 
+  //     progress: 60, 
+  //     due: '5 June - 21:00' 
+  //   },
+  //   { 
+  //     code: 'CS1010s', 
+  //     name: 'Mission 1', 
+  //     progress: 20, 
+  //     due: '9 June' 
+  //   }
+  // ];
 
   const startTimer = (type) => {
     setActiveTimer(type);
@@ -164,11 +235,11 @@ export default function GrindHub({navigation}) {
               <View key={index} style={styles.assignmentItem}>
                 <View style={styles.assignmentHeader}>
                   <Text style={styles.assignmentTitle}>
-                    {assignment.code} - {assignment.name}
+                    {assignment.assignmentmodule} - {assignment.assignmentname}
                   </Text>
-                  <Text style={styles.assignmentDue}>Due {assignment.due}</Text>
+                  <Text style={styles.assignmentDue}>Due {assignment.assignmentduedate}</Text>
                 </View>
-                <ProgressBar progress={assignment.progress} />
+                <ProgressBar progress={assignment.assignmentpercentage} />
               </View>
             ))}
           </View>

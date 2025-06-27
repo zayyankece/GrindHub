@@ -60,7 +60,25 @@ exports.getAssignments = async(req, res) => {
 
   catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Something went wrong', success : false});
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+
+}
+
+exports.getClass = async(req, res) => {
+  const {userid} = req.body
+
+  try{
+    const existingClass = await db.query('SELECT * FROM class WHERE userid = $1', [userid])
+    if (existingClass.rows.length == 0){
+      return res.status(404).json({message: "No class found!", success: false})
+    }
+    return res.status(200).json({message: "Class retrieved!", success:true, class:existingClass.rows})
+  }
+
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
   }
 
 }
@@ -68,7 +86,6 @@ exports.getAssignments = async(req, res) => {
 // exports.setAssignments
 
 // exports.setClass
-// exports.getClass
 
 // exports.setModule
 // exports.getModule

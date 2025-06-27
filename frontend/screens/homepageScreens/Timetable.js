@@ -63,13 +63,42 @@ const Timetable = ({navigation}) => {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-        userid : "TEST_USER",
+      userid : "TEST_USER",
       }),
     });
-
+    
     const data = await response.json()
-    console.log(data)
-    console.log(data.assignment.rows)
+
+    if (data.success == false){
+      return []
+    }
+    assignments = data.assignments
+    console.log(assignments)
+    return assignments
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
+  const getClass = async ({userid}) =>{
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getClass", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+      userid : userid,
+      }),
+    });
+    
+    const data = await response.json()
+
+    if (data.success == false){
+      return []
+    }
+    classes = data.classes
+    console.log(classes)
+    return classes
 
     }
     catch (error){
@@ -89,7 +118,7 @@ const Timetable = ({navigation}) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sunday, 25th May 2025 */}
         <DateSection date="Sun, 25th May 2025">
-          <TouchableOpacity onPress={() => getAssignments("TEST_USER")}>
+          <TouchableOpacity onPress={() => getAssignments({userid: "TEST_USER"})}>
             <AssignmentCard
               title="CS1010s - Mission 1"
               percentage={20}
@@ -119,11 +148,13 @@ const Timetable = ({navigation}) => {
 
         {/* Thursday, 29th May 2025 */}
         <DateSection date="Thu, 29th May 2025">
+          <TouchableOpacity onPress={() => getClass({userid: "TEST_USER"})}>
           <LectureCard
             title="CS2109S - Lecture"
             room="LT27"
             time="13:00 - 15:00"
           />
+          </TouchableOpacity>
           <LectureCard
             title="MA2108S - Tutorial"
             room="S16-0204"

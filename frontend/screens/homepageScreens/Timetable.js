@@ -76,9 +76,7 @@ const Timetable = ({navigation}) => {
     if (data.success == false){
       return []
     }
-    assignments = data.assignments
-    console.log(assignments)
-    return assignments
+    return data.assignments
     }
     catch (error){
       console.error(error)
@@ -100,9 +98,7 @@ const Timetable = ({navigation}) => {
     if (data.success == false){
       return []
     }
-    classes = data.classes
-    console.log(classes)
-    return classes
+    return data.classes
 
     }
     catch (error){

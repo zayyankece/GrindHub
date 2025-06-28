@@ -8,29 +8,13 @@ import {
   SafeAreaView,
   StatusBar,
   Image,
+  Modal,
+  Button,
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from './components/GrindHubFooter';
 import GrindHubHeader from './components/GrindHubHeader';
-
-const AssignmentCard = ({ title, percentage, dueDate, type = 'assignment' }) => (
-  <View style={[styles.card, type === 'assignment' ? styles.assignmentCard : styles.projectCard]}>
-    <Text style={styles.cardTitle}>{title}</Text>
-    <View style={styles.cardContent}>
-      <Text style={styles.dueDate}>{dueDate}</Text>
-    </View>
-  </View>
-);
-
-const LectureCard = ({ title, room, time }) => (
-  <View style={styles.lectureCard}>
-    <View style={styles.lectureContent}>
-      <Text style={styles.lectureTitle}>{title}</Text>
-      <Text style={styles.lectureRoom}>{room}</Text>
-    </View>
-    <Text style={styles.lectureTime}>{time}</Text>
-  </View>
-);
 
 const FreeTimeCard = () => (
   <View style={styles.scheduleItem}>
@@ -48,6 +32,7 @@ export default function GrindHub({navigation}) {
   const [classes, setClasses] = useState([])
   const [combinedData, setCombinedData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [addModalVisible, setAddModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const todayDate = new Date(today);
@@ -216,13 +201,6 @@ export default function GrindHub({navigation}) {
             </View>
             <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
           </View>
-          
-          // <View 
-          //   key={index}
-          //   title={`${event.module_code} - ${event.type}`}
-          //   room={event.location}
-          //   time={formatTime(event.time)}
-          // />
         );
       case 'Tutorial': // Cases are now combined
         return (
@@ -235,13 +213,6 @@ export default function GrindHub({navigation}) {
             </View>
             <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
           </View>
-          
-          // <View 
-          //   key={index}
-          //   title={`${event.module_code} - ${event.type}`}
-          //   room={event.location}
-          //   time={formatTime(event.time)}
-          // />
         );
       case 'Assignment':
         return (
@@ -255,24 +226,8 @@ export default function GrindHub({navigation}) {
             <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
           </View>
         );
-        // return (
-        //   <AssignmentCard
-        //     key={index}
-        //     title={`${event.module_code} - ${event.name}`}
-        //     percentage={event.percentage}
-        //     dueDate={`Due at ${formatTime(event.time)}`}
-        //   />
-        // );
       default:
-        return (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={styles.scheduleItemLeft}>
-              <Text style={styles.scheduleItemText}>
-                You don't have anything to do!
-              </Text>
-            </View>
-          </View>
-        );
+        return null
     }
   };
   
@@ -383,7 +338,7 @@ export default function GrindHub({navigation}) {
             <Text style={styles.greetingText}>Hello, Sanny!</Text>
             <Ionicons name="search-outline" size={24} color="#374151" />
           </View>
-  
+
           {/* Schedule Card */}
           {/* <TouchableOpacity onPress={() => navigation.navigate("Timetable")}> */}
             <View style={[styles.card]}>
@@ -491,17 +446,55 @@ export default function GrindHub({navigation}) {
           
         </ScrollView>
   
-        {/* Floating Action Buttons */}
-        <View style={styles.fab}>
-          <View style={styles.fabContainer}>
-            <TouchableOpacity style={styles.fabButton}>
-              <Ionicons name="chatbubble" size={16} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.fabButtonDark}>
-              <Ionicons name="add" size={16} color="white" />
-            </TouchableOpacity>
-          </View>
+        {/* 👇 The Modal Component */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={addModalVisible}
+        onRequestClose={() => setAddModalVisible(false)}>
+        {/* Pressable backdrop to close modal on outside touch */}
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setAddModalVisible(false)}>
+          {/* This inner Pressable stops the touch from propagating and closing the modal */}
+          <Pressable>
+            <View style={styles.modalView}>
+              <View style={styles.innerContainer}>
+                <TouchableOpacity style={styles.itemBox}>
+                  <View style={styles.itemBox}>
+                    <Text style={styles.itemText}>Add Module</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox}>
+                  <View style={styles.itemBox}>
+                    <Text style={styles.itemText}>Add Class</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox}>
+                  <View style={styles.itemBox}>
+                    <Text style={styles.itemText}>Add Task</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 👇 Your FAB code, which now sits "under" the modal */}
+      <View style={styles.fab}>
+        <View style={styles.fabContainer}>
+          <TouchableOpacity style={styles.fabButton}>
+            <Ionicons name="chatbubble" size={16} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.fabButtonDark}
+            onPress={() => setAddModalVisible(true)}
+          >
+            <Ionicons name="add" size={16} color="white" />
+          </TouchableOpacity>
         </View>
+      </View>
   
         {/* Bottom Navigation */}
         <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
@@ -730,5 +723,59 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  // --- Modal Styles ---
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    backgroundColor: 'transparent',
+    
+  },
+  modalView: {
+    width: '200',
+    marginBottom:120,
+    marginRight:15,
+    backgroundColor: '#f5f1e9',
+    borderRadius: 25,
+    padding: 10,
+    alignItems: 'center',
+    // Shadow for the modal
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0,
+    shadowRadius: 4,
+    elevation: 0,
+  },
+  innerContainer: {
+    width: '100%',
+    backgroundColor: '#eae6db',
+    borderRadius: 20,
+    paddingVertical: 0, // Add vertical space inside
+    paddingHorizontal: 15,
+    alignItems: 'center',
+  },
+  itemBox: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#FFA333',
+    borderRadius: 20,
+    marginVertical: 6, // Creates space between the two boxes
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  itemText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

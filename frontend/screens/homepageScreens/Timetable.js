@@ -7,8 +7,9 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
-  Image
-} from 'react-native';
+  Image,
+  ActivityIndicator
+} from 'react-native'; 
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 
@@ -84,6 +85,7 @@ const Timetable = ({navigation}) => {
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
   const [combinedData, setCombinedData] = useState([])
+  const [isLoading, setIsLoading] = useState(true);
   const [weekStartDate, setWeekStartDate] = useState(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -139,28 +141,6 @@ const Timetable = ({navigation}) => {
     }
   }
 
-  useEffect(() => {
-    const fetchAndCombineData = async () => {
-      try {
-        const [fetchedAssignments, fetchedClasses] = await Promise.all([
-          getAssignments({ userid: "TEST_USER" }),
-          getClass({ userid: "TEST_USER" })
-        ]);
-
-        setAssignments(fetchedAssignments);
-        setClasses(fetchedClasses);
-
-        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
-        setCombinedData(combinedData);
-
-      } catch (error) {
-        console.error("Failed to fetch or combine data:", error);
-      }
-    };
-    fetchAndCombineData();
-
-  }, []); 
-
   function combineAndExtract(classesArray, assignmentsArray) {
     // Process the classes array using map to transform each item
     const extractedClasses = classesArray.map(classItem => ({
@@ -192,34 +172,43 @@ const Timetable = ({navigation}) => {
     return combinedList;
   }
 
+  useEffect(() => {
+    const fetchAndCombineData = async () => { 
+      try {
+        const [fetchedAssignments, fetchedClasses] = await Promise.all([
+          getAssignments({ userid: "TEST_USER" }),
+          getClass({ userid: "TEST_USER" })
+        ]);
+
+        setAssignments(fetchedAssignments);
+        setClasses(fetchedClasses);
+
+        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
+        setCombinedData(combinedData);
+
+      } catch (error) {
+        console.error("Failed to fetch or combine data:", error);
+      } finally {
+        setIsLoading(false); 
+      }
+    };
+    fetchAndCombineData();
+
+  }, []); 
+
   const groupedEvents = useMemo(() => {
-        const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
-        return sorted.reduce((acc, event) => {
-            const dateKey = getDateKey(event.time);
-            if (!acc[dateKey]) acc[dateKey] = [];
-            acc[dateKey].push(event);
-            return acc;
-        }, {});
-    }, []);
+    const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
+    return sorted.reduce((acc, event) => {
+        const dateKey = getDateKey(event.time);
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(event);
+        return acc;
+    }, {});
+  }, [combinedData]); 
 
   const renderDays = ({mondayDate}) => {
-    // const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
-    // const dayOfWeek = today.getDay(); // For Friday, this is 5
 
-    // // Calculate how many days to go back to get to Monday
-    // const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-    // // Create the date for the Monday of this week
-    // const mondayDate = new Date(today); // Start with a copy of today
-    // mondayDate.setDate(today.getDate() - daysToSubtract);
-
-    // // Best Practice: Normalize the start date to the beginning of the day (midnight)
-    // // This avoids any potential bugs related to the time of day.
-    // mondayDate.setHours(0, 0, 0, 0);
-
-    // --- END: New Logic ---
     const days = [];
-    // const startDate = mondayDate; // Use our calculated Monday as the start date
     const numberOfDaysToShow = 7;
 
     for (let i = 0; i < numberOfDaysToShow; i++) {
@@ -275,27 +264,6 @@ const Timetable = ({navigation}) => {
   return days;
   };
 
-  // const today = new Date(); // Get the actual current date, e.g., Fri, Jun 27, 2025
-  // const dayOfWeek = today.getDay(); // For Friday, this is 5
-  // const daysToSubtract = dayOfWeek - 1;
-  // const mondayDate = new Date(today); // Start with a copy of today
-  // mondayDate.setDate(today.getDate() - daysToSubtract);
-  // mondayDate.setHours(0, 0, 0, 0);
-
-  // const rightArrowPressed = async () => {
-  //   mondayDate.setDate(mondayDate.getDate() + 7)
-  //   mondayDate.setHours(0, 0, 0, 0)
-  //   console.log("right arrow pressed")
-  //   console.log(mondayDate)
-  // }
-
-  // const leftArrowPressed = async () => {
-  //   mondayDate.setDate(mondayDate.getDate() - 7)
-  //   mondayDate.setHours(0, 0, 0, 0)
-  //   console.log("left arrow pressed")
-  //   console.log(mondayDate)
-  // }
-
   const leftArrowPressed = () => {
     setWeekStartDate(currentMonday => {
       const newMonday = new Date(currentMonday);
@@ -319,49 +287,67 @@ const Timetable = ({navigation}) => {
   };
 
   const sundayDate = new Date(weekStartDate);
-  sundayDate.setDate(weekStartDate.getDate() + 6);
+  sundayDate.setDate(weekStartDate.getDate() + 6); 
   
-  const options = { month: 'long', day: 'numeric', year: 'numeric' };
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
   const formattedMonday = weekStartDate.toLocaleDateString('en-US', options);
   const formattedSunday = sundayDate.toLocaleDateString('en-US', options);
   const displayRange = `${formattedMonday} - ${formattedSunday}`;
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      
-      {/* Header */}
-      <GrindHubHeader navigation={navigation}/>
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
+        
+        {/* Header */}
+        <GrindHubHeader navigation={navigation}/>
 
-      <View style={styles.container2}>
-      {/* Interactive Left Arrow */}
-      <TouchableOpacity onPress={() => leftArrowPressed()}>
-        <Image
-          source={require("../../assets/Arrow to left.png")}
-          style={styles.arrowIcon}
-        />
-      </TouchableOpacity>
-
-      {/* Date Range Text */}
-      <Text style={styles.dateText}>{displayRange}</Text>
-
-      {/* Interactive Right Arrow */}
-      <TouchableOpacity onPress={() => rightArrowPressed()}>
-        <Image
-          source={require("../../assets/Arrow to right.png")}
-          style={styles.arrowIcon}
-        />
-      </TouchableOpacity>
-    </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {renderDays({mondayDate: weekStartDate})}
-      </ScrollView>
-
-      {/* Bottom Navigation */}
-      <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
-    </SafeAreaView>
-  );
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        </ScrollView>
+  
+        {/* Bottom Navigation */}
+        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+      </SafeAreaView>
+    );
+  }
+  else{
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
+        
+        {/* Header */}
+        <GrindHubHeader navigation={navigation}/>
+  
+        <View style={styles.container2}>
+        {/* Interactive Left Arrow */}
+        <TouchableOpacity onPress={() => leftArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to left.png")}
+            style={styles.arrowIcon}
+          />
+        </TouchableOpacity>
+  
+        {/* Date Range Text */}
+        <Text style={styles.dateText}>{displayRange}</Text>
+  
+        {/* Interactive Right Arrow */}
+        <TouchableOpacity onPress={() => rightArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to right.png")}
+            style={styles.arrowIcon}
+          />
+        </TouchableOpacity>
+      </View>
+  
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {renderDays({mondayDate: weekStartDate})}
+        </ScrollView>
+  
+        {/* Bottom Navigation */}
+        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+      </SafeAreaView>
+    );
+  }
 };
 
 const styles = StyleSheet.create({

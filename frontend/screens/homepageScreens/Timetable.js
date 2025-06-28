@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,36 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity
-} from 'react-native';
+  TouchableOpacity,
+  Image,
+  ActivityIndicator
+} from 'react-native'; 
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
+
+// --- HELPER FUNCTIONS ---
+
+// Gets the date part of an ISO string (e.g., "2025-05-29")
+const getDateKey = (isoString) => isoString.substring(0, 10);
+
+// Formats a Date object into "Tue, 27th May 2025"
+const formatSectionDate = (date) => {
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    const day = date.getDate();
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
+    return formatted;
+}
+
+// Formats a time string into "13:00"
+const formatTime = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
 
 const ProgressBar = ({ percentage }) => (
   <View style={styles.progressBarContainer}>
@@ -56,14 +82,27 @@ const DateSection = ({ date, children }) => (
 
 const Timetable = ({navigation}) => {
 
+  const [assignments, setAssignments] = useState([])
+  const [classes, setClasses] = useState([])
+  const [combinedData, setCombinedData] = useState([])
+  const [isLoading, setIsLoading] = useState(true);
+  const [weekStartDate, setWeekStartDate] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mondayDate = new Date(today);
+    mondayDate.setDate(today.getDate() - daysToSubtract);
+    mondayDate.setHours(0, 0, 0, 0);
+    return mondayDate;
+  });
+
   const getAssignments = async ({userid}) => {
-    console.log(userid)
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-      userid : "TEST_USER",
+      userid : userid,
       }),
     });
     
@@ -72,9 +111,7 @@ const Timetable = ({navigation}) => {
     if (data.success == false){
       return []
     }
-    assignments = data.assignments
-    console.log(assignments)
-    return assignments
+    return data.assignments
     }
     catch (error){
       console.error(error)
@@ -96,9 +133,7 @@ const Timetable = ({navigation}) => {
     if (data.success == false){
       return []
     }
-    classes = data.classes
-    console.log(classes)
-    return classes
+    return data.classes
 
     }
     catch (error){
@@ -106,90 +141,251 @@ const Timetable = ({navigation}) => {
     }
   }
 
-  // put handle get class here
+  function combineAndExtract(classesArray, assignmentsArray) {
+    // Process the classes array using map to transform each item
+    const extractedClasses = classesArray.map(classItem => ({
+      module_code: classItem.module,
+      name: classItem.classname,
+      type: classItem.classname,
+      location: classItem.classlocation,
+      time: classItem.startdate, // Using startdate as the primary time
+      percentage: null
+    }));
+  
+    // Process the assignments array
+    const extractedAssignments = assignmentsArray.map(assignmentItem => ({
+      module_code: assignmentItem.assignmentmodule,
+      name: assignmentItem.assignmentname,
+      type: "Assignment", // Explicitly defining the type
+      location: null,     // Assignments don't have a physical location
+      time: assignmentItem.assignmentduedate,
+      percentage: assignmentItem.assignmentpercentage
+    }));
+  
+    // Combine both transformed arrays into one
+    const combinedList = [...extractedClasses, ...extractedAssignments];
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      
-      {/* Header */}
-      <GrindHubHeader navigation={navigation}/>
+    combinedList.sort((a, b) => {
+      return new Date(a.time) - new Date(b.time); // Just swap a and b
+    });
+  
+    return combinedList;
+  }
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Sunday, 25th May 2025 */}
-        <DateSection date="Sun, 25th May 2025">
-          <TouchableOpacity onPress={() => getAssignments({userid: "TEST_USER"})}>
-            <AssignmentCard
-              title="CS1010s - Mission 1"
-              percentage={20}
-              dueDate="Due 25 May - 23:00"
-            />
-          </TouchableOpacity>
-          <AssignmentCard
-            title="MA2108S - Assignment 1"
-            percentage={20}
-            dueDate="Due 25 May - 23:00"
+  useEffect(() => {
+    const fetchAndCombineData = async () => { 
+      try {
+        const [fetchedAssignments, fetchedClasses] = await Promise.all([
+          getAssignments({ userid: "TEST_USER" }),
+          getClass({ userid: "TEST_USER" })
+        ]);
+
+        setAssignments(fetchedAssignments);
+        setClasses(fetchedClasses);
+
+        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
+        setCombinedData(combinedData);
+
+      } catch (error) {
+        console.error("Failed to fetch or combine data:", error);
+      } finally {
+        setIsLoading(false); 
+      }
+    };
+    fetchAndCombineData();
+
+  }, []); 
+
+  const groupedEvents = useMemo(() => {
+    const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
+    return sorted.reduce((acc, event) => {
+        const dateKey = getDateKey(event.time);
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(event);
+        return acc;
+    }, {});
+  }, [combinedData]); 
+
+  const renderDays = ({mondayDate}) => {
+
+    const days = [];
+    const numberOfDaysToShow = 7;
+
+    for (let i = 0; i < numberOfDaysToShow; i++) {
+      const currentDate = new Date(mondayDate);
+      currentDate.setDate(mondayDate.getDate() + i);
+
+      const dateKey = getDateKey(currentDate.toISOString());
+      const eventsForDay = groupedEvents[dateKey] || [];
+
+      days.push(
+          <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
+              {eventsForDay.length > 0 ? (
+                  eventsForDay.map((event, index) => {
+                      // ... switch statement to render cards (no change here)
+                      switch (event.type) {
+                          case 'Lecture':
+                            return (
+                              <LectureCard
+                                  key={index}
+                                  title={`${event.module_code} - ${event.type}`}
+                                  room={event.location}
+                                  time={formatTime(event.time)}
+                              />
+                              );  
+                          case 'Tutorial':
+                            return (
+                                    <LectureCard
+                                        key={index}
+                                        title={`${event.module_code} - ${event.type}`}
+                                        room={event.location}
+                                        time={formatTime(event.time)}
+                                    />
+                                    );    
+                          case 'Assignment':
+                            return (
+                                    <AssignmentCard
+                                        key={index}
+                                        title={`${event.module_code} - ${event.name}`}
+                                        percentage={event.percentage}
+                                        dueDate={`Due at ${formatTime(event.time)}`}
+                                    />
+                                  );  
+                          default:
+                              return null;
+                      }
+                  })
+              ) : (
+                  <FreeTimeCard />
+              )}
+          </DateSection>
+      );
+  }
+  return days;
+  };
+
+  const leftArrowPressed = () => {
+    setWeekStartDate(currentMonday => {
+      const newMonday = new Date(currentMonday);
+      newMonday.setDate(currentMonday.getDate() - 7);
+      return newMonday;
+    });
+
+    console.log("left arrow pressed")
+    console.log(weekStartDate)
+  };
+  
+  const rightArrowPressed = () => {
+    setWeekStartDate(currentMonday => {
+      const newMonday = new Date(currentMonday);
+      newMonday.setDate(currentMonday.getDate() + 7);
+      return newMonday;
+    });
+
+    console.log("right arrow pressed")
+    console.log(weekStartDate)
+  };
+
+  const sundayDate = new Date(weekStartDate);
+  sundayDate.setDate(weekStartDate.getDate() + 6); 
+  
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  const formattedMonday = weekStartDate.toLocaleDateString('en-US', options);
+  const formattedSunday = sundayDate.toLocaleDateString('en-US', options);
+  const displayRange = `${formattedMonday} - ${formattedSunday}`;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
+        
+        {/* Header */}
+        <GrindHubHeader navigation={navigation}/>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        </ScrollView>
+  
+        {/* Bottom Navigation */}
+        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+      </SafeAreaView>
+    );
+  }
+  else{
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
+        
+        {/* Header */}
+        <GrindHubHeader navigation={navigation}/>
+  
+        <View style={styles.container2}>
+        {/* Interactive Left Arrow */}
+        <TouchableOpacity onPress={() => leftArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to left.png")}
+            style={styles.arrowIcon}
           />
-        </DateSection>
-
-        {/* Monday, 26th May 2025 */}
-        <DateSection date="Mon, 26th May 2025">
-          <AssignmentCard
-            title="ES1103 - CA1"
-            percentage={20}
-            dueDate="Due 26 May - 21:00"
+        </TouchableOpacity>
+  
+        {/* Date Range Text */}
+        <Text style={styles.dateText}>{displayRange}</Text>
+  
+        {/* Interactive Right Arrow */}
+        <TouchableOpacity onPress={() => rightArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to right.png")}
+            style={styles.arrowIcon}
           />
-        </DateSection>
-
-        {/* Tuesday, 27th May 2025 - Wednesday, 28th May 2025 */}
-        <DateSection date="Tue, 27th May 2025 - Wed, 28th May 2025">
-          <FreeTimeCard />
-        </DateSection>
-
-        {/* Thursday, 29th May 2025 */}
-        <DateSection date="Thu, 29th May 2025">
-          <TouchableOpacity onPress={() => getClass({userid: "TEST_USER"})}>
-          <LectureCard
-            title="CS2109S - Lecture"
-            room="LT27"
-            time="13:00 - 15:00"
-          />
-          </TouchableOpacity>
-          <LectureCard
-            title="MA2108S - Tutorial"
-            room="S16-0204"
-            time="17:00 - 18:00"
-          />
-          <AssignmentCard
-            title="CS3244 - Group Project 2"
-            percentage={90}
-            dueDate="Due 29 May - 21:00"
-            type="project"
-          />
-        </DateSection>
-
-        {/* Friday, 30th May 2025 */}
-        <DateSection date="Fri, 30th May 2025">
-          <LectureCard
-            title="MA1100T - Lecture"
-            room="LT27"
-            time="13:00 - 15:00"
-          />
-        </DateSection>
-
-        <View style={styles.bottomPadding} />
-      </ScrollView>
-
-      {/* Bottom Navigation */}
-      <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
-    </SafeAreaView>
-  );
+        </TouchableOpacity>
+      </View>
+  
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {renderDays({mondayDate: weekStartDate})}
+        </ScrollView>
+  
+        {/* Bottom Navigation */}
+        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+      </SafeAreaView>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FED7AA',
+  },
+  container2: {
+    marginTop:15,
+    marginBottom:10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f2f5', // A light, neutral background
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30, // Creates the pill shape
+    marginHorizontal: 16, // Adds space on the sides of the screen
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    // Shadow for Android
+    elevation: 5,
+  },
+  arrowIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#4A4A4A', // Tints the icon to a professional dark gray
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600', // Semi-bold for emphasis
+    color: '#1C1C1E', // A dark, modern text color
   },
   appName: {
     fontSize: 24,

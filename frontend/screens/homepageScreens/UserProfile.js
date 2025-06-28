@@ -13,12 +13,38 @@ import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 
 const UserProfile = ({navigation}) => {
+
+  const [user, setUser] = useState()
+
+  const getUser = async ({userid}) => {
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getUser", {
+      method : "POST",
+      headers : { 'Content-Type': 'application/json' },
+      body : JSON.stringify({
+      userid : userid,
+      }),
+    });
+    
+    const data = await response.json()
+
+    if (data.success == false){
+      return []
+    }
+    return data.existingUser
+
+    }
+    catch (error){
+      console.error(error)
+    }
+  }
+
   const [notifications, setNotifications] = useState({
     notifications: true,
     taskDeadline: true,
-    lectureClass: false,
+    lectureClass: true,
     groupMessages: true,
-    privateMessages: false
+    privateMessages: true
   });
 
   const toggleNotification = (key) => {
@@ -30,8 +56,7 @@ const UserProfile = ({navigation}) => {
 
   const menuItems = [
     { title: 'Status Message', icon: 'chevron-forward' },
-    { title: 'Study Icon Settings', icon: 'chevron-forward' },
-    { title: 'Category', icon: 'chevron-forward' }
+    { title: 'Change Username', icon: 'chevron-forward' }
   ];
 
   const notificationItems = [
@@ -111,7 +136,7 @@ const UserProfile = ({navigation}) => {
         </View>
 
         {/* Sign Out Button */}
-        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={() => console.log(getUser({userid: "TEST_USER"}))}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
@@ -223,7 +248,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   bottomSpacing: {
-    height: 80,
+    height: 10,
   }
 });
 

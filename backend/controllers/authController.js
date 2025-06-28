@@ -83,6 +83,24 @@ exports.getClass = async(req, res) => {
 
 }
 
+exports.getUsers = async(req, res) => {
+  const {userid} = req.body
+
+  try{
+    const existingUser = await db.query('SELECT * FROM userprofile WHERE username = $1', [userid])
+    if (existingUser.rows.length == 0){
+      return res.status(404).json({message: "No user found!", success: false})
+    }
+    return res.status(200).json({message: "Class retrieved!", success:true, existingUser:existingUser.rows})
+  }
+
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+
 // exports.setAssignments
 
 // exports.setClass
@@ -97,4 +115,3 @@ exports.getClass = async(req, res) => {
 // exports.getGroups
 
 // exports.setUsers
-// exports.getUsers

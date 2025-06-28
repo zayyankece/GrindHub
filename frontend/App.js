@@ -14,6 +14,12 @@ import GroupChat from './screens/homepageScreens/groupChat/GroupChat';
 import ChatScreen from './screens/homepageScreens/groupChat/ChatScreen';
 import GroupDescription from './screens/homepageScreens/groupChat/GroupDescription';
 import Timetable from './screens/homepageScreens/Timetable';
+import AddingAssingment from './screens/assignmentTracker/addingAssignment';
+import EditAssignment from './screens/assignmentTracker/editAssignment';
+import AssignmentTracker from './screens/assignmentTracker/trackerPage';
+import StudyTargetReport from './screens/studyTarget/reportPage';
+import SelectingModule from './screens/studyTarget/selectingModule';
+import TimerPage from './screens/studyTimer/timerPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,7 +41,12 @@ export default function App() {
         <Stack.Screen name="ConfirmationForgotPassword" component={ConfirmationForgotPassword}/>
         <Stack.Screen name="ChangePassword" component={ChangePassword}/>
         <Stack.Screen name="HomePage" component={HomePage} />
-        
+        <Stack.Screen name="AddingAssignment" component={AddingAssingment} />
+        <Stack.Screen name="EditAssignment" component={EditAssignment} />
+        <Stack.Screen name="AssignmentTracker" component={AssignmentTracker} />
+        <Stack.Screen name="StudyTargetReport" component={StudyTargetReport} />
+        <Stack.Screen name="SelectingModule" component={SelectingModule} />
+        <Stack.Screen name="TimerPage" component={TimerPage} />
 
       </Stack.Navigator>
     </NavigationContainer>

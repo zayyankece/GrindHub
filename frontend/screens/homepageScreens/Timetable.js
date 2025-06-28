@@ -8,8 +8,8 @@ import {
   StatusBar,
   TouchableOpacity
 } from 'react-native';
-import GrindHubHeader from './components/GrindHubHeader';
-import GrindHubFooter from './components/GrindHubFooter';
+import GrindHubHeader from '../components/GrindHubHeader';
+import GrindHubFooter from '../components/GrindHubFooter';
 
 const ProgressBar = ({ percentage }) => (
   <View style={styles.progressBarContainer}>

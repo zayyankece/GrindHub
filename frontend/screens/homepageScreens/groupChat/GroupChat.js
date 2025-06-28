@@ -10,8 +10,8 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubHeader from '../components/GrindHubHeader';
-import GrindHubFooter from '../components/GrindHubFooter';
+import GrindHubHeader from '../../components/GrindHubHeader';
+import GrindHubFooter from '../../components/GrindHubFooter';
 
 const GroupChat = ({navigation}) => {
   const groups = [

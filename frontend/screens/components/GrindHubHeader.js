@@ -15,7 +15,7 @@ const GrindHubHeader = ({ navigation, onProfilePress }) => {
     <View style={styles.header}>
       <View style={styles.headerLeft}>
         <View style={styles.logoContainer}>
-        <Image source={require("../../../assets/GrindHub Logo White.png")} style={{flex: 1, backgroundColor: "#FF8400"}} resizeMode="contain"/>
+        <Image source={require("../../assets/GrindHub Logo White.png")} style={{flex: 1, backgroundColor: "#FF8400"}} resizeMode="contain"/>
         </View>
         <Text style={styles.headerTitle}>GrindHub</Text>
       </View>

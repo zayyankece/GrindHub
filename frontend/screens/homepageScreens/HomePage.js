@@ -10,8 +10,8 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubFooter from './components/GrindHubFooter';
-import GrindHubHeader from './components/GrindHubHeader';
+import GrindHubFooter from '../components/GrindHubFooter';
+import GrindHubHeader from '../components/GrindHubHeader';
 
 export default function GrindHub({navigation}) {
   const [activeTimer, setActiveTimer] = useState(null);
@@ -34,7 +34,7 @@ export default function GrindHub({navigation}) {
       time: '12.03'
     }
   ];
-
+  
   const assignments = [
     { 
       code: 'HSI2010', 
@@ -157,6 +157,7 @@ export default function GrindHub({navigation}) {
         </View>
 
         {/* Your Assignments */}
+      <TouchableOpacity onPress={() => navigation.navigate('AssignmentTracker')}>
         <View style={[styles.card, styles.lastCard]}>
           <Text style={styles.cardTitle}>Your Assignments</Text>
           <View style={styles.assignmentsList}>
@@ -173,6 +174,7 @@ export default function GrindHub({navigation}) {
             ))}
           </View>
         </View>
+      </TouchableOpacity>
       </ScrollView>
 
       {/* Floating Action Buttons */}

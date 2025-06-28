@@ -9,8 +9,9 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubHeader from './components/GrindHubHeader';
-import GrindHubFooter from './components/GrindHubFooter';
+
+//import GrindHubHeader from '../components/GrindHubHeader';
+//import GrindHubFooter from '../components/GrindHubFooter';
 
 const UserProfile = ({navigation}) => {
   const [notifications, setNotifications] = useState({

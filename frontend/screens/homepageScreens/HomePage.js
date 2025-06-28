@@ -447,39 +447,38 @@ export default function GrindHub({navigation}) {
         </ScrollView>
   
         {/* 👇 The Modal Component */}
-      <Modal
-        transparent={true}
-        animationType="fade"
-        visible={addModalVisible}
-        onRequestClose={() => setAddModalVisible(false)}>
-        {/* Pressable backdrop to close modal on outside touch */}
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setAddModalVisible(false)}>
-          {/* This inner Pressable stops the touch from propagating and closing the modal */}
-          <Pressable>
-            <View style={styles.modalView}>
-              <View style={styles.innerContainer}>
-                <TouchableOpacity style={styles.itemBox}>
-                  <View style={styles.itemBox}>
-                    <Text style={styles.itemText}>Add Module</Text>
+        <Modal
+            transparent={true}
+            animationType="fade"
+            visible={addModalVisible}
+            onRequestClose={() => setAddModalVisible(false)}>
+            
+            {/* This Pressable now covers the full screen thanks to the style fix */}
+            <Pressable
+              style={styles.modalOverlay}
+              onPress={() => setAddModalVisible(false)}>
+              
+              {/* This inner Pressable stops touches on the modal from closing it */}
+                <View style={styles.modalView}>
+                  <View style={styles.innerContainer}>
+
+                    {/* 👇 Simplified TouchableOpacity items */}
+                    <TouchableOpacity style={styles.itemBox}>
+                      <Text style={styles.itemText}>Add Module</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.itemBox}>
+                      <Text style={styles.itemText}>Add Class</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.itemBox}>
+                      <Text style={styles.itemText}>Add Task</Text>
+                    </TouchableOpacity>
+
                   </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.itemBox}>
-                  <View style={styles.itemBox}>
-                    <Text style={styles.itemText}>Add Class</Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.itemBox}>
-                  <View style={styles.itemBox}>
-                    <Text style={styles.itemText}>Add Task</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+                </View>
+            </Pressable>
+        </Modal>
 
       {/* 👇 Your FAB code, which now sits "under" the modal */}
       <View style={styles.fab}>
@@ -732,13 +731,16 @@ const styles = StyleSheet.create({
   },
   // --- Modal Styles ---
   modalOverlay: {
-    flex: 1,
+    flex:1,
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
-    backgroundColor: 'transparent',
-    
+    top:0,
+    left:0,
+    bottom: 0,
+    right: 0,
   },
   modalView: {
+    bottom:30,
     width: '200',
     marginBottom:120,
     marginRight:15,
@@ -760,7 +762,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#eae6db',
     borderRadius: 20,
-    paddingVertical: 0, // Add vertical space inside
+    paddingVertical: 2, // Add vertical space inside
     paddingHorizontal: 15,
     alignItems: 'center',
   },

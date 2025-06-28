@@ -83,15 +83,15 @@ exports.getClass = async(req, res) => {
 
 }
 
-exports.getUsers = async(req, res) => {
-  const {userid} = req.body
+exports.getUser = async(req, res) => {
+  const {username} = req.body
 
   try{
-    const existingUser = await db.query('SELECT * FROM userprofile WHERE username = $1', [userid])
+    const existingUser = await db.query('SELECT * FROM userprofile WHERE username = $1', [username])
     if (existingUser.rows.length == 0){
       return res.status(404).json({message: "No user found!", success: false})
     }
-    return res.status(200).json({message: "Class retrieved!", success:true, existingUser:existingUser.rows})
+    return res.status(200).json({message: "User retrieved!", success:true, existingUser:existingUser.rows})
   }
 
   catch (error) {

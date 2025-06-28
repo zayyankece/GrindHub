@@ -16,13 +16,13 @@ const UserProfile = ({navigation}) => {
 
   const [user, setUser] = useState()
 
-  const getUser = async ({userid}) => {
+  const getUser = async ({username}) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getUser", {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-      userid : userid,
+      username : username,
       }),
     });
     
@@ -136,7 +136,7 @@ const UserProfile = ({navigation}) => {
         </View>
 
         {/* Sign Out Button */}
-        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={() => console.log(getUser({userid: "TEST_USER"}))}>
+        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={() => console.log(getUser({username: "TEST_USER"}))}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 

@@ -53,7 +53,7 @@ const UserProfile = ({navigation, route}) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const fetchedUser = await getUser({ username : "TEST_USER"});
+        const fetchedUser = await getUser({ userid : userid});
         if (fetchedUser) {
           setUser(fetchedUser);
 

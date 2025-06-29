@@ -21,6 +21,7 @@ const GroupDescription = ({ route, navigation }) => {
   // const { groupId } = route.params;
 
   // --- State Management ---
+  const [invitationcode, setInvitationcode] = useState("")
   const [groupDetails, setGroupDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +46,7 @@ const GroupDescription = ({ route, navigation }) => {
 
         if (data.success) {
           setGroupDetails(data.description);
+          setInvitationcode(data.description[0].invitationcode)
 
           const extractedUser = data.description.map(members => ({
             id: members.userid, 
@@ -94,12 +96,12 @@ const GroupDescription = ({ route, navigation }) => {
           <View style={styles.groupAvatar} />
           <Text style={styles.groupTitle}>{groupDetails[0]?.groupname || 'Loading...'}</Text>
           <Text style={styles.memberCount}>{members.length} members</Text>
-          <Text style={styles.memberCount}>Invitation code: {groupDetails.description.invitationcode}</Text>
+          <Text style={styles.memberCount}>Invitation code: {invitationcode}</Text>
         </View>
 
         <View style={styles.membersSection}>
           {members.map((member) => (
-            <MemberItem key={member.id} member={member} />
+            <MemberItem key={member.id} member={member} /> 
           ))}
         </View>
 

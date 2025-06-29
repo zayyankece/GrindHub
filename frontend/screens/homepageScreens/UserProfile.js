@@ -90,7 +90,7 @@ const UserProfile = ({navigation}) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              username: user.userid,
+              username: user.username,
                 field: key,
                 value: newValue
             })

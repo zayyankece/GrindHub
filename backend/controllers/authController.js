@@ -110,6 +110,13 @@ exports.updateUser = async(req, res) => {
     privateMessages: 'isprivatemessagesnotificationon',
   };
 
+  const dbColumn = columnMap[field];
+
+  // If the provided field is not in our map, reject the request.
+  if (!dbColumn) {
+    return res.status(400).json({ success: false, message: 'Invalid notification field.' });
+  }
+
   try {
     // We can now safely build the query. The column name is from our secure whitelist,
     // and the values are passed as parameters to prevent SQL injection.

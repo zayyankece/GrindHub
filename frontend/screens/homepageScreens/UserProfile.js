@@ -86,7 +86,7 @@ const UserProfile = ({navigation}) => {
     }
 
     try {
-        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/updateNotification", {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/updateUser", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

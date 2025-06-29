@@ -11,8 +11,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
+import { jwtDecode } from "jwt-decode";
 
-const UserProfile = ({navigation}) => {
+const UserProfile = ({navigation, route}) => {
+
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
 
   const [user, setUser] = useState(null); // Changed to null initially
   const [notifications, setNotifications] = useState({
@@ -139,7 +144,7 @@ const UserProfile = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      <GrindHubHeader navigation={navigation}/>
+      <GrindHubHeader navigation={navigation} token={token}/>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <View style={styles.profilePicture} />
@@ -180,7 +185,7 @@ const UserProfile = ({navigation}) => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-      <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+      <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
     </SafeAreaView>
   );
 };

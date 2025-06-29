@@ -158,6 +158,63 @@ exports.getGroups = async(req, res) => {
   }
 }
 
+exports.addGroups = async(req, res) => {
+  const {groupname, groupdescription} = req.body
+
+  try {
+    const groupid = crypto.randomUUID()
+    const invitationcode = generateRandomString(6)
+    const queryText = "INSERT INTO groupcollections (groupid, groupname, groupdescription, invitationcode) VALUES ($1, $2, $3, NOW(), $4) RETURNING *"
+
+    const { rows } = await db.query(queryText, [groupid, groupname, groupdescription, invitationcode]);
+
+    if (rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Group added successfully!", 
+      success: true, 
+      newGroup: rows[0] 
+    });
+  }
+  catch (error){
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+exports.joinGroup = async(req, res) => {
+  const {invitationcode, userid} = req.body
+
+  try {
+    const getGroupidQuery = "SELECT * from groupcollections where invitationcode = $1"
+    const {groupRows} = await db.query(getGroupidQuery, [invitationcode])
+
+    if (groupRows.length == 0){
+      return res.status(404).json({ message: 'Invitation code doesnt belon to any group', success : false});
+    } 
+
+    const memberid = crypto.randomUUID()
+    const queryText = "INSERT INTO group members (memberid, userid, groupid) VALUES ($1, $2, $3) RETURNING *"
+    const {rows} = await db.query(queryText, [memberid, userid, groupRows[0].groupid])
+
+    if (rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Person added successfully!", 
+      success: true, 
+      newGroup: rows[0] 
+    });
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+
 exports.getMessages = async(req, res) => {
   const {groupid} = req.body
 
@@ -249,3 +306,22 @@ exports.getDescription = async (req, res) => {
 // exports.getGroups
 
 // exports.setUsers
+
+
+// Helper Functions
+
+function generateRandomString(length) {
+  // Define the set of characters to choose from
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+
+  // Loop 'length' times to build the string
+  for (let i = 0; i < length; i++) {
+    // Pick a random character from the 'characters' string
+    const randomIndex = Math.floor(Math.random() * charactersLength);
+    result += characters.charAt(randomIndex);
+  }
+
+  return result;
+}

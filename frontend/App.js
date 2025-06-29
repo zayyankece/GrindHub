@@ -14,6 +14,8 @@ import GroupChat from './screens/homepageScreens/groupChat/GroupChat';
 import ChatScreen from './screens/homepageScreens/groupChat/ChatScreen';
 import GroupDescription from './screens/homepageScreens/groupChat/GroupDescription';
 import Timetable from './screens/homepageScreens/Timetable';
+import CreateGroup from './screens/homepageScreens/groupChat/CreateGroup';
+import JoinGroup from './screens/homepageScreens/groupChat/JoinGroup';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +37,8 @@ export default function App() {
         <Stack.Screen name="ConfirmationForgotPassword" component={ConfirmationForgotPassword}/>
         <Stack.Screen name="ChangePassword" component={ChangePassword}/>
         <Stack.Screen name="HomePage" component={HomePage} />
+        <Stack.Screen name="CreateGroup" component={CreateGroup}/>
+        <Stack.Screen name="JoinGroup" component={JoinGroup}/>
         
 
       </Stack.Navigator>

@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const GrindHubHeader = ({ navigation, onProfilePress }) => {
+const GrindHubHeader = ({ navigation, onProfilePress, token }) => {
   const handleProfilePress = () => {
     if (onProfilePress) {
       onProfilePress();
     } else if (navigation) {
-      navigation.navigate("UserProfile");
+      navigation.navigate("UserProfile", {token:token});
     }
   };
 

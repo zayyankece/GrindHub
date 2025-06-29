@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,18 @@ import GrindHubFooter from '../components/GrindHubFooter';
 import io from 'socket.io-client';
 
 const SERVER_URL = "https://grindhub-production.up.railway.app"
+
+const MessageBubble = ({ message, isOwn }) => (
+  <View
+    style={[
+      styles.messageBubbleBase,
+      isOwn ? styles.ownMessageBubble : styles.otherMessageBubble,
+    ]}
+  >
+    {!isOwn && <Text style={styles.messageUsername}>{message.user}</Text>}
+    <Text style={styles.messageText}>{message.msg}</Text>
+  </View>
+);
 
 const ChatScreen = ({navigation}) => {
   const [username, setUsername] = useState('');
@@ -71,7 +83,24 @@ const ChatScreen = ({navigation}) => {
   // Function to send a message
   const sendMessage = () => {
     if (message.trim() && socketRef.current) {
-      socketRef.current.emit('chat message', message);
+      const messageData = {
+        user: username,
+        msg: message,
+      };
+
+      // Emit the message to the server
+      socketRef.current.emit('chat message', messageData.msg);
+
+      // --- Optimistic Update ---
+      // Add the message to our own screen immediately.
+      const newMessage = {
+        id: Date.now(),
+        ...messageData,
+        isOwn: true,
+      };
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      
+      // Clear the input field
       setMessage('');
     }
   };

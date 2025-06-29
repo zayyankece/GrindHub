@@ -35,9 +35,11 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    const userid = crypto.randomUUID()
+
     const newUser = await db.query(
-      'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)',
-      [email, username, hashedPassword]
+      'INSERT INTO users (userid, email, username, password) VALUES ($1, $2, $3, $4)',
+      [userid, email, username, hashedPassword]
     );
 
     return res.status(201).json({ message: 'User created successfully', user: newUser.rows[0], success : true });

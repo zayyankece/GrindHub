@@ -104,7 +104,8 @@ exports.getGroups = async(req, res) => {
   const {userid} = req.body
 
   try{
-    const existingGroups = await db.query('SELECT * FROM groupmembers WHERE userid = $1', [userid])
+    const existingGroups = await db.query("SELECT gc.groupid, gc.groupname FROM groupmembers gm JOIN groupcollections gc ON gm.groupid = gc.groupid WHERE gm.userid = 'TEST_USER'")
+    // const existingGroups = await db.query('SELECT * FROM groupmembers WHERE userid = $1', [userid])
     if (existingGroups.rows.length == 0){
       return res.status(404).json({message: "No groups found!", success: false})
     }

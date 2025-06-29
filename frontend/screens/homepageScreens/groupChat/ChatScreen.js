@@ -37,7 +37,7 @@ const MessageBubble = ({ message, isOwn }) => (
 const ChatScreen = ({route, navigation}) => {
   // const { groupId, groupName, userId, username } = route.params;
   const groupId = 1
-  const groupName = "TEST_GROUPS"
+  const groupName = "TEST_GROUP"
   const userId = 1
   const username = "TEST_USER"
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +76,7 @@ const ChatScreen = ({route, navigation}) => {
           }));
           setMessages(formattedMessages);
         } else {
-          console.error("Failed to fetch chat history:", data.message);
+          console.error("Failed to fetch chat history:", data.message, data);
         }
       } catch (error) {
         console.error("Error fetching chat history:", error);

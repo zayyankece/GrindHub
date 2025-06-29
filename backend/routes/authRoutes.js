@@ -21,6 +21,7 @@ router.post('/joinGroup', joinGroup)
 // router.post('/setUsers', setUsers)
 router.post('/updateUser', updateUser)
 router.post('/getUser', getUser)
+// router.post('/getUsersFromGroup', getUsersFromGroup)
 router.post('/getDescription', getDescription)
 
 module.exports = router;

@@ -15,13 +15,12 @@ import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
 
 const GroupDescription = ({ route, navigation }) => {
-  const { token } = route.params
+  const { token, groupid } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
   // const { groupId } = route.params;
 
   // --- State Management ---
-  const [groupid, setGroupid] = useState("1")
   const [groupDetails, setGroupDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +94,7 @@ const GroupDescription = ({ route, navigation }) => {
           <View style={styles.groupAvatar} />
           <Text style={styles.groupTitle}>{groupDetails[0]?.groupname || 'Loading...'}</Text>
           <Text style={styles.memberCount}>{members.length} members</Text>
+          <Text style={styles.memberCount}>Invitation code: {groupDetails.description.invitationcode}</Text>
         </View>
 
         <View style={styles.membersSection}>

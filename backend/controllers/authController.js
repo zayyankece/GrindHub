@@ -141,6 +141,21 @@ exports.updateUser = async(req, res) => {
   }
 }
 
+// exports.getUsersFromGroup = async(req, res) => {
+//   const {groupid} = req.body
+
+//   try { 
+//     const existingUsers = await db.query("Select u.userid, u.username from groupmembers g join users u on u.userid = g.userid where groupid = $1", [groupid])
+//     if (existingUsers.rows.length == 0){
+//       return res.status(404).json({message: "No user found!", success: false})
+//     } 
+//     return res.status(200).json({message: "Users retrieved!", success:true, users:existingUsers.rows})
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: 'Something went wrong', success : false});
+//   }
+// }
+
 exports.getGroups = async(req, res) => {
   const {userid} = req.body
 
@@ -278,7 +293,7 @@ exports.getDescription = async (req, res) => {
   const {groupid} = req.body
 
   try{
-    const queryText = "SELECT u.username, u.userid, gc.groupdescription, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid = gc.groupid JOIN users u ON gm.userid = u.userid WHERE gm.groupid = $1"
+    const queryText = "SELECT u.username, u.userid, gc.groupdescription, gc.groupname, gc.invitationcode FROM groupcollections gc JOIN groupmembers gm ON gm.groupid = gc.groupid JOIN users u ON gm.userid = u.userid WHERE gm.groupid = $1"
     const existingDescription = await db.query(queryText, [groupid])
     if (existingDescription.rows.length == 0){
       return res.status(404).json({message: "No description found!", success: false, description:existingDescription})

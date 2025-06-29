@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GrindHubFooter from '../components/GrindHubFooter';
+import GrindHubHeader from '../components/GrindHubHeader';
 
-export default function EditAssignmentScreen() {
+export default function EditAssignmentScreen({navigation, route}) {
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
+  
   const [title, setTitle] = useState("Read Chapter 3");
   const [module, setModule] = useState("CS1101S");
   const [deadline, setDeadline] = useState("2025-07-01");
@@ -20,6 +26,7 @@ export default function EditAssignmentScreen() {
 
   return (
     <View style={styles.container}>
+      <GrindHubHeader navigation={navigation} token={token}/>
       <Text style={styles.header}>Edit Assignment</Text>
 
       <Text style={styles.label}>Module</Text>
@@ -60,6 +67,7 @@ export default function EditAssignmentScreen() {
         <Ionicons name="trash" size={20} color="#fff" />
         <Text style={styles.deleteText}>Delete Assignment</Text>
       </TouchableOpacity>
+      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token}/>
     </View>
   );
 }

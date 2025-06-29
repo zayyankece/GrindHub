@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
+import { jwtDecode } from "jwt-decode";
 
 const tasks = [
   { code: 'CS1010S', title: 'Mission 1', progress: 0.9 },
@@ -17,10 +18,14 @@ const tasks = [
   { code: 'MA2002', title: 'Homework 1', progress: 0.8 },
 ];
 
-export default function TaskListScreen() {
+export default function TaskListScreen({navigation, route}) {
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
+
   return (
     <View style={styles.container}>
-      <GrindHubHeader title="GrindHub" />
+      <GrindHubHeader navigation={navigation} token={token}/>
       <View style={styles.searchContainer}>
         <TextInput placeholder="Search" style={styles.searchInput} />
         <Ionicons name="search" size={20} color="#333" style={styles.icon} />
@@ -40,7 +45,7 @@ export default function TaskListScreen() {
           </View>
         ))}
       </ScrollView>
-      <GrindHubFooter />
+      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token}/>
     </View>
   );
 }

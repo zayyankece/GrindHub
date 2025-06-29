@@ -4,9 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
+import { jwtDecode } from "jwt-decode";
 
-export default function TargetPerformanceScreen({ navigation }) {
-  const route = useRoute();
+export default function TargetPerformanceScreen({ navigation, route }) {
+  // const route = useRoute();
+
+  const {token, name} = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
 
   const modules = ['ST2131','CS1231','DSA1101','DSA2102','DSA3101','DSA4288M','CS2040','CS3230'];
 
@@ -14,7 +19,7 @@ export default function TargetPerformanceScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} />
+      <GrindHubHeader navigation={navigation} token={token}/>
 
       <Text style={styles.title}>Target and Performance</Text>
 
@@ -23,7 +28,7 @@ export default function TargetPerformanceScreen({ navigation }) {
           <TouchableOpacity
           key={index}
           style={styles.moduleButton}
-          onPress={() => navigation.navigate('StudyTargetReport', { moduleCode: module })}
+          onPress={() => navigation.navigate('StudyTargetReport', { token:token, moduleCode: module })}
         >
           <Text style={styles.moduleText}>{module}</Text>
         </TouchableOpacity>
@@ -31,7 +36,7 @@ export default function TargetPerformanceScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      <GrindHubFooter navigation={navigation} activeTab={route.name} />
+      <GrindHubFooter navigation={navigation} activeTab={"SelectingModule"} token={token}/>
     </SafeAreaView>
   );
 }

@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import { jwtDecode } from "jwt-decode";
 
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 
-export default function GrindHubScreen({ navigation }) {
-  const route = useRoute();
+export default function GrindHubScreen({ navigation, route }) {
+  const { token, name} = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
+  // const route = useRoute();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isRunning, setIsRunning] = useState(false);
   const [activeTimer, setActiveTimer] = useState(null);
@@ -124,7 +128,7 @@ export default function GrindHubScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#f58220" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} />
+      <GrindHubHeader navigation={navigation} token={token}/>
 
       <View style={styles.timeContainer}>
         <Text style={styles.date}>{getDayMonthString(currentTime)}</Text>
@@ -218,7 +222,7 @@ export default function GrindHubScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      <GrindHubFooter navigation={navigation} activeTab={route.name} />
+      <GrindHubFooter navigation={navigation} activeTab={"TimerPage"}  token={token}/>
     </SafeAreaView>
   );
 }

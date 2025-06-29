@@ -44,7 +44,7 @@ const GrindHubFooter = ({ navigation, activeTab, token }) => {
         
         <TouchableOpacity 
           style={styles.navItem}
-          onPress={() => navigation.navigate('TimerPage')}
+          onPress={() => navigation.navigate('TimerPage', { token: token })}
         >
           <Ionicons 
             name="time" 
@@ -56,7 +56,7 @@ const GrindHubFooter = ({ navigation, activeTab, token }) => {
         
         <TouchableOpacity 
           style={styles.navItem}
-          onPress={() => navigation.navigate('SelectingModule')}
+          onPress={() => navigation.navigate('SelectingModule', { token: token })}
         >
         <Ionicons 
           name="bag" 

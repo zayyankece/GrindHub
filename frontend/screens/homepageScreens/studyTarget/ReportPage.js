@@ -5,11 +5,17 @@ import { LineChart } from 'react-native-chart-kit';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
+import { jwtDecode } from "jwt-decode";
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function ModuleDetailScreen({ navigation }) {
-  const route = useRoute();
+export default function ModuleDetailScreen({ navigation, route}) {
+
+  const { token, moduleCode} = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
+
+  // const route = useRoute();
   const [targetType, setTargetType] = useState('Weekly');
   const [targetHours, setTargetHours] = useState('20');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -46,11 +52,11 @@ export default function ModuleDetailScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} />
+      <GrindHubHeader navigation={navigation} token={token}/>
 
       <View style={styles.content}>
         <View style={styles.moduleCodeBox}>
-          <Text style={styles.moduleCode}>{route.params?.moduleCode}</Text>
+          <Text style={styles.moduleCode}>{moduleCode}</Text>
         </View>
 
         <View style={styles.targetCard}>
@@ -164,14 +170,16 @@ export default function ModuleDetailScreen({ navigation }) {
         </Modal>
       </View>
 
-      <GrindHubFooter navigation={navigation} activeTab={route.name} />
+      <GrindHubFooter navigation={navigation} activeTab={"SelectingModule"}  token={token}/>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FED7AA' },
-  content: { paddingHorizontal: 16, paddingBottom: 100 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FED7AA' },
+  content: { flex:1,paddingHorizontal: 16, paddingBottom: 100 },
   moduleCodeBox: {
     backgroundColor: '#FFD93D',
     paddingVertical: 12,

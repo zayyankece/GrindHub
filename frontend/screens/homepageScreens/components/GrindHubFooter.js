@@ -3,8 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const GrindHubFooter = ({ navigation, activeTab, token }) => {
-    console.log("haha")
-    console.log(token)
     const getIconColor = (tabName) => {
       return activeTab === tabName ? 'yellow' : 'white';
     };

@@ -8,30 +8,68 @@ import {
   SafeAreaView,
   StatusBar,
   TextInput,
-  ActivityIndicator, // Import ActivityIndicator for loading state
+  ActivityIndicator,
+  Modal,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
 
+const { width, height } = Dimensions.get('window');
+
 const GroupChat = ({ navigation, route }) => {
   const { token } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
+  
   // --- State Management ---
-  // const userid = "0d3f62b2-35fa-4074-a8e4-1c7681f646de"
-  // const username = "nabilrakaiza"
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
+  
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+
+  // --- Modal Animation Effect ---
+  useEffect(() => {
+    if (modalVisible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [modalVisible]);
 
   // --- Data Fetching ---
-  // This useEffect hook now correctly fetches data when the component first loads.
   useEffect(() => {
-    // We define an async function inside the effect to fetch the data.
     const fetchGroups = async () => {
-      // console.log(typeof userid, userid)
       try {
         const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
           method: "POST",
@@ -45,33 +83,57 @@ const GroupChat = ({ navigation, route }) => {
         console.log(data)
 
         if (data.success) {
-          setGroups(data.groups); // Set the fetched groups into our state
+          setGroups(data.groups);
         } else {
+          if (data.message == "No groups found!"){
+            console.log("No groups found, santai aja dulu bang!")
+          }
+          else {
           console.error("Failed to fetch groups:", data.message);
+          }
         }
       } catch (error) {
         console.error("Error fetching groups:", error);
       } finally {
-        setIsLoading(false); // Stop the loading indicator, even if it fails
+        setIsLoading(false);
       }
     };
 
     fetchGroups();
-  }, []); // The empty dependency array [] ensures this runs only ONCE.
+  }, []);
+
+  // --- Modal Handlers ---
+  const handleOpenModal = () => {
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
+
+  const handleCreateGroup = () => {
+    setModalVisible(false);
+    // Navigate to Create Group screen
+    navigation.navigate('CreateGroup', { token:token });
+  };
+
+  const handleJoinGroup = () => {
+    setModalVisible(false);
+    // Navigate to Join Group screen
+    navigation.navigate('JoinGroup', { token:token });
+  };
 
   // --- Child Component for List Items ---
-  // This handles rendering and navigation for each group.
   const GroupListItem = ({ group }) => (
     <TouchableOpacity
       style={styles.groupItem}
       activeOpacity={0.7}
       onPress={() => {
-        // Navigate to the ChatScreen and pass necessary data
         navigation.navigate("ChatScreen", {
           groupid: group.groupid,
           groupname: group.groupname,
-          userid: userid, // Pass the dynamic user ID here as well
-          username: username, // Pass the dynamic username
+          userid: userid,
+          username: username,
         });
       }}
     >
@@ -109,13 +171,11 @@ const GroupChat = ({ navigation, route }) => {
         </View>
       </View>
 
-      {/* Conditionally render loading indicator or the list */}
       {isLoading ? (
         <ActivityIndicator size="large" color="#FF8C42" style={{ flex: 1 }} />
       ) : (
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           {groups.map((group) => (
-            // Use the groupid from your database as the key
             <GroupListItem key={group.groupid} group={group} />
           ))}
           <View style={styles.bottomSpacing} />
@@ -123,10 +183,90 @@ const GroupChat = ({ navigation, route }) => {
       )}
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.joinButton} activeOpacity={0.8}>
+        <TouchableOpacity 
+          style={styles.joinButton} 
+          activeOpacity={0.8}
+          onPress={handleOpenModal}
+        >
           <Text style={styles.joinButtonText}>Join / Create More Groups!</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal Component */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={handleCloseModal}
+      >
+        <Animated.View 
+          style={[
+            styles.overlay,
+            { opacity: fadeAnim }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.overlayTouchable} 
+            activeOpacity={1} 
+            onPress={handleCloseModal}
+          >
+            <Animated.View 
+              style={[
+                styles.modalContainer,
+                {
+                  transform: [{ scale: scaleAnim }],
+                  opacity: fadeAnim,
+                }
+              ]}
+            >
+              <TouchableOpacity activeOpacity={1}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Choose an Option</Text>
+                  <Text style={styles.modalSubtitle}>What would you like to do?</Text>
+                  
+                  <View style={styles.buttonGroup}>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.createButton]} 
+                      onPress={handleCreateGroup}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.buttonIcon}>
+                        <Text style={styles.iconText}>+</Text>
+                      </View>
+                      <View style={styles.buttonTextContainer}>
+                        <Text style={styles.modalButtonText}>Create Group</Text>
+                        <Text style={styles.modalButtonSubtext}>Start a new group</Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.joinButtonModal]} 
+                      onPress={handleJoinGroup}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.buttonIcon}>
+                        <Text style={styles.iconText}>→</Text>
+                      </View>
+                      <View style={styles.buttonTextContainer}>
+                        <Text style={styles.modalButtonText}>Join Group</Text>
+                        <Text style={styles.modalButtonSubtext}>Enter with invite code</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.cancelButton} 
+                    onPress={handleCloseModal}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
 
       <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
@@ -228,7 +368,120 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
-  }
+  },
+  
+  // Modal styles
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlayTouchable: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: width * 0.85,
+    maxWidth: 350,
+  },
+  modalContent: {
+    backgroundColor: '#FED7AA',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  buttonGroup: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  createButton: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  joinButtonModal: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+  buttonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF8C42',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  iconText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  buttonTextContainer: {
+    flex: 1,
+  },
+  modalButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  modalButtonSubtext: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#999',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+    textAlign: 'center',
+  },
 });
 
 export default GroupChat;

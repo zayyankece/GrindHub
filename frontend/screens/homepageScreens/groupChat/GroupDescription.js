@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,20 +7,62 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 
-const GroupDescription = ({navigation}) => {
-  const members = [
-    { id: 1, username: 'mynameisyou' },
-    { id: 2, username: 'halo bang' },
-    { id: 3, username: 'wibu' },
-    { id: 4, username: 'test-123' },
-    { id: 5, username: 'train-213' },
-  ];
+const GroupDescription = ({ route, navigation }) => {
+  // const { groupId } = route.params;
 
+  // --- State Management ---
+  const [groupDetails, setGroupDetails] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- Data Fetching ---
+  // This useEffect hook fetches all necessary data when the screen loads.
+  useEffect(() => {
+    const fetchGroupDetails = async () => {
+      // Fetch description from your API
+      try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getDescription", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupid: "1",
+          }),
+        });
+        
+        const data = await response.json();
+
+        if (data.success) {
+          setGroupDetails(data.description);
+        } else {
+          console.error("Failed to fetch group description:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching group description:", error);
+      }
+
+      // TODO: Fetch member list from your backend in the future.
+      const staticMembers = [
+        { id: 1, username: 'mynameisyou' },
+        { id: 2, username: 'halo bang' },
+        { id: 3, username: 'wibu' },
+        { id: 4, username: 'test-123' },
+        { id: 5, username: 'train-213' },
+      ];
+      setMembers(staticMembers);
+
+      setIsLoading(false); // Stop loading indicator
+    };
+
+    fetchGroupDetails();
+  }, []); // Dependency array ensures this runs when groupId changes.
+
+  // --- Child Component for List Items ---
   const MemberItem = ({ member }) => (
     <TouchableOpacity style={styles.memberItem} activeOpacity={0.7}>
       <View style={styles.memberAvatar} />
@@ -28,35 +70,39 @@ const GroupDescription = ({navigation}) => {
     </TouchableOpacity>
   );
 
+  // --- Render Logic ---
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <GrindHubHeader navigation={navigation}/>
+        <ActivityIndicator size="large" color="#FF8C42" style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
-      {/* Header */}
       <GrindHubHeader navigation={navigation}/>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Group Info Section */}
         <View style={styles.groupInfoSection}>
           <View style={styles.groupAvatar} />
-          <Text style={styles.groupTitle}>Only for people with 5.00 GPA</Text>
+          <Text style={styles.groupTitle}>{groupDetails?.groupname || 'Loading...'}</Text>
           <Text style={styles.memberCount}>{members.length} members</Text>
         </View>
 
-        {/* Members List */}
         <View style={styles.membersSection}>
           {members.map((member) => (
             <MemberItem key={member.id} member={member} />
           ))}
         </View>
 
-        {/* Bottom spacing for navigation */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <GrindHubFooter navigation={navigation} activeTab="GroupChat"/>
-
     </SafeAreaView>
   );
 };
@@ -80,7 +126,6 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: '#4F46E5',
     marginBottom: 20,
-    // Simulate gradient effect with border
     borderWidth: 3,
     borderColor: '#06B6D4',
   },

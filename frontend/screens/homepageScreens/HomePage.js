@@ -27,7 +27,7 @@ const FreeTimeCard = () => (
   </View>
 );
 
-export default function GrindHub({navigation, route}) {
+export default function HomePage({navigation, route}) {
 
   const { token } = route.params
   const decodedToken = jwtDecode(token)

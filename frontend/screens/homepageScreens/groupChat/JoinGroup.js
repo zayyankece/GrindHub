@@ -13,6 +13,8 @@ import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
 
+const SERVER_URL = "https://grindhub-production.up.railway.app"
+
 const JoinGroup = ({navigation, route}) => {
     const { token } = route.params
     const decodedToken = jwtDecode(token)
@@ -22,6 +24,7 @@ const JoinGroup = ({navigation, route}) => {
     const handleJoinGroup = async () => {
       // Handle join group logic here
       try {
+        console.log(invitationCode)
         const response = await fetch(`${SERVER_URL}/api/auth/joinGroup`, {
             method : "POST",
             headers : { 'Content-Type': 'application/json' },
@@ -30,8 +33,9 @@ const JoinGroup = ({navigation, route}) => {
                 userid:userid
             }),
         });
-
+        console.log("haidhsoaudjso")
         const data = await response.json();
+        console.log("hssesesds")
 
         if (data.success) {
             setInvitationCode('')

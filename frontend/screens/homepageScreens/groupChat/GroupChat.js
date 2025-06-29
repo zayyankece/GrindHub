@@ -130,10 +130,9 @@ const GroupChat = ({ navigation, route }) => {
       activeOpacity={0.7}
       onPress={() => {
         navigation.navigate("ChatScreen", {
+          token:token,
           groupid: group.groupid,
-          groupname: group.groupname,
-          userid: userid,
-          username: username,
+          groupname: group.groupname
         });
       }}
     >

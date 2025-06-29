@@ -189,7 +189,8 @@ exports.addMessage = async(req, res) => {
     // insert the current transaction's timestamp. This is more reliable than
     // using a value from the client.
     const date = new Date()
-    const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds
+    const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
+    console.log(seconds)
     const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent, timestamp, timeinseconds) VALUES ($1, $2, $3, NOW(), $4) RETURNING *";
     
     // 3. Execute the query. The parameters still match the placeholders $1, $2, and $3.

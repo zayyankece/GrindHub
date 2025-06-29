@@ -433,24 +433,27 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Assignments */}
-          <TouchableOpacity>
-            <View style={[styles.card, styles.lastCard]}>
-            <Text style={styles.cardTitle}>Your Assignments</Text>
-            <View style={styles.assignmentsList}>
-              {assignments.map((assignment, index) => (
-                <View key={index} style={styles.assignmentItem}>
-                  <View style={styles.assignmentHeader}>
-                    <Text style={styles.assignmentTitle}>
-                      {assignment.assignmentmodule} - {assignment.assignmentname}
-                    </Text>
-                    <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
-                  </View>
-                  <ProgressBar progress={assignment.assignmentpercentage} />
-                </View>
-              ))}
-            </View>
+<TouchableOpacity 
+  onPress={() => navigation.navigate('AssignmentTracker')}
+  activeOpacity={0.7}
+>
+  <View style={[styles.card, styles.lastCard]}>
+    <Text style={styles.cardTitle}>Your Assignments</Text>
+    <View style={styles.assignmentsList}>
+      {assignments.map((assignment, index) => (
+        <View key={index} style={styles.assignmentItem}>
+          <View style={styles.assignmentHeader}>
+            <Text style={styles.assignmentTitle}>
+              {assignment.assignmentmodule} - {assignment.assignmentname}
+            </Text>
+            <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
           </View>
-          </TouchableOpacity>
+          <ProgressBar progress={assignment.assignmentpercentage} />
+        </View>
+      ))}
+    </View>
+  </View>
+</TouchableOpacity>
           
         </ScrollView>
   

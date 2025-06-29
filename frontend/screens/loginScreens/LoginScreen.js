@@ -51,7 +51,8 @@ export default function LoginScreen({navigation}) {
     const data = await response.json()
     if (data.success){
       resetToDefault()
-      navigation.navigate("HomePage")
+      console.log(data.userid)
+      navigation.navigate("HomePage", { token: data.token })
     }
     else {
       console.log("test")

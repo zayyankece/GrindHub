@@ -309,7 +309,7 @@ const GroupChat = ({ navigation }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             // IMPORTANT: Replace "TEST_USER" with the actual logged-in user's ID
-          username: "TEST_USER",
+          userid: "TEST_USER",
           }),
         }); 
 

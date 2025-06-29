@@ -36,8 +36,8 @@ const MessageBubble = ({ message, isOwn }) => (
 );
 
 const ChatScreen = ({route, navigation}) => {
-  // const { groupid, groupName, userid, username } = route.params;
-  const { token, groupid, groupName} = route.params
+  // const { groupid, groupname, userid, username } = route.params;
+  const { token, groupid, groupname} = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
   const [username, setUsername] = useState('')
@@ -46,6 +46,7 @@ const ChatScreen = ({route, navigation}) => {
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [members, setMembers] = useState("")
   
   const socketRef = useRef(null);
   const scrollViewRef = useRef(null);
@@ -106,9 +107,36 @@ const ChatScreen = ({route, navigation}) => {
       }
     }
 
+    const getMembers = async() => {
+      try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getDescription", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupid: groupid,
+          }),
+        });
+        
+        const data = await response.json();
+        console.log(data)
+        console.log(data.description)
+
+        if (data.success) {
+          const extractedUser = data.description.map(member => member.username);
+          setMembers(extractedUser.join(', '))
+
+        } else {
+          console.error("Failed to fetch group description:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching group description:", error);
+      }
+    }
+
     getUsername();
     fetchChatHistory();
-  }, [groupid, userid]);
+    getMembers();
+  }, [groupid, userid]); 
 
   // Effect for handling the real-time socket connection
   useEffect(() => {
@@ -200,12 +228,12 @@ const ChatScreen = ({route, navigation}) => {
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       <GrindHubHeader navigation={navigation} token={token}/>
       
-      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { groupid })}>
+      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { token:token, groupid:groupid })}>
         <View style={styles.groupInfoContainer}>
           <View style={styles.groupInfoCard}>
             <View style={styles.groupInfoLeft}>
-              <Text style={styles.groupTitle}>{groupName}</Text>
-              <Text style={styles.groupMembers}>alex, xela, elax, exal, lexa, ....</Text>
+              <Text style={styles.groupTitle}>{groupname}</Text>
+              <Text style={styles.groupMembers}>{members}</Text>
             </View>
             <View style={styles.groupAvatar} />
           </View>

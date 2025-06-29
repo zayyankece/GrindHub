@@ -38,32 +38,38 @@ const CreateGroup = ({navigation, route}) => {
             console.log("heeee")
             const data = await response.json();
             console.log("hiii")
+            console.log(data)
 
-            if (data.success) {
+            if (!data.success) {
 
-                const response = await fetch(`${SERVER_URL}/api/auth/joinGroup`, {
-                    method : "POST",
-                    headers : { 'Content-Type': 'application/json' },
-                    body : JSON.stringify({
-                        invitationcode: data.invitationcode,
-                        userid:userid
-                    }),
-                });
+                console.error("there are some error")
+            }
+            console.log(data)
 
-                const data = await response.json();
+            const response2 = await fetch(`${SERVER_URL}/api/auth/joinGroup`, {
+                method : "POST",
+                headers : { 'Content-Type': 'application/json' },
+                body : JSON.stringify({
+                    invitationcode: data.newGroup.invitationcode,
+                    userid:userid
+                }),
+            });
 
-                if (data.success) {
-                    setGroupName('')
-                    setGroupDescription('')
-                    navigation.navigate("GroupChat", {token:token})
-                }
-                else {
-                    console.error("there are some error")
-                }
+            console.log("saya suka sanny")
+
+            const data2 = await response2.json();
+
+            console.log("hassdsdsd")
+
+            if (data2.success) {
+                setGroupName('')
+                setGroupDescription('')
+                navigation.navigate("GroupChat", {token:token})
             }
             else {
-                console.error("There are some error", data)
+                console.error("there are some error", data2)
             }
+            
 
         } catch (error) {
             console.error("Error creating group:", error, data);

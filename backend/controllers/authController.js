@@ -196,7 +196,7 @@ exports.joinGroup = async(req, res) => {
     } 
 
     const memberid = crypto.randomUUID()
-    const queryText = "INSERT INTO group members (memberid, userid, groupid) VALUES ($1, $2, $3) RETURNING *"
+    const queryText = "INSERT INTO groupmembers (memberid, userid, groupid) VALUES ($1, $2, $3) RETURNING *"
     const {rows} = await db.query(queryText, [memberid, userid, groupRows[0].groupid])
 
     if (rows.length == 0){

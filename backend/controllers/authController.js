@@ -100,6 +100,41 @@ exports.getUser = async(req, res) => {
   }
 }
 
+exports.getGroups = async(req, res) => {
+  const {userid} = req.body
+
+  try{
+    const existingGroups = await db.query('SELECT * FROM groupmembers WHERE userid = $1', [userid])
+    if (existingGroups.rows.length == 0){
+      return res.status(404).json({message: "No groups found!", success: false})
+    }
+    return res.status(200).json({message: "Group retrieved!", success:true, groups:existingGroups.rows})
+  }
+
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+exports.getMessages = async(req, res) => {
+  const {groupid} = req.body
+
+  try{
+    const queryText = "SELECT m.messageid, m.messagecontent, m.timestamp, u.userid, u.username FROM messagecollections m JOIN userprofile u ON m.userid = u.username WHERE m.groupid = $1 ORDER BY m.timestamp ASC;"
+    const existingMessages = await db.query(queryText, [groupid])
+    if (existingMessages.rows.length == 0){
+      return res.status(404).json({message: "No messages found!", success: false})
+    }
+    return res.status(200).json({message: "Messages retrieved!", success:true, messages:existingMessages.rows})
+  }
+
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 
 // exports.setAssignments
 

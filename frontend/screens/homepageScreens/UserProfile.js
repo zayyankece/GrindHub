@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import GrindHubFooter from './components/GrindHubFooter';
 
 const UserProfile = ({navigation}) => {
 
-  const [user, setUser] = useState()
+  const [username, setUser] = useState()
 
   const getUser = async ({username}) => {
     try {
@@ -26,7 +26,9 @@ const UserProfile = ({navigation}) => {
       }),
     });
     
+    
     const data = await response.json()
+    console.log(data)
 
     if (data.success == false){
       return []
@@ -47,7 +49,50 @@ const UserProfile = ({navigation}) => {
     privateMessages: true
   });
 
+  useEffect(() => {
+    // We define an async function inside the effect to perform the fetch.
+    const fetchUserData = async () => {
+
+      try {
+        // Call your getUser function.
+        const fetchedUser = await getUser({ username : "TEST_USER"});
+
+        // If a user is successfully returned, update the states.
+        if (fetchedUser) {
+          setUser(fetchedUser);
+
+          // IMPORTANT: We are assuming the user object from your API has a
+          // property called 'notificationSettings' that contains the user's
+          // notification preferences. If the property has a different name,
+          // you'll need to change `fetchedUser.notificationSettings` below.
+
+          const notificationSettings = fetchedUser.map(notificationsItems => ({
+            notifications: notificationsItems.isnotificationon,
+            taskDeadline: notificationsItems.istaskdeadlinenotificationon,
+            lectureClass: notificationsItems.islecturenotificationon,
+            groupMessages: notificationsItems.isgroupmessagesnotificationon,
+            privateMessages: notificationsItems.isprivatemessagesnotificationon
+          }))
+          if (notificationSettings) {
+            setNotifications(notificationSettings[0]);
+          } else {
+             console.warn("User data fetched, but it does not contain 'notificationSettings'. Using default values.");
+          }
+        }
+      } catch (err) {
+        // If an error was thrown during the fetch, we catch it and update the error state.
+
+      } finally {
+        // This runs whether the fetch succeeded or failed.
+      }
+    };
+
+    // Call the async function to start the data fetching process.
+    fetchUserData();
+  }, []);
+
   const toggleNotification = (key) => {
+    console.log(notifications)
     setNotifications(prev => ({
       ...prev,
       [key]: !prev[key]
@@ -109,6 +154,7 @@ const UserProfile = ({navigation}) => {
                 index !== menuItems.length - 1 && styles.menuItemBorder
               ]}
               activeOpacity={0.7}
+              onPress={() => console.log(notifications)}
             >
               <Text style={styles.menuItemText}>{item.title}</Text>
               <Ionicons name={item.icon} size={20} color="#666" />
@@ -128,7 +174,7 @@ const UserProfile = ({navigation}) => {
             >
               <Text style={styles.notificationText}>{item.title}</Text>
               <ToggleSwitch
-                isOn={notifications[item.key]}
+                isOn={notifications[item.key]} 
                 onToggle={() => toggleNotification(item.key)}
               />
             </View>
@@ -136,7 +182,7 @@ const UserProfile = ({navigation}) => {
         </View>
 
         {/* Sign Out Button */}
-        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={() => console.log(getUser({username: "TEST_USER"}))}>
+        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 

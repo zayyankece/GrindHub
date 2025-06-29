@@ -6,12 +6,16 @@ export default function SignUp({navigation}) {
   const [inputEmail, setInputEmail] = useState('')
   const [inputPassword, setInputPassword] = useState('')
   const [inputConfirmPassword, setInputConfirmPassword] = useState('')
+  const [inputUsername, setInputUsername] = useState('')
   const [inputColorEmail, setInputColorEmail] = useState('#e0e0e0');
   const [inputColorPassword, setInputColorPassword] = useState('#e0e0e0');
   const [inputColorConfirmPassword, setInputColorConfirmPassword] = useState('#e0e0e0');
+  const [inputColorUsername, setInputColorUsername] = useState('#e0e0e0');
   const [invalidInput, setInvalidInput] = useState('')
 
   const resetToDefault = () =>{
+    setInputUsername("#e0e0e0")
+    setInputColorConfirmPassword("#e0e0e0")
     setInputColorPassword("#e0e0e0")
     setInputColorEmail("#e0e0e0")
     setInvalidInput("")
@@ -43,8 +47,16 @@ export default function SignUp({navigation}) {
       setInputColorConfirmPassword("#e0e0e0")
     }
 
+    if (inputUsername == ""){
+      setInputColorUsername("#ffb09c")
+      isValid = false
+    }
+    else {
+      setInputColorUsername("#e0e0e0")
+    }
+
     if (isValid == false){
-      setInvalidInput("Please don't leave email/password empty")
+      setInvalidInput("Please don't leave any part empty")
       return
     }
 
@@ -61,7 +73,8 @@ export default function SignUp({navigation}) {
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
         email : inputEmail,
-        password : inputPassword
+        password : inputPassword,
+        username: inputUsername
       }),
     });
     const data = await response.json()
@@ -89,6 +102,11 @@ export default function SignUp({navigation}) {
         <Text style={styles.welcomeText}>Welcome!</Text>
         <Text style={styles.subText}>Please sign up to continue</Text>
 
+        <Text style={styles.label}>Username</Text>
+        <TextInput style={[styles.input, {backgroundColor:inputColorUsername}]} 
+        value = {inputUsername}
+        onChangeText={setInputUsername}/>
+
         <Text style={styles.label}>Email</Text>
         <TextInput style={[styles.input, {backgroundColor:inputColorEmail}]} keyboardType="email-address" 
         value = {inputEmail}
@@ -104,7 +122,7 @@ export default function SignUp({navigation}) {
         value = {inputConfirmPassword} 
         onChangeText={setInputConfirmPassword}/>
 
-        <Text style={[styles.subText, {marginBottom : 5, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
+        <Text style={[styles.subText, {marginBottom : 0, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
 
         <TouchableOpacity style={styles.signupButton} onPress={() => handleSignUpButton()}>
           <Text style={styles.signupText}>Sign Up</Text>

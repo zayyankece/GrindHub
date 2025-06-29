@@ -35,10 +35,10 @@ const MessageBubble = ({ message, isOwn }) => (
 );
 
 const ChatScreen = ({route, navigation}) => {
-  // const { groupId, groupName, userId, username } = route.params;
-  const groupId = 1
+  // const { groupid, groupName, userid, username } = route.params;
+  const groupid = 1
   const groupName = "TEST_GROUP"
-  const userId = 1
+  const userid = 1
   const username = "TEST_USER"
   const [isLoading, setIsLoading] = useState(true);
 
@@ -56,7 +56,7 @@ const ChatScreen = ({route, navigation}) => {
           method : "POST",
           headers : { 'Content-Type': 'application/json' },
           body : JSON.stringify({
-            groupid: groupId,
+            groupid: groupid,
           }),
         });
         
@@ -67,7 +67,7 @@ const ChatScreen = ({route, navigation}) => {
             id: msg.messageid,
             user: msg.username,
             msg: msg.messagecontent,
-            isOwn: msg.userid === userId,
+            isOwn: msg.userid === userid,
           }));
           setMessages(formattedMessages);
         } else {
@@ -81,14 +81,14 @@ const ChatScreen = ({route, navigation}) => {
     };
 
     fetchChatHistory();
-  }, [groupId, userId]);
+  }, [groupid, userid]);
 
   // Effect for handling the real-time socket connection
   useEffect(() => {
     const newSocket = io(SERVER_URL);
     socketRef.current = newSocket;
 
-    newSocket.emit('joinGroup', { groupId, username, userId });
+    newSocket.emit('joinGroup', { groupid, username, userid });
 
     newSocket.on('chat message', (data) => {
       // Prevent duplicate messages from appearing if the sender is us
@@ -113,7 +113,7 @@ const ChatScreen = ({route, navigation}) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [groupId, userId, username]);
+  }, [groupid, userid, username]);
 
   // --- MODIFIED FUNCTION ---
   // This function now saves messages to the database via a REST API call.
@@ -139,8 +139,8 @@ const ChatScreen = ({route, navigation}) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          groupid: groupId,
-          userid: username,
+          groupid: groupid,
+          userid: userid,
           messagecontent: messageContent,
         }),
       });
@@ -171,7 +171,7 @@ const ChatScreen = ({route, navigation}) => {
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       <GrindHubHeader navigation={navigation}/>
       
-      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { groupId })}>
+      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { groupid })}>
         <View style={styles.groupInfoContainer}>
           <View style={styles.groupInfoCard}>
             <View style={styles.groupInfoLeft}>

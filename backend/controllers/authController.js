@@ -13,11 +13,11 @@ exports.login = async (req, res) => {
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials (beda pass)', result:result });
+      return res.status(401).json({ success: false, message: 'Invalid credentials', result:result });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, message: 'Login success!', token });
+    return res.status(200).json({ success: true, message: 'Login success!', token });
   } catch (err) {
     console.error('Login error:', err);  
     res.status(500).json({ success: false, message: 'Server error' });
@@ -25,7 +25,7 @@ exports.login = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
 
   try {
     const existingUser = await db.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -36,11 +36,12 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = await db.query(
-      'INSERT INTO users (email, password) VALUES ($1, $2)',
-      [email, hashedPassword]
+      'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)',
+      [email, username, hashedPassword]
     );
 
-    res.status(201).json({ message: 'User created successfully', user: newUser.rows[0], success : true });
+    return res.status(201).json({ message: 'User created successfully', user: newUser.rows[0], success : true });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Something went wrong', success : false});
@@ -84,10 +85,10 @@ exports.getClass = async(req, res) => {
 }
 
 exports.getUser = async(req, res) => {
-  const {username} = req.body
+  const {userid} = req.body
 
   try{
-    const existingUser = await db.query('SELECT * FROM userprofile WHERE username = $1', [username])
+    const existingUser = await db.query('SELECT * FROM users WHERE userid = $1', [userid])
     if (existingUser.rows.length == 0){
       return res.status(404).json({message: "No user found!", success: false})
     }
@@ -101,13 +102,13 @@ exports.getUser = async(req, res) => {
 }
 
 exports.updateUser = async(req, res) => {
-  const { username, field, value } = req.body;
+  const { userid, field, value } = req.body;
   const columnMap = {
-    notifications: 'isnotificationon',
-    taskDeadline: 'istaskdeadlinenotificationon',
-    lectureClass: 'islecturenotificationon',
-    groupMessages: 'isgroupmessagesnotificationon',
-    privateMessages: 'isprivatemessagesnotificationon',
+    notifications: 'notification',
+    taskDeadline: 'tasknotification',
+    lectureClass: 'classnotification',
+    groupMessages: 'groupnotification',
+    privateMessages: 'privatenotification',
   };
 
   const dbColumn = columnMap[field];
@@ -120,9 +121,9 @@ exports.updateUser = async(req, res) => {
   try {
     // We can now safely build the query. The column name is from our secure whitelist,
     // and the values are passed as parameters to prevent SQL injection.
-    const query = `UPDATE userprofile SET ${dbColumn} = $1 WHERE username = $2::text RETURNING *`;
+    const query = `UPDATE users SET ${dbColumn} = $1 WHERE userid = $2 RETURNING *`;
     
-    const { rows } = await db.query(query, [value, username]);
+    const { rows } = await db.query(query, [value, userid]);
 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
@@ -157,7 +158,7 @@ exports.getMessages = async(req, res) => {
   const {groupid} = req.body
 
   try{
-    const queryText = "SELECT m.messageid, m.messagecontent, m.timestamp, m.timeinseconds, u.userid, u.username FROM messagecollections m JOIN userprofile u ON m.userid = u.username WHERE m.groupid = $1 ORDER BY m.timestamp ASC, m.timeinseconds ASC;"
+    const queryText = "SELECT m.messageid, m.messagecontent, m.datesent, m.timesent, u.userid, u.username FROM messagecollections m JOIN users u ON m.userid = u.userid WHERE m.groupid = $1 ORDER BY m.datesent ASC, m.timesent ASC;"
     const existingMessages = await db.query(queryText, [groupid])
     if (existingMessages.rows.length == 0){
       return res.status(404).json({message: "No messages found!", success: false, messages:existingMessages, gi:groupid})
@@ -191,7 +192,7 @@ exports.addMessage = async(req, res) => {
     const date = new Date()
     const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
     console.log(seconds)
-    const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent, timestamp, timeinseconds) VALUES ($1, $2, $3, NOW(), $4) RETURNING *";
+    const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent, datesent, timesent) VALUES ($1, $2, $3, NOW(), $4) RETURNING *";
     
     // 3. Execute the query. The parameters still match the placeholders $1, $2, and $3.
     const { rows } = await db.query(queryText, [groupid, userid, messagecontent, seconds]);
@@ -215,7 +216,7 @@ exports.getDescription = async (req, res) => {
   const {groupid} = req.body
 
   try{
-    const queryText = "SELECT gm.userid, gc.groupdescription, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid::integer = gc.groupid WHERE gm.groupid = $1"
+    const queryText = "SELECT u.username, u.userid, gc.groupdescription, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid = gc.groupid JOIN users u ON gm.userid = u.userid WHERE gm.groupid = $1"
     const existingDescription = await db.query(queryText, [groupid])
     if (existingDescription.rows.length == 0){
       return res.status(404).json({message: "No description found!", success: false, description:existingDescription})

@@ -89,9 +89,10 @@ export default function LoginScreen({navigation}) {
 
         <Text style={[styles.subText, {marginBottom : 5, fontSize:12, color : "#ee2400"}]}>{invalidInput}</Text>
 
-        <TouchableOpacity onPress={() => {resetToDefault();navigation.navigate("ForgotPassword")}}>
+        {/* Will implement this in ms3 */}
+        {/* <TouchableOpacity onPress={() => {resetToDefault();navigation.navigate("ForgotPassword")}}>
           <Text style={styles.forgotText}>Forgot password?</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={styles.loginButton} onPress={() => handleLoginButton()}>
           <Text style={styles.loginText}>Login</Text>

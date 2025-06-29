@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const GrindHubFooter = ({ navigation, activeTab }) => {
+const GrindHubFooter = ({ navigation, activeTab, token }) => {
+    console.log("haha")
+    console.log(token)
     const getIconColor = (tabName) => {
       return activeTab === tabName ? 'yellow' : 'white';
     };
@@ -11,7 +13,7 @@ const GrindHubFooter = ({ navigation, activeTab }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity 
           style={styles.navItem} 
-          onPress={() => navigation.navigate("HomePage")}
+          onPress={() => navigation.navigate("HomePage", { token: token })}
         >
           <Ionicons 
             name="home" 
@@ -22,7 +24,7 @@ const GrindHubFooter = ({ navigation, activeTab }) => {
         
         <TouchableOpacity 
           style={styles.navItem} 
-          onPress={() => navigation.navigate("GroupChat")}
+          onPress={() => navigation.navigate("GroupChat", { token: token })}
         >
           <Ionicons 
             name="people" 
@@ -33,7 +35,7 @@ const GrindHubFooter = ({ navigation, activeTab }) => {
         
         <TouchableOpacity 
           style={styles.navItem} 
-          onPress={() => navigation.navigate("Timetable")}
+          onPress={() => navigation.navigate("Timetable", { token: token })}
         >
           <Ionicons 
             name="calendar" 

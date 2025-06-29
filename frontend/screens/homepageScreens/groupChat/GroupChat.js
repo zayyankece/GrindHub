@@ -13,11 +13,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
+import { jwtDecode } from "jwt-decode";
 
-const GroupChat = ({ navigation }) => {
+const GroupChat = ({ navigation, route }) => {
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
   // --- State Management ---
-  const userid = "0d3f62b2-35fa-4074-a8e4-1c7681f646de"
-  const username = "nabilrakaiza"
+  // const userid = "0d3f62b2-35fa-4074-a8e4-1c7681f646de"
+  // const username = "nabilrakaiza"
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -90,7 +94,7 @@ const GroupChat = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
-      <GrindHubHeader navigation={navigation} />
+      <GrindHubHeader navigation={navigation} token={token}/>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
@@ -124,7 +128,7 @@ const GroupChat = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <GrindHubFooter navigation={navigation} activeTab="GroupChat" />
+      <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
   );
 };

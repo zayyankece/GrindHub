@@ -12,6 +12,7 @@ import {
 } from 'react-native'; 
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
+import { jwtDecode } from "jwt-decode";
 
 // --- HELPER FUNCTIONS ---
 
@@ -80,7 +81,11 @@ const DateSection = ({ date, children }) => (
   </View>
 );
 
-const Timetable = ({navigation}) => {
+const Timetable = ({navigation, route}) => {
+
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
 
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
@@ -300,7 +305,7 @@ const Timetable = ({navigation}) => {
         <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
         
         {/* Header */}
-        <GrindHubHeader navigation={navigation}/>
+        <GrindHubHeader navigation={navigation} token={token}/>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         </ScrollView>
@@ -344,7 +349,7 @@ const Timetable = ({navigation}) => {
         </ScrollView>
   
         {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+        <GrindHubFooter navigation={navigation} activeTab="Timetable" token={token}/>
       </SafeAreaView>
     );
   }

@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import io from 'socket.io-client';
+import { jwtDecode } from "jwt-decode";
 
 const SERVER_URL = "https://grindhub-production.up.railway.app"
 
@@ -36,9 +37,12 @@ const MessageBubble = ({ message, isOwn }) => (
 
 const ChatScreen = ({route, navigation}) => {
   // const { groupid, groupName, userid, username } = route.params;
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
   const groupid = 1
   const groupName = "TEST_GROUP"
-  const userid = 1
+  // const userid = 1
   const username = "TEST_USER"
   const [isLoading, setIsLoading] = useState(true);
 
@@ -169,7 +173,7 @@ const ChatScreen = ({route, navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      <GrindHubHeader navigation={navigation}/>
+      <GrindHubHeader navigation={navigation} token={token}/>
       
       <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { groupid })}>
         <View style={styles.groupInfoContainer}>
@@ -216,7 +220,7 @@ const ChatScreen = ({route, navigation}) => {
         </View>
       </KeyboardAvoidingView>
 
-      <GrindHubFooter navigation={navigation} activeTab="GroupChat"/>
+      <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
   );
 };

@@ -12,8 +12,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
+import { jwtDecode } from "jwt-decode";
 
 const GroupDescription = ({ route, navigation }) => {
+  const { token } = route.params
+  const decodedToken = jwtDecode(token)
+  const userid = decodedToken.userid 
   // const { groupId } = route.params;
 
   // --- State Management ---
@@ -84,7 +88,7 @@ const GroupDescription = ({ route, navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
-      <GrindHubHeader navigation={navigation}/>
+      <GrindHubHeader navigation={navigation} token={token}/>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.groupInfoSection}>
@@ -102,7 +106,7 @@ const GroupDescription = ({ route, navigation }) => {
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      <GrindHubFooter navigation={navigation} activeTab="GroupChat"/>
+      <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
   );
 };

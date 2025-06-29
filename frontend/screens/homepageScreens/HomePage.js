@@ -338,7 +338,7 @@ export default function GrindHub({navigation, route}) {
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
         
-        <GrindHubHeader navigation={navigation}/>
+        <GrindHubHeader navigation={navigation} token={token}/>
   
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
@@ -504,7 +504,7 @@ export default function GrindHub({navigation, route}) {
       </View>
   
         {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
         
       </SafeAreaView>
     );

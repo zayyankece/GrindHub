@@ -36,6 +36,8 @@ const GroupDescription = ({ route, navigation }) => {
         });
         
         const data = await response.json();
+        console.log(data)
+        console.log(data.description)
 
         if (data.success) {
           setGroupDetails(data.description);
@@ -47,14 +49,12 @@ const GroupDescription = ({ route, navigation }) => {
       }
 
       // TODO: Fetch member list from your backend in the future.
-      const staticMembers = [
-        { id: 1, username: 'mynameisyou' },
-        { id: 2, username: 'halo bang' },
-        { id: 3, username: 'wibu' },
-        { id: 4, username: 'test-123' },
-        { id: 5, username: 'train-213' },
-      ];
-      setMembers(staticMembers);
+      const extractedUser = groupDetails.map(members => ({
+        id: members.userid,
+        username: members.userid,
+      }));
+
+      setMembers(extractedUser);
 
       setIsLoading(false); // Stop loading indicator
     };
@@ -89,7 +89,7 @@ const GroupDescription = ({ route, navigation }) => {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.groupInfoSection}>
           <View style={styles.groupAvatar} />
-          <Text style={styles.groupTitle}>{groupDetails?.groupname || 'Loading...'}</Text>
+          <Text style={styles.groupTitle}>{groupDetails[0]?.groupname || 'Loading...'}</Text>
           <Text style={styles.memberCount}>{members.length} members</Text>
         </View>
 

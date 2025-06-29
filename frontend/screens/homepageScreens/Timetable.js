@@ -311,7 +311,7 @@ const Timetable = ({navigation, route}) => {
         </ScrollView>
   
         {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="Timetable"/>
+        <GrindHubFooter navigation={navigation} activeTab="Timetable" token={token}/>
       </SafeAreaView>
     );
   }

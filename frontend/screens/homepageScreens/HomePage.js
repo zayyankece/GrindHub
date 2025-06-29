@@ -328,7 +328,7 @@ export default function HomePage({navigation, route}) {
   
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}/>  
 
-        <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
         
       </SafeAreaView>
     )

@@ -140,7 +140,7 @@ const ChatScreen = ({route, navigation}) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           groupid: groupId,
-          userid: userId,
+          userid: username,
           messagecontent: messageContent,
         }),
       });

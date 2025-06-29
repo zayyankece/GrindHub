@@ -102,13 +102,10 @@ exports.getUser = async(req, res) => {
 }
 
 exports.getGroups = async(req, res) => {
-  const {userid} = req.body
-
-  console.log(typeof userid)
-  console.log(userid)
+  const {username} = req.body
 
   try{
-    const existingGroups = await db.query(`SELECT gc.groupid, gc.groupname FROM groupmembers gm JOIN groupcollections gc ON gm.groupid = gc.groupid WHERE gm.userid::text = '${userid}'`)
+    const existingGroups = await db.query('SELECT gc.groupid, gc.groupname FROM groupmembers AS gm JOIN groupcollections AS gc ON gm.groupid = gc.groupid WHERE gm.username = $1', [username])
     if (existingGroups.rows.length == 0){
       return res.status(404).json({message: "No groups found!", success: false})
     }

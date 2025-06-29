@@ -16,8 +16,8 @@ import GrindHubFooter from '../components/GrindHubFooter';
 
 const GroupChat = ({ navigation }) => {
   // --- State Management ---
-  const userid = ""
-  const username = ""
+  const userid = "0d3f62b2-35fa-4074-a8e4-1c7681f646de"
+  const username = "nabilrakaiza"
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState('');

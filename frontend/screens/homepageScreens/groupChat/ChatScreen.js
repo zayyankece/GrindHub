@@ -43,7 +43,7 @@ const ChatScreen = ({route, navigation}) => {
   const groupid = 1
   const groupName = "TEST_GROUP"
   // const userid = 1
-  const username = "TEST_USER"
+  const username = "nabilrakaiza"
   const [isLoading, setIsLoading] = useState(true);
 
   const [message, setMessage] = useState('');

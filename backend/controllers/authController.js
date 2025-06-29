@@ -171,6 +171,44 @@ exports.getMessages = async(req, res) => {
   }
 }
 
+exports.addMessage = async(req, res) => {
+  // 1. Destructure the required information from the request body.
+  const { groupid, userid, messagecontent } = req.body;
+
+  // Basic validation to ensure all required fields are present.
+  if (!groupid || !userid || !messagecontent) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Missing required fields: groupid, userid, and messagecontent are all required.' 
+    });
+  }
+
+  try {
+    // 2. Define the SQL INSERT statement.
+    // We use parameterized queries ($1, $2, $3) to prevent SQL injection.
+    // 'RETURNING *' will return the full row that was just inserted,
+    // which is useful for getting the new messageid and the server-generated timestamp.
+    const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent) VALUES ($1, $2, $3) RETURNING *";
+    
+    // 3. Execute the query with the provided data.
+    const { rows } = await db.query(queryText, [groupid, userid, messagecontent]);
+
+    // 4. Return a success response.
+    // A 201 "Created" status is appropriate for successful INSERT operations.
+    // We send back the newly created message row.
+    return res.status(201).json({
+      message: "Message added successfully!", 
+      success: true, 
+      newMessage: rows[0] 
+    });
+  }
+  catch (error) {
+    // 5. Handle any potential database errors.
+    console.error("Error adding message:", error);
+    return res.status(500).json({ message: 'Something went wrong', success: false });
+  }
+};
+
 exports.getDescription = async (req, res) => {
   const {groupid} = req.body
 

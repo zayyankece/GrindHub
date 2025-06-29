@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, getAssignments, getClass, getUser, getGroups, getMessages, getDescription, updateUser} = require('../controllers/authController');
+const { signup, login, getAssignments, getClass, getUser, getGroups, getMessages, getDescription, updateUser, addMessage} = require('../controllers/authController');
 // , setAssignments,setClass,getClass,setModule,getModule,setChats,getChats,setGroups,getGroups,setUsers,getUsers
 router.post('/signup', signup);
 router.post('/login', login);
@@ -14,6 +14,7 @@ router.post('/getClass', getClass)
 // router.post('/getChats', getChats)
 // router.post('/setGroups', setGroups)
 router.post("/getMessages", getMessages)
+router.post("/addMessage", addMessage)
 router.post('/getGroups', getGroups)
 // router.post('/setUsers', setUsers)
 router.post('/updateUser', updateUser)

@@ -19,8 +19,30 @@ const JoinGroup = ({navigation, route}) => {
     const userid = decodedToken.userid 
     const [invitationCode, setInvitationCode] = useState('');
   
-    const handleJoinGroup = () => {
+    const handleJoinGroup = async () => {
       // Handle join group logic here
+      try {
+        const response = await fetch(`${SERVER_URL}/api/auth/joinGroup`, {
+            method : "POST",
+            headers : { 'Content-Type': 'application/json' },
+            body : JSON.stringify({
+                invitationcode: invitationCode,
+                userid:userid
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            setInvitationCode('')
+            navigation.navigate("GroupChat", {token:token})
+        }
+        else {
+            console.error("there are some error")
+        }
+      } catch (error) {
+        console.log("there are some error", error)
+      }
       console.log('Joining group with code:', invitationCode);
     };
   

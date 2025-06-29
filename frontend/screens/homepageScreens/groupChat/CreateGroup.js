@@ -13,6 +13,8 @@ import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
 
+const SERVER_URL = "https://grindhub-production.up.railway.app"
+
 const CreateGroup = ({navigation, route}) => {
     const { token } = route.params
     const decodedToken = jwtDecode(token)
@@ -20,9 +22,48 @@ const CreateGroup = ({navigation, route}) => {
     const [groupName, setGroupName] = useState('');
     const [groupDescription, setGroupDescription] = useState('');
   
-    const handleCreateGroup = () => {
+    const handleCreateGroup = async () => {
       // Handle create group logic here
-      console.log('Creating group:', { groupName, groupDescription });
+        try {
+            const response = await fetch(`${SERVER_URL}/api/auth/addGroup`, {
+                method : "POST",
+                headers : { 'Content-Type': 'application/json' },
+                body : JSON.stringify({
+                    groupname: groupName,
+                    groupdescription:groupDescription
+                }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+
+                const response = await fetch(`${SERVER_URL}/api/auth/joinGroup`, {
+                    method : "POST",
+                    headers : { 'Content-Type': 'application/json' },
+                    body : JSON.stringify({
+                        groupid: data.groupid,
+                        userid:userid
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    setGroupName('')
+                    setGroupDescription('')
+                    navigation.navigate("GroupChat", {token:token})
+                }
+                else {
+                    console.error("there are some error")
+                }
+            }
+            else {
+                console.error("There are some error")
+            }
+
+        } catch (error) {
+            console.error("Error creating group:", error);
+        }
     };
   
     return (

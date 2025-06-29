@@ -135,6 +135,24 @@ exports.getMessages = async(req, res) => {
   }
 }
 
+exports.getDescription = async (req, res) => {
+  const {groupid} = req.body
+
+  try{
+    const queryText = "SELECT gm.userid, gc.description, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid::integer = gc.groupid WHERE gm.groupid = $1"
+    const existingDescription = await db.query(queryText, [groupid])
+    if (existingDescription.rows.length == 0){
+      return res.status(404).json({message: "No description found!", success: false, description:existingDescription})
+    }
+    return res.status(200).json({message: "Description retrieved!", success:true, description:existingDescription.rows})
+  }
+
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 
 // exports.setAssignments
 

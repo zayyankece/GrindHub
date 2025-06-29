@@ -25,7 +25,9 @@ const CreateGroup = ({navigation, route}) => {
     const handleCreateGroup = async () => {
       // Handle create group logic here
         try {
-            const response = await fetch(`${SERVER_URL}/api/auth/addGroup`, {
+            console.log(groupName)
+            console.log(groupDescription)
+            const response = await fetch(`${SERVER_URL}/api/auth/addGroups`, {
                 method : "POST",
                 headers : { 'Content-Type': 'application/json' },
                 body : JSON.stringify({
@@ -33,7 +35,9 @@ const CreateGroup = ({navigation, route}) => {
                     groupdescription:groupDescription
                 }),
             });
+            console.log("heeee")
             const data = await response.json();
+            console.log("hiii")
 
             if (data.success) {
 
@@ -41,7 +45,7 @@ const CreateGroup = ({navigation, route}) => {
                     method : "POST",
                     headers : { 'Content-Type': 'application/json' },
                     body : JSON.stringify({
-                        groupid: data.groupid,
+                        invitationcode: data.invitationcode,
                         userid:userid
                     }),
                 });
@@ -58,11 +62,11 @@ const CreateGroup = ({navigation, route}) => {
                 }
             }
             else {
-                console.error("There are some error")
+                console.error("There are some error", data)
             }
 
         } catch (error) {
-            console.error("Error creating group:", error);
+            console.error("Error creating group:", error, data);
         }
     };
   

@@ -131,8 +131,8 @@ export default function GrindHub({navigation, route}) {
     const fetchAndCombineData = async () => {
       try {
         const [fetchedAssignments, fetchedClasses] = await Promise.all([
-          getAssignments({ userid: "TEST_USER" }),
-          getClass({ userid: "TEST_USER" })
+          getAssignments({ userid: userid }),
+          getClass({ userid: userid })
         ]);
 
         setAssignments(fetchedAssignments);

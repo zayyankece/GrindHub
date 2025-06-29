@@ -164,7 +164,7 @@ exports.addGroups = async(req, res) => {
   try {
     const groupid = crypto.randomUUID()
     const invitationcode = generateRandomString(6)
-    const queryText = "INSERT INTO groupcollections (groupid, groupname, groupdescription, invitationcode) VALUES ($1, $2, $3, NOW(), $4) RETURNING *"
+    const queryText = "INSERT INTO groupcollections (groupid, groupname, groupdescription, invitationcode) VALUES ($1, $2, $3, $4) RETURNING *"
 
     const { rows } = await db.query(queryText, [groupid, groupname, groupdescription, invitationcode]);
 

@@ -1,7 +1,6 @@
 const db = require('../db.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { use } = require('../routes/authRoutes.js');
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -102,10 +101,10 @@ exports.getUser = async(req, res) => {
 }
 
 exports.getGroups = async(req, res) => {
-  const {username} = req.body
+  const {userid} = req.body
 
   try{
-    const existingGroups = await db.query('SELECT gc.groupid, gc.groupname FROM groupmembers AS gm JOIN groupcollections AS gc ON gm.groupid = gc.groupid WHERE gm.username = $1', [username])
+    const existingGroups = await db.query('SELECT * FROM groupmembers WHERE userid = $1', [userid])
     if (existingGroups.rows.length == 0){
       return res.status(404).json({message: "No groups found!", success: false})
     }
@@ -114,7 +113,7 @@ exports.getGroups = async(req, res) => {
 
   catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Something went wrong', success : false, errormessage:error});
+    return res.status(500).json({ message: 'Something went wrong', success : false});
   }
 }
 

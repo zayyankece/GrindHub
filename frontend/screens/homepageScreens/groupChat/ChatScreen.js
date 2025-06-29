@@ -37,13 +37,11 @@ const MessageBubble = ({ message, isOwn }) => (
 
 const ChatScreen = ({route, navigation}) => {
   // const { groupid, groupName, userid, username } = route.params;
-  const { token } = route.params
+  const { token, groupid, groupName} = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
-  const groupid = 1
-  const groupName = "TEST_GROUP"
-  // const userid = 1
-  const username = "nabilrakaiza"
+  const [username, setUsername] = useState('')
+
   const [isLoading, setIsLoading] = useState(true);
 
   const [message, setMessage] = useState('');
@@ -75,7 +73,12 @@ const ChatScreen = ({route, navigation}) => {
           }));
           setMessages(formattedMessages);
         } else {
+          if (data.message == "No messages found!"){
+
+          }
+          else {
           console.error("Failed to fetch chat history:", data.message, data);
+          }
         }
       } catch (error) {
         console.error("Error fetching chat history:", error);
@@ -84,6 +87,26 @@ const ChatScreen = ({route, navigation}) => {
       }
     };
 
+    const getUsername = async() => {
+      try{
+        const response = await fetch(`${SERVER_URL}/api/auth/getUser`, {
+          method : "POST",
+          headers : { 'Content-Type': 'application/json' },
+          body : JSON.stringify({
+            userid: userid,
+          }),
+        });
+        const data = await response.json();
+
+        if (data.success){
+          setUsername(data.username)
+        }
+      } catch (error) {
+        console.error("there are error", error)
+      }
+    }
+
+    getUsername();
     fetchChatHistory();
   }, [groupid, userid]);
 
@@ -149,6 +172,8 @@ const ChatScreen = ({route, navigation}) => {
         }),
       });
 
+      console.log(groupid, userid, messageContent)
+
       const data = await response.json();
 
       if (data.success) {
@@ -160,7 +185,7 @@ const ChatScreen = ({route, navigation}) => {
           });
         }
       } else {
-        console.error('Failed to save message:', data.message);
+        console.error('Failed to save message:', data.message, data);
         // Optional: Add UI feedback to show the message failed to send
       }
     } catch (error) {

@@ -189,7 +189,7 @@ exports.joinGroup = async(req, res) => {
 
   try {
     const getGroupidQuery = "SELECT * from groupcollections where invitationcode = $1"
-    const {groupRows} = await db.query(getGroupidQuery, [invitationcode])
+    const {rows: groupRows} = await db.query(getGroupidQuery, [invitationcode])
 
     if (groupRows.length == 0){
       return res.status(404).json({ message: 'Invitation code doesnt belon to any group', success : false});

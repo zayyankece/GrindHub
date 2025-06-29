@@ -139,7 +139,7 @@ exports.getDescription = async (req, res) => {
   const {groupid} = req.body
 
   try{
-    const queryText = "SELECT gm.userid, gc.description, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid::integer = gc.groupid WHERE gm.groupid = $1"
+    const queryText = "SELECT gm.userid, gc.groupdescription, gc.groupname FROM groupcollections gc JOIN groupmembers gm ON gm.groupid::integer = gc.groupid WHERE gm.groupid = $1"
     const existingDescription = await db.query(queryText, [groupid])
     if (existingDescription.rows.length == 0){
       return res.status(404).json({message: "No description found!", success: false, description:existingDescription})

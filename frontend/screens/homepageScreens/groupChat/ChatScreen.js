@@ -60,7 +60,7 @@ const ChatScreen = ({route, navigation}) => {
           method : "POST",
           headers : { 'Content-Type': 'application/json' },
           body : JSON.stringify({
-          groupid : "TEST_GROUP",
+          groupid : 1,
           }),
         });
         
@@ -71,7 +71,7 @@ const ChatScreen = ({route, navigation}) => {
           const formattedMessages = data.messages.map(msg => ({
             id: msg.messageid,
             user: msg.username,
-            msg: msg.content,
+            msg: msg.messagecontent,
             isOwn: msg.userid === userId,
           }));
           setMessages(formattedMessages);

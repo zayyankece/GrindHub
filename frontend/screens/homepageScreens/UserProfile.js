@@ -14,33 +14,7 @@ import GrindHubFooter from './components/GrindHubFooter';
 
 const UserProfile = ({navigation}) => {
 
-  const [username, setUser] = useState()
-
-  const getUser = async ({username}) => {
-    try {
-      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getUser", {
-      method : "POST",
-      headers : { 'Content-Type': 'application/json' },
-      body : JSON.stringify({
-      username : username,
-      }),
-    });
-    
-    
-    const data = await response.json()
-    console.log(data)
-
-    if (data.success == false){
-      return []
-    }
-    return data.existingUser
-
-    }
-    catch (error){
-      console.error(error)
-    }
-  }
-
+  const [user, setUser] = useState(null); // Changed to null initially
   const [notifications, setNotifications] = useState({
     notifications: true,
     taskDeadline: true,
@@ -49,54 +23,92 @@ const UserProfile = ({navigation}) => {
     privateMessages: true
   });
 
+  const getUser = async ({username}) => {
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getUser", {
+        method : "POST",
+        headers : { 'Content-Type': 'application/json' },
+        body : JSON.stringify({
+          username : username,
+        }),
+      });
+      const data = await response.json();
+      if (data.success == false){
+        return null;
+      }
+      // Assuming existingUser is an array with one user object
+      return data.existingUser[0]; 
+    }
+    catch (error){
+      console.error(error);
+      return null;
+    }
+  }
+
   useEffect(() => {
-    // We define an async function inside the effect to perform the fetch.
     const fetchUserData = async () => {
-
       try {
-        // Call your getUser function.
         const fetchedUser = await getUser({ username : "TEST_USER"});
-
-        // If a user is successfully returned, update the states.
         if (fetchedUser) {
           setUser(fetchedUser);
 
-          // IMPORTANT: We are assuming the user object from your API has a
-          // property called 'notificationSettings' that contains the user's
-          // notification preferences. If the property has a different name,
-          // you'll need to change `fetchedUser.notificationSettings` below.
-
-          const notificationSettings = fetchedUser.map(notificationsItems => ({
-            notifications: notificationsItems.isnotificationon,
-            taskDeadline: notificationsItems.istaskdeadlinenotificationon,
-            lectureClass: notificationsItems.islecturenotificationon,
-            groupMessages: notificationsItems.isgroupmessagesnotificationon,
-            privateMessages: notificationsItems.isprivatemessagesnotificationon
-          }))
-          if (notificationSettings) {
-            setNotifications(notificationSettings[0]);
-          } else {
-             console.warn("User data fetched, but it does not contain 'notificationSettings'. Using default values.");
-          }
+          // Map the fetched user data to the notification state shape
+          const notificationSettings = {
+            notifications: fetchedUser.isnotificationon,
+            taskDeadline: fetchedUser.istaskdeadlinenotificationon,
+            lectureClass: fetchedUser.islecturenotificationon,
+            groupMessages: fetchedUser.isgroupmessagesnotificationon,
+            privateMessages: fetchedUser.isprivatemessagesnotificationon
+          };
+          setNotifications(notificationSettings);
         }
       } catch (err) {
-        // If an error was thrown during the fetch, we catch it and update the error state.
-
-      } finally {
-        // This runs whether the fetch succeeded or failed.
+        console.error("Error in fetchUserData:", err);
       }
     };
-
-    // Call the async function to start the data fetching process.
     fetchUserData();
   }, []);
 
-  const toggleNotification = (key) => {
-    console.log(notifications)
+  // This function now updates the UI instantly and sends the change to the backend.
+  const toggleNotification = async (key) => {
+    // 1. Optimistic UI Update: Update the state immediately for a responsive feel.
+    const newValue = !notifications[key];
     setNotifications(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: newValue
     }));
+
+    // 2. Persist to Database: Call the backend to save the change.
+    if (!user || !user.userid) {
+        console.error("Cannot update notification: user not loaded.");
+        // Optional: revert the UI change here if needed
+        return;
+    }
+
+    try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/updateNotification", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: user.userid,
+                field: key,
+                value: newValue
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            console.log(`Successfully updated '${key}' to ${newValue}`);
+        } else {
+            console.error(`Failed to update '${key}':`, data.message);
+            // Optional: Revert the UI change on failure
+            setNotifications(prev => ({ ...prev, [key]: !newValue }));
+        }
+    } catch (error) {
+        console.error("API error updating notification:", error);
+        // Optional: Revert the UI change on failure
+        setNotifications(prev => ({ ...prev, [key]: !newValue }));
+    }
   };
 
   const menuItems = [
@@ -114,18 +126,12 @@ const UserProfile = ({navigation}) => {
 
   const ToggleSwitch = ({ isOn, onToggle }) => (
     <TouchableOpacity
-      style={[
-        styles.toggleSwitch,
-        { backgroundColor: isOn ? '#FF8C42' : '#9CA3AF' }
-      ]}
+      style={[ styles.toggleSwitch, { backgroundColor: isOn ? '#FF8C42' : '#9CA3AF' } ]}
       onPress={onToggle}
       activeOpacity={0.8}
     >
       <View
-        style={[
-          styles.toggleThumb,
-          { transform: [{ translateX: isOn ? 20 : 2 }] }
-        ]}
+        style={[ styles.toggleThumb, { transform: [{ translateX: isOn ? 20 : 2 }] } ]}
       />
     </TouchableOpacity>
   );
@@ -133,28 +139,19 @@ const UserProfile = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      
-      {/* Header */}
       <GrindHubHeader navigation={navigation}/>
-
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profilePicture} />
-          <Text style={styles.username}>im_a_user</Text>
+          <Text style={styles.username}>{user ? user.username : 'Loading...'}</Text>
         </View>
 
-        {/* Menu Items */}
         <View style={styles.card}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.menuItem,
-                index !== menuItems.length - 1 && styles.menuItemBorder
-              ]}
+              style={[ styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder ]}
               activeOpacity={0.7}
-              onPress={() => console.log(notifications)}
             >
               <Text style={styles.menuItemText}>{item.title}</Text>
               <Ionicons name={item.icon} size={20} color="#666" />
@@ -162,15 +159,11 @@ const UserProfile = ({navigation}) => {
           ))}
         </View>
 
-        {/* Notification Settings */}
         <View style={styles.card}>
           {notificationItems.map((item, index) => (
             <View
               key={index}
-              style={[
-                styles.notificationItem,
-                index !== notificationItems.length - 1 && styles.notificationItemBorder
-              ]}
+              style={[ styles.notificationItem, index !== notificationItems.length - 1 && styles.notificationItemBorder ]}
             >
               <Text style={styles.notificationText}>{item.title}</Text>
               <ToggleSwitch
@@ -181,18 +174,13 @@ const UserProfile = ({navigation}) => {
           ))}
         </View>
 
-        {/* Sign Out Button */}
         <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        {/* Bottom spacing for navigation */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Bottom Navigation */}
       <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
-      
     </SafeAreaView>
   );
 };
@@ -216,7 +204,6 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: '#4F46E5',
     marginBottom: 16,
-    // Gradient effect simulation
     borderWidth: 3,
     borderColor: '#06B6D4',
   },

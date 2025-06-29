@@ -190,7 +190,7 @@ exports.addMessage = async(req, res) => {
     // using a value from the client.
     const date = new Date()
     const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds
-    const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent, timestamp, time) VALUES ($1, $2, $3, NOW(), $4) RETURNING *";
+    const queryText = "INSERT INTO messagecollections (groupid, userid, messagecontent, timestamp, timeinseconds) VALUES ($1, $2, $3, NOW(), $4) RETURNING *";
     
     // 3. Execute the query. The parameters still match the placeholders $1, $2, and $3.
     const { rows } = await db.query(queryText, [groupid, userid, messagecontent, seconds]);

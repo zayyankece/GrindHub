@@ -124,7 +124,7 @@ exports.getMessages = async(req, res) => {
     const queryText = "SELECT m.messageid, m.messagecontent, m.timestamp, u.userid, u.username FROM messagecollections m JOIN userprofile u ON m.userid = u.username WHERE m.groupid = $1 ORDER BY m.timestamp ASC;"
     const existingMessages = await db.query(queryText, [groupid])
     if (existingMessages.rows.length == 0){
-      return res.status(404).json({message: "No messages found!", success: false})
+      return res.status(404).json({message: "No messages found!", success: false, messages:existingMessages, gi:groupid})
     }
     return res.status(200).json({message: "Messages retrieved!", success:true, messages:existingMessages.rows})
   }

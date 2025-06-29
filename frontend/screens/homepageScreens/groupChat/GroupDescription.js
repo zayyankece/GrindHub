@@ -17,6 +17,7 @@ const GroupDescription = ({ route, navigation }) => {
   // const { groupId } = route.params;
 
   // --- State Management ---
+  const [groupid, setGroupid] = useState("1")
   const [groupDetails, setGroupDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +42,14 @@ const GroupDescription = ({ route, navigation }) => {
 
         if (data.success) {
           setGroupDetails(data.description);
+
+          const extractedUser = data.description.map(members => ({
+            id: members.userid, 
+            username: members.userid,
+          }));
+          setMembers(extractedUser)
+          setIsLoading(false)
+
         } else {
           console.error("Failed to fetch group description:", data.message);
         }
@@ -48,18 +57,9 @@ const GroupDescription = ({ route, navigation }) => {
         console.error("Error fetching group description:", error);
       }
 
-      // TODO: Fetch member list from your backend in the future.
-      const extractedUser = groupDetails.map(members => ({
-        id: members.userid,
-        username: members.userid,
-      }));
-
-      setMembers(extractedUser);
-
-      setIsLoading(false); // Stop loading indicator
     };
 
-    fetchGroupDetails();
+    fetchGroupDetails(); 
   }, []); // Dependency array ensures this runs when groupId changes.
 
   // --- Child Component for List Items ---

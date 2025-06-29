@@ -301,15 +301,17 @@ const GroupChat = ({ navigation }) => {
   useEffect(() => {
     // We define an async function inside the effect to fetch the data.
     const fetchGroups = async () => {
+      // console.log(typeof userid, userid)
       try {
+        console.log(typeof "TEST_USER", "TEST_USER")
         const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
           method: "POST",
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             // IMPORTANT: Replace "TEST_USER" with the actual logged-in user's ID
-            userid: "TEST_USER",
+          userid: "TEST_USER",
           }),
-        });
+        }); 
 
         const data = await response.json();
         console.log(data)

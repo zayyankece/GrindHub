@@ -100,6 +100,35 @@ exports.getUser = async(req, res) => {
   }
 }
 
+exports.updateUser = async(req, res) => {
+  const { username, field, value } = req.body;
+  const columnMap = {
+    notifications: 'isnotificationon',
+    taskDeadline: 'istaskdeadlinenotificationon',
+    lectureClass: 'islecturenotificationon',
+    groupMessages: 'isgroupmessagesnotificationon',
+    privateMessages: 'isprivatemessagesnotificationon',
+  };
+
+  try {
+    // We can now safely build the query. The column name is from our secure whitelist,
+    // and the values are passed as parameters to prevent SQL injection.
+    const query = `UPDATE userprofile SET ${dbColumn} = $1 WHERE username = $2::text RETURNING *`;
+    
+    const { rows } = await db.query(query, [value, username]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Notification setting updated.', user: rows[0] });
+
+  } catch (error) {
+    console.error('Error updating notification setting:', error);
+    return res.status(500).json({ message: 'Something went wrong', success: false });
+  }
+}
+
 exports.getGroups = async(req, res) => {
   const {userid} = req.body
 

@@ -17,6 +17,7 @@ const GroupDescription = ({ route, navigation }) => {
   // const { groupId } = route.params;
 
   // --- State Management ---
+  const [groupid, setGroupid] = useState("1")
   const [groupDetails, setGroupDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,9 +37,19 @@ const GroupDescription = ({ route, navigation }) => {
         });
         
         const data = await response.json();
+        console.log(data)
+        console.log(data.description)
 
         if (data.success) {
           setGroupDetails(data.description);
+
+          const extractedUser = data.description.map(members => ({
+            id: members.userid, 
+            username: members.userid,
+          }));
+          setMembers(extractedUser)
+          setIsLoading(false)
+
         } else {
           console.error("Failed to fetch group description:", data.message);
         }
@@ -46,20 +57,9 @@ const GroupDescription = ({ route, navigation }) => {
         console.error("Error fetching group description:", error);
       }
 
-      // TODO: Fetch member list from your backend in the future.
-      const staticMembers = [
-        { id: 1, username: 'mynameisyou' },
-        { id: 2, username: 'halo bang' },
-        { id: 3, username: 'wibu' },
-        { id: 4, username: 'test-123' },
-        { id: 5, username: 'train-213' },
-      ];
-      setMembers(staticMembers);
-
-      setIsLoading(false); // Stop loading indicator
     };
 
-    fetchGroupDetails();
+    fetchGroupDetails(); 
   }, []); // Dependency array ensures this runs when groupId changes.
 
   // --- Child Component for List Items ---
@@ -89,7 +89,7 @@ const GroupDescription = ({ route, navigation }) => {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.groupInfoSection}>
           <View style={styles.groupAvatar} />
-          <Text style={styles.groupTitle}>{groupDetails?.groupname || 'Loading...'}</Text>
+          <Text style={styles.groupTitle}>{groupDetails[0]?.groupname || 'Loading...'}</Text>
           <Text style={styles.memberCount}>{members.length} members</Text>
         </View>
 

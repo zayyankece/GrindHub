@@ -1,6 +1,8 @@
 const db = require('../db.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 

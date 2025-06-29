@@ -83,7 +83,7 @@ export default function GrindHub({navigation}) {
       method : "POST",
       headers : { 'Content-Type': 'application/json' },
       body : JSON.stringify({
-      userid : "TEST_USER",
+      userid : userid,
       }),
     });
     
@@ -149,11 +149,12 @@ export default function GrindHub({navigation}) {
   function combineAndExtract(classesArray, assignmentsArray) {
     // Process the classes array using map to transform each item
     const extractedClasses = classesArray.map(classItem => ({
-      module_code: classItem.module,
-      name: classItem.classname,
-      type: classItem.classname,
+      module_code: classItem.modulename,
+      name: classItem.classtype,
+      type: classItem.classtype,
       location: classItem.classlocation,
-      time: classItem.startdate, // Using startdate as the primary time
+      date: classItem.startdate, // Using startdate as the primary time
+      time: classItem.starttime,
       percentage: null
     }));
   
@@ -163,7 +164,8 @@ export default function GrindHub({navigation}) {
       name: assignmentItem.assignmentname,
       type: "Assignment", // Explicitly defining the type
       location: null,     // Assignments don't have a physical location
-      time: assignmentItem.assignmentduedate,
+      date: assignmentItem.assignmentduedate,
+      time: assignmentItem.assignmenttimeduedate,
       percentage: assignmentItem.assignmentpercentage
     }));
   
@@ -256,18 +258,18 @@ export default function GrindHub({navigation}) {
 
   const leftArrowPressed = () => {
     setStartDate(currentMonday => {
-      const newMonday = new Date(currentMonday);
-      newMonday.setDate(currentMonday.getDate() - 1);
-      return newMonday;
+      const newDay = new Date(currentMonday);
+      newDay.setDate(currentMonday.getDate() - 1);
+      return newDay;
     });
 
   };
   
   const rightArrowPressed = () => {
     setStartDate(currentMonday => {
-      const newMonday = new Date(currentMonday);
-      newMonday.setDate(currentMonday.getDate() + 1);
-      return newMonday;
+      const newDay = new Date(currentMonday);
+      newDay.setDate(currentMonday.getDate() + 1);
+      return newDay;
     });
 
   };

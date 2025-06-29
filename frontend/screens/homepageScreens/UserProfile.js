@@ -23,13 +23,13 @@ const UserProfile = ({navigation}) => {
     privateMessages: true
   });
 
-  const getUser = async ({username}) => {
+  const getUser = async ({userid}) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getUser", {
         method : "POST",
         headers : { 'Content-Type': 'application/json' },
         body : JSON.stringify({
-          username : username,
+          userid : userid,
         }),
       });
       const data = await response.json();
@@ -54,11 +54,11 @@ const UserProfile = ({navigation}) => {
 
           // Map the fetched user data to the notification state shape
           const notificationSettings = {
-            notifications: fetchedUser.isnotificationon,
-            taskDeadline: fetchedUser.istaskdeadlinenotificationon,
-            lectureClass: fetchedUser.islecturenotificationon,
-            groupMessages: fetchedUser.isgroupmessagesnotificationon,
-            privateMessages: fetchedUser.isprivatemessagesnotificationon
+            notifications: fetchedUser.notification,
+            taskDeadline: fetchedUser.tasknotification,
+            lectureClass: fetchedUser.classnotification,
+            groupMessages: fetchedUser.groupnotification,
+            privateMessages: fetchedUser.privatenotification
           };
           setNotifications(notificationSettings);
         }
@@ -90,7 +90,7 @@ const UserProfile = ({navigation}) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              username: user.username,
+              userid: user.userid,
                 field: key,
                 value: newValue
             })

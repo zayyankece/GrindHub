@@ -32,7 +32,7 @@ const GroupDescription = ({ route, navigation }) => {
           method: "POST",
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            groupid: "1",
+            groupid: groupid,
           }),
         });
         
@@ -45,7 +45,7 @@ const GroupDescription = ({ route, navigation }) => {
 
           const extractedUser = data.description.map(members => ({
             id: members.userid, 
-            username: members.userid,
+            username: members.username,
           }));
           setMembers(extractedUser)
           setIsLoading(false)

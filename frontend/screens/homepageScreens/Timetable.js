@@ -149,11 +149,12 @@ const Timetable = ({navigation, route}) => {
   function combineAndExtract(classesArray, assignmentsArray) {
     // Process the classes array using map to transform each item
     const extractedClasses = classesArray.map(classItem => ({
-      module_code: classItem.module,
-      name: classItem.classname,
-      type: classItem.classname,
+      module_code: classItem.modulename,
+      name: classItem.classtype,
+      type: classItem.classtype,
       location: classItem.classlocation,
-      time: classItem.startdate, // Using startdate as the primary time
+      date: classItem.startdate, // Using startdate as the primary time
+      time: classItem.starttime,
       percentage: null
     }));
   
@@ -163,7 +164,8 @@ const Timetable = ({navigation, route}) => {
       name: assignmentItem.assignmentname,
       type: "Assignment", // Explicitly defining the type
       location: null,     // Assignments don't have a physical location
-      time: assignmentItem.assignmentduedate,
+      date: assignmentItem.assignmentduedate,
+      time: assignmentItem.assignmenttimeduedate,
       percentage: assignmentItem.assignmentpercentage
     }));
   
@@ -204,7 +206,7 @@ const Timetable = ({navigation, route}) => {
   const groupedEvents = useMemo(() => {
     const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
     return sorted.reduce((acc, event) => {
-        const dateKey = getDateKey(event.time);
+        const dateKey = getDateKey(event.date);
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(event);
         return acc;
@@ -275,9 +277,6 @@ const Timetable = ({navigation, route}) => {
       newMonday.setDate(currentMonday.getDate() - 7);
       return newMonday;
     });
-
-    console.log("left arrow pressed")
-    console.log(weekStartDate)
   };
   
   const rightArrowPressed = () => {
@@ -286,9 +285,6 @@ const Timetable = ({navigation, route}) => {
       newMonday.setDate(currentMonday.getDate() + 7);
       return newMonday;
     });
-
-    console.log("right arrow pressed")
-    console.log(weekStartDate)
   };
 
   const sundayDate = new Date(weekStartDate);

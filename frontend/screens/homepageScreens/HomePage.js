@@ -36,6 +36,9 @@ export default function HomePage({navigation, route}) {
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
   const [combinedData, setCombinedData] = useState([])
+  const [groups, setGroups] = useState([]);
+  const [username, setUsername] = useState("")
+
   const [isLoading, setIsLoading] = useState(true)
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(() => {
@@ -78,7 +81,6 @@ export default function HomePage({navigation, route}) {
       minute: '2-digit', // Ensures the minute is always two digits (e.g., 00)
       hour12: false      // CRITICAL: Use 24-hour clock (19:00 instead of 7:00 PM)
     };
-  
     return date.toLocaleTimeString('en-GB', options);
   }
 
@@ -147,7 +149,56 @@ export default function HomePage({navigation, route}) {
         setIsLoading(false); 
       }
     };
+    const fetchGroups = async () => {
+      try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+          userid: userid,
+          }),
+        }); 
+
+        const data = await response.json();
+
+        if (data.success) {
+          setGroups(data.groups);
+        } else {
+          if (data.message == "No groups found!"){
+            console.log("No groups found, santai aja dulu bang!")
+          }
+          else {
+          console.error("Failed to fetch groups:", data.message);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    const getUsername = async() => {
+      try{
+        const response = await fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
+          method : "POST",
+          headers : { 'Content-Type': 'application/json' },
+          body : JSON.stringify({
+            userid: userid,
+          }),
+        });
+        const data = await response.json();
+ 
+        if (data.success){
+          setUsername(data.existingUser[0].username)
+        }
+      } catch (error) {
+        console.error("there are error", error)
+      }
+    }
+
+    fetchGroups();
     fetchAndCombineData();
+    getUsername();
 
   }, []); 
 
@@ -187,7 +238,7 @@ export default function HomePage({navigation, route}) {
   const groupedEvents = useMemo(() => {
     const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
     return sorted.reduce((acc, event) => {
-        const dateKey = getDateKey(event.time);
+        const dateKey = getDateKey(event.date);
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(event);
         return acc;
@@ -206,7 +257,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       case 'Tutorial': // Cases are now combined
@@ -218,7 +269,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       case 'Assignment':
@@ -230,7 +281,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       default:
@@ -262,19 +313,18 @@ export default function HomePage({navigation, route}) {
   };
 
   const leftArrowPressed = () => {
-    console.log(userid)
-    setStartDate(currentMonday => {
-      const newDay = new Date(currentMonday);
-      newDay.setDate(currentMonday.getDate() - 1);
+    setStartDate(startDate => {
+      const newDay = new Date(startDate);
+      newDay.setDate(startDate.getDate() - 1);
       return newDay;
     });
 
   };
   
   const rightArrowPressed = () => {
-    setStartDate(currentMonday => {
-      const newDay = new Date(currentMonday);
-      newDay.setDate(currentMonday.getDate() + 1);
+    setStartDate(startDate => {
+      const newDay = new Date(startDate);
+      newDay.setDate(startDate.getDate() + 1);
       return newDay;
     });
 
@@ -282,18 +332,18 @@ export default function HomePage({navigation, route}) {
 
   const [activeTimer, setActiveTimer] = useState(null);
 
-  const groups = [
-    { 
-      name: 'Only for people with 5.00 GPA', 
-      message: 'Guys, let\'s finish entire material tonight',
-      time: '13.54'
-    },
-    { 
-      name: 'Bombardillo Crocodilo Project', 
-      message: 'Cappucino assasino is bugged, need help',
-      time: '12.03'
-    }
-  ];
+  // const groups = [
+  //   { 
+  //     name: 'Only for people with 5.00 GPA', 
+  //     message: 'Guys, let\'s finish entire material tonight',
+  //     time: '13.54'
+  //   },
+  //   { 
+  //     name: 'Bombardillo Crocodilo Project', 
+  //     message: 'Cappucino assasino is bugged, need help',
+  //     time: '12.03'
+  //   }
+  // ];
 
   const startTimer = (type) => {
     setActiveTimer(type);
@@ -343,7 +393,7 @@ export default function HomePage({navigation, route}) {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
           <View style={styles.greetingContainer}>
-            <Text style={styles.greetingText}>Hello, Sanny!</Text>
+            <Text style={styles.greetingText}>Hello, {username}!</Text>
             <Ionicons name="search-outline" size={24} color="#374151" />
           </View>
 
@@ -412,19 +462,19 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Groups */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("GroupChat", {token:token})}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Groups</Text>
               <View style={styles.groupsList}>
                 {groups.map((group, index) => (
                   <View key={index} style={styles.groupItem}>
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupName}>{group.name}</Text>
-                      <Text style={styles.groupTime}>{group.time}</Text>
+                      <Text style={styles.groupName}>{group.groupname}</Text>
+                      {/* <Text style={styles.groupTime}>{group.time}</Text> */}
                     </View>
                     <View style={styles.groupMessage}>
                       <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-                      <Text style={styles.groupMessageText}>{group.message}</Text>
+                      <Text style={styles.groupMessageText}>this is a subtitle (not yet implemented)</Text>
                     </View>
                   </View>
                 ))}
@@ -433,27 +483,37 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Assignments */}
-<TouchableOpacity 
-  onPress={() => navigation.navigate('AssignmentTracker')}
-  activeOpacity={0.7}
->
-  <View style={[styles.card, styles.lastCard]}>
-    <Text style={styles.cardTitle}>Your Assignments</Text>
-    <View style={styles.assignmentsList}>
-      {assignments.map((assignment, index) => (
-        <View key={index} style={styles.assignmentItem}>
-          <View style={styles.assignmentHeader}>
-            <Text style={styles.assignmentTitle}>
-              {assignment.assignmentmodule} - {assignment.assignmentname}
-            </Text>
-            <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
-          </View>
-          <ProgressBar progress={assignment.assignmentpercentage} />
-        </View>
-      ))}
-    </View>
-  </View>
-</TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TrackerPage', {token:token})}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.card, styles.lastCard]}>
+              <Text style={styles.cardTitle}>Your Assignments</Text>
+              <View style={styles.assignmentsList}>
+                {assignments.length > 0 ? (
+                  assignments.map((assignment, index) => (
+                    <View key={index} style={styles.assignmentItem}>
+                      <View style={styles.assignmentHeader}>
+                        <Text style={styles.assignmentTitle}>
+                          {assignment.assignmentmodule} - {assignment.assignmentname}
+                        </Text>
+                        <Text style={styles.assignmentDue}>
+                          Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}
+                        </Text>
+                      </View>
+                      <ProgressBar progress={assignment.assignmentpercentage} />
+                    </View>
+                  ))
+                ) : (
+                  <View style={styles.noAssignmentsView}>
+                    <Text style={styles.noAssignmentsText}>
+                      No assignments at the moment!
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
           
         </ScrollView>
   
@@ -790,5 +850,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  noAssignmentsView: {
+    backgroundColor: '#FFD93D',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noAssignmentsText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
+    textAlign: 'center',
   },
 });

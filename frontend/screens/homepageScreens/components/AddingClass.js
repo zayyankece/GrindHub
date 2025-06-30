@@ -1,38 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
-
-// Helper function to get the next date for a given day of the week
-const getNextDateForDay = (day) => {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const targetDay = days.indexOf(day.toLowerCase());
-
-  if (targetDay === -1) {
-    return null; // Invalid day
-  }
-
-  const today = new Date();
-  const currentDay = today.getDay();
-  let dayDifference = targetDay - currentDay;
-
-  // If the target day is in the past for the current week, get next week's date
-  if (dayDifference < 0) {
-    dayDifference += 7;
-  }
-
-  const nextDate = new Date(today);
-  nextDate.setDate(today.getDate() + dayDifference);
-
-  // Format the date as YYYY-MM-DD
-  const year = nextDate.getFullYear();
-  const month = String(nextDate.getMonth() + 1).padStart(2, '0');
-  const date = String(nextDate.getDate()).padStart(2, '0');
-  
-  return `${year}-${month}-${date}`;
-};
 
 
 export default function AddingClass({ navigation, route }) {
@@ -43,26 +15,54 @@ export default function AddingClass({ navigation, route }) {
   // State for class-related fields
   const [moduleCode, setModuleCode] = useState('');
   const [classType, setClassType] = useState('');
-  const [day, setDay] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [venue, setVenue] = useState('');
+
+  // --- New state for Date and Time Pickers ---
+  const [date, setDate] = useState(new Date());
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // --- onChange handlers for pickers ---
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === 'ios');
+    setDate(currentDate);
+  };
+
+  const onStartTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || startTime;
+    setShowStartTimePicker(Platform.OS === 'ios');
+    setStartTime(currentTime);
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || endTime;
+    setShowEndTimePicker(Platform.OS === 'ios');
+    setEndTime(currentTime);
+  };
 
   /**
    * Handles adding a new class by sending a POST request to the server.
    */
   const handleAddClass = async () => {
     // 1. Validate inputs
-    if (!moduleCode || !classType || !day || !startTime || !endTime || !venue) {
+    if (!moduleCode || !classType || !venue) {
       Alert.alert("Incomplete Form", "Please fill out all the fields to add a class.");
       return;
     }
 
-    // 2. Derive startdate and enddate from the day input
-    const classDate = getNextDateForDay(day);
-    if (!classDate) {
-      Alert.alert("Invalid Day", "Please enter a valid day of the week (e.g., Monday).");
-      return;
+    // 2. Format data for the API
+    const formattedDate = date.toISOString().split('T')[0];
+    const startTimeInMinutes = startTime.getHours() * 60 + startTime.getMinutes();
+    const endTimeInMinutes = endTime.getHours() * 60 + endTime.getMinutes();
+
+    if (startTimeInMinutes >= endTimeInMinutes) {
+        Alert.alert("Invalid Time", "End time must be after start time.");
+        return;
     }
 
     // 3. Construct payload for the API
@@ -71,15 +71,14 @@ export default function AddingClass({ navigation, route }) {
       modulename: moduleCode,
       classtype: classType,
       classlocation: venue,
-      startdate: classDate, // Use the calculated date
-      starttime: startTime,
-      enddate: classDate, // Assuming class is on the same day
-      endtime: endTime,
+      startdate: formattedDate,
+      starttime: startTimeInMinutes,
+      enddate: formattedDate, // Class is assumed to be on the same day
+      endtime: endTimeInMinutes,
     };
 
     try {
       // 4. Send fetch request
-      // IMPORTANT: Replace 'http://your-api-url.com' with your actual API endpoint
       const response = await fetch('https://grindhub-production.up.railway.app/api/auth/setClass', {
         method: 'POST',
         headers: {
@@ -120,75 +119,54 @@ export default function AddingClass({ navigation, route }) {
 
         {/* Form */}
         <View style={styles.formContainer}>
-          {/* Module Code */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Module Code</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., CS1010S"
-              value={moduleCode}
-              onChangeText={setModuleCode}
-            />
+            <TextInput style={styles.inputField} placeholder="e.g., CS1010S" value={moduleCode} onChangeText={setModuleCode}/>
           </View>
 
-          {/* Class Type */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Class Type</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., Lecture, Tutorial, Lab"
-              value={classType}
-              onChangeText={setClassType}
-            />
+            <TextInput style={styles.inputField} placeholder="e.g., Lecture, Tutorial, Lab" value={classType} onChangeText={setClassType} />
           </View>
           
-          {/* Day of the Week */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Day</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., Monday, Tuesday..."
-              value={day}
-              onChangeText={setDay}
-              autoCapitalize="words"
-            />
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.inputField, styles.pickerButton]}>
+                <Text style={styles.inputText}>{date.toLocaleDateString()}</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Time */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Time</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <TextInput
-                style={[styles.inputField, { flex: 1 }]}
-                placeholder="Start Time (e.g., 14:00)"
-                value={startTime}
-                onChangeText={setStartTime}
-              />
-              <TextInput
-                style={[styles.inputField, { flex: 1 }]}
-                placeholder="End Time (e.g., 16:00)"
-                value={endTime}
-                onChangeText={setEndTime}
-              />
+                <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.inputField, styles.pickerButton, { flex: 1 }]}>
+                    <Text style={styles.inputText}>{startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.inputField, styles.pickerButton, { flex: 1 }]}>
+                    <Text style={styles.inputText}>{endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                </TouchableOpacity>
             </View>
           </View>
 
-          {/* Venue */}
+          {/* DateTimePicker Modals */}
+          {showDatePicker && (
+            <DateTimePicker testID="datePicker" value={date} mode="date" display="default" onChange={onDateChange} />
+          )}
+          {showStartTimePicker && (
+            <DateTimePicker testID="startTimePicker" value={startTime} mode="time" display="default" onChange={onStartTimeChange} />
+          )}
+          {showEndTimePicker && (
+            <DateTimePicker testID="endTimePicker" value={endTime} mode="time" display="default" onChange={onEndTimeChange} />
+          )}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Venue / Location</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., i3-AUD"
-              value={venue}
-              onChangeText={setVenue}
-            />
+            <TextInput style={styles.inputField} placeholder="e.g., i3-AUD" value={venue} onChangeText={setVenue} />
           </View>
         </View>
 
-        {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Create Button */}
         <TouchableOpacity style={styles.createButton} onPress={handleAddClass}>
           <Text style={styles.createButtonText}>Add Class</Text>
         </TouchableOpacity>
@@ -198,7 +176,6 @@ export default function AddingClass({ navigation, route }) {
   );
 }
 
-// Re-using the same styles from your example
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
@@ -232,9 +209,16 @@ const styles = StyleSheet.create({
   inputField: {
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#D1D5DB',
+    fontSize: 16,
+  },
+  pickerButton: {
+    justifyContent: 'center',
+  },
+  inputText: {
     fontSize: 16,
   },
   divider: {

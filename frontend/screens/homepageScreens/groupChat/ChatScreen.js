@@ -100,7 +100,7 @@ const ChatScreen = ({route, navigation}) => {
         const data = await response.json();
 
         if (data.success){
-          setUsername(data.username)
+          setUsername(data.existingUser[0].username)
         }
       } catch (error) {
         console.error("there are error", error)

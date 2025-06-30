@@ -22,6 +22,8 @@ import TrackerPage from './screens/homepageScreens/assignmentTracker/TrackerPage
 import ReportPage from './screens/homepageScreens/studyTarget/ReportPage';
 import SelectingModule from './screens/homepageScreens/studyTarget/SelectingModule';
 import TimerPage from './screens/homepageScreens/studyTimer/TimerPage';
+import AddingClass from './screens/homepageScreens/components/AddingClass';
+import AddingModule from './screens/homepageScreens/components/AddingModule';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +53,8 @@ export default function App() {
         <Stack.Screen name="ReportPage" component={ReportPage} />
         <Stack.Screen name="SelectingModule" component={SelectingModule} />
         <Stack.Screen name="TimerPage" component={TimerPage} />
+        <Stack.Screen name="AddingClass" component={AddingClass} />
+        <Stack.Screen name="AddingModule" component={AddingModule} />
 
       </Stack.Navigator>
     </NavigationContainer>

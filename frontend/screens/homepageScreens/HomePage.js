@@ -474,15 +474,15 @@ export default function HomePage({navigation, route}) {
                   <View style={styles.innerContainer}>
 
                     {/* 👇 Simplified TouchableOpacity items */}
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingModule", {token:token})}}>
                       <Text style={styles.itemText}>Add Module</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingClass", {token:token})}}>
                       <Text style={styles.itemText}>Add Class</Text>
                     </TouchableOpacity>
                     
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingAssignment", {token:token})}}>
                       <Text style={styles.itemText}>Add Task</Text>
                     </TouchableOpacity>
 
@@ -499,7 +499,7 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.fabButtonDark}
-            onPress={() => setAddModalVisible(true)}
+            onPress={() => {setAddModalVisible(true)}}
           >
             <Ionicons name="add" size={16} color="white" />
           </TouchableOpacity>

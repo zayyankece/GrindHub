@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, {useState} from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
@@ -9,77 +9,132 @@ export default function AddingAssignment({navigation, route}) {
   const { token } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
+
+  const [taskName, setTaskName] = useState('');
+  const [taskGroup, setTaskGroup] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [deadlineTime, setDeadlineTime] = useState('');
+  const [hours, setHours] = useState('');
+  const [minutes, setMinutes] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleCreateAssignment = () => {
+    // Logic to create the assignment goes here
+    console.log({
+      taskName,
+      taskGroup,
+      deadlineDate,
+      deadlineTime,
+      hours,
+      minutes,
+      description,
+    });
+    // Example: navigation.goBack();
+  };
+
   
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <GrindHubHeader navigation={navigation} token={token}/>
-      <View style={styles.header}>
-        <Ionicons name="arrow-back" size={24} color="#000" />
-        <Text style={styles.headerTitle}>New Assignment</Text>
-        <View style={{ width: 24 }} /> {/* Spacer for alignment */}
-      </View>
-
-      {/* Form */}
-      <View style={styles.formContainer}>
-        {/* Task Name */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Task Name</Text>
-          <View style={styles.inputField}>
-            <Text style={styles.inputText}>Mission 1 - Time Travel</Text>
-          </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <GrindHubHeader navigation={navigation} token={token} />
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>New Assignment</Text>
+          <View style={{ width: 24 }}/>
         </View>
 
-        {/* Task Group */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Task Group</Text>
-          <View style={styles.inputField}>
-            <Text style={styles.inputText}>CS1010S</Text>
+        {/* Form */}
+        <View style={styles.formContainer}>
+          {/* Task Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Task Name</Text>
+            <TextInput
+              style={styles.inputField}
+              placeholder="e.g., Mission 1 - Time Travel"
+              value={taskName}
+              onChangeText={setTaskName}
+            />
           </View>
-        </View>
 
-        {/* Deadline */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Deadline</Text>
-          <View style={styles.inputField}>
-            <Text style={styles.inputText}>23 December 2025</Text>
-            <Text style={styles.inputText}>23:59</Text>
+          {/* Task Group */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Task Group</Text>
+            <TextInput
+              style={styles.inputField}
+              placeholder="e.g., CS1010S"
+              value={taskGroup}
+              onChangeText={setTaskGroup}
+            />
           </View>
-        </View>
 
-        {/* Time Needed */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Time Needed</Text>
-          <View style={styles.timeInputContainer}>
-            <View style={styles.timeInput}>
-              <Text style={styles.timeText}>1</Text>
+          {/* Deadline */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Deadline</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <TextInput
+                style={[styles.inputField, { flex: 1, marginRight: 8 }]}
+                placeholder="23 December 2025"
+                value={deadlineDate}
+                onChangeText={setDeadlineDate}
+              />
+              <TextInput
+                style={[styles.inputField, { flex: 0.5 }]}
+                placeholder="23:59"
+                value={deadlineTime}
+                onChangeText={setDeadlineTime}
+              />
             </View>
-            <Text style={styles.timeLabel}>Hour(s)</Text>
-            <View style={styles.timeInput}>
-              <Text style={styles.timeText}>30</Text>
+          </View>
+
+          {/* Time Needed */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Time Needed</Text>
+            <View style={styles.timeInputContainer}>
+              <TextInput
+                style={styles.timeInput}
+                keyboardType="numeric"
+                placeholder="1"
+                value={hours}
+                onChangeText={setHours}
+              />
+              <Text style={styles.timeLabel}>Hour(s)</Text>
+              <TextInput
+                style={styles.timeInput}
+                keyboardType="numeric"
+                placeholder="30"
+                value={minutes}
+                onChangeText={setMinutes}
+              />
+              <Text style={styles.timeLabel}>Minutes</Text>
             </View>
-            <Text style={styles.timeLabel}>Minutes</Text>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.inputField, { minHeight: 100, textAlignVertical: 'top' }]}
+              placeholder="Need to learn cobra language first"
+              value={description}
+              onChangeText={setDescription}
+              multiline={true}
+            />
           </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description</Text>
-          <View style={[styles.inputField, { minHeight: 100 }]}>
-            <Text style={styles.inputText}>Need to learn cobra language first</Text>
-          </View>
-        </View>
-      </View>
+        {/* Divider */}
+        <View style={styles.divider} />
 
-      {/* Divider */}
-      <View style={styles.divider} />
-
-      {/* Create Button */}
-      <TouchableOpacity style={styles.createButton}>
-        <Text style={styles.createButtonText}>Create Assignment</Text>
-      </TouchableOpacity>
-      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token}/>
-    </ScrollView>
+        {/* Create Button */}
+        <TouchableOpacity style={styles.createButton} onPress={handleCreateAssignment}>
+          <Text style={styles.createButtonText}>Create Assignment</Text>
+        </TouchableOpacity>
+      </ScrollView>
+      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token} />
+    </SafeAreaView>
   );
 }
 

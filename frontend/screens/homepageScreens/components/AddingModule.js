@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
@@ -16,17 +16,50 @@ export default function AddingModule({ navigation, route }) {
   const [credits, setCredits] = useState('');
   const [instructor, setInstructor] = useState('');
 
-  const handleAddModule = () => {
-    // Logic to add the new module
-    console.log({
-      userid,
-      moduleCode,
-      moduleTitle,
-      credits,
-      instructor,
-    });
-    // You might want to navigate back after adding
-    navigation.goBack();
+  /**
+   * Handles adding a new module by sending a POST request to the server.
+   */
+  const handleAddModule = async () => {
+    // 1. Validate inputs
+    if (!moduleCode || !moduleTitle || !credits || !instructor) {
+      Alert.alert("Incomplete Form", "Please fill out all the fields to add a module.");
+      return;
+    }
+
+    // 2. Construct payload for the API
+    const moduleData = {
+      modulename: moduleCode,
+      moduletitle: moduleTitle,
+      credits: parseInt(credits, 10), // Ensure credits are sent as a number
+      instructor: instructor,
+    };
+
+    try {
+      // 3. Send fetch request
+      // IMPORTANT: Replace 'http://your-api-url.com' with your actual API endpoint
+      const response = await fetch('https://grindhub-production.up.railway.app/api/auth/setModule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${token}` // Uncomment if you use Bearer token auth
+        },
+        body: JSON.stringify(moduleData),
+      });
+
+      const result = await response.json();
+
+      // 4. Handle response
+      if (response.ok && result.success) {
+        Alert.alert("Success", "Module has been added successfully.");
+        navigation.goBack();
+      } else {
+        Alert.alert("Failed to Add Module", result.message || "An error occurred on the server.");
+      }
+    } catch (error) {
+      // 5. Handle network errors
+      console.error("Error adding module:", error);
+      Alert.alert("Network Error", "Unable to connect to the server. Please check your internet connection.");
+    }
   };
 
   return (

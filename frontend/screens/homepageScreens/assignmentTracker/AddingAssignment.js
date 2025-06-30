@@ -1,14 +1,15 @@
 import React, {useState} from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+// Make sure to import Alert
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
 
 export default function AddingAssignment({navigation, route}) {
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { token } = route.params;
+  const decodedToken = jwtDecode(token);
+  const userid = decodedToken.userid;
 
   const [taskName, setTaskName] = useState('');
   const [taskGroup, setTaskGroup] = useState('');
@@ -16,23 +17,63 @@ export default function AddingAssignment({navigation, route}) {
   const [deadlineTime, setDeadlineTime] = useState('');
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(''); // Note: description is not sent to the backend in this example as the API doesn't handle it.
 
-  const handleCreateAssignment = () => {
-    // Logic to create the assignment goes here
-    console.log({
-      taskName,
-      taskGroup,
-      deadlineDate,
-      deadlineTime,
-      hours,
-      minutes,
-      description,
-    });
-    // Example: navigation.goBack();
+  /**
+   * Handles creating the assignment by sending a POST request to the server.
+   * Navigates back on success and shows an alert on failure.
+   */
+  const handleCreateAssignment = async () => {
+    // Basic validation to ensure required fields are not empty
+    if (!taskName || !taskGroup || !deadlineDate || !deadlineTime || !hours || !minutes) {
+      Alert.alert("Incomplete Form", "Please fill out all the required fields.");
+      return;
+    }
+
+    // Combine hours and minutes into a single string for 'timeneeded'
+    const timeNeeded = (parseInt(hours, 10) || 0) * 60 + (parseInt(minutes, 10) || 0);
+
+    try {
+      // Replace 'http://your-api-url.com' with your actual API endpoint
+      const response = await fetch('https://grindhub-production.up.railway.app/api/auth/setAssignment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // If you use token-based authentication (like Bearer), add it here
+          // 'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userid: userid,
+          assignmentname: taskName,
+          assignmentmodule: taskGroup,
+          assignmentduedate: deadlineDate,
+          assignmenttimeduedate: deadlineTime,
+          timeneeded: timeNeeded,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        Alert.alert(
+          "Success!", 
+          "Your assignment has been created successfully."
+        );
+        // Navigate back to the previous screen
+        navigation.goBack(); 
+      } else {
+        // Handle server-side errors (e.g., validation failed)
+        Alert.alert("Creation Failed", data.message || "An unexpected error occurred.");
+      }
+    } catch (error) {
+      // Handle network errors or other exceptions
+      console.error("Fetch error:", error);
+      Alert.alert("Network Error", "Could not connect to the server. Please check your connection and try again.");
+    }
   };
 
-  
+
+  // ... rest of your component code (return statement, styles) remains the same
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <GrindHubHeader navigation={navigation} token={token} />
@@ -138,6 +179,7 @@ export default function AddingAssignment({navigation, route}) {
   );
 }
 
+// ... Styles remain the same
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,

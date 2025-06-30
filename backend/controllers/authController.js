@@ -70,6 +70,30 @@ exports.getAssignments = async(req, res) => {
 
 }
 
+exports.setAssignment = async(req, res) => {
+  const {userid, assignmentname, assignmentmodule, assignmentduedate, assignmenttimeduedate, timeneeded} = req.body
+
+  try {
+    const assignmentid = crypto.randomUUID()
+    const assignmentpercentage = 0
+    const queryText = "INSERT INTO assignments (assignmentid, assignmentname, assignmentmodule, assignmentpercentage, assignmentduedate, assignmenttimeduedate, timeneeded, userid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
+    const { rows } = await db.query(queryText, [assignmentid, assignmentname, assignmentmodule, assignmentpercentage, assignmentduedate, assignmenttimeduedate, timeneeded, userid]);
+
+    if (rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Assignment added successfully!", 
+      success: true, 
+      assignment: rows[0] 
+    });
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 exports.getClass = async(req, res) => {
   const {userid} = req.body
 
@@ -86,6 +110,53 @@ exports.getClass = async(req, res) => {
     return res.status(500).json({ message: 'Something went wrong', success : false});
   }
 
+}
+
+exports.setClass = async(req, res) => {
+  const {userid, classtype, modulename, classlocation, startdate, starttime, enddate, endtime} = req.body
+
+  try {
+    const classid = crypto.randomUUID()
+    const queryText = "INSERT INTO class (classid, userid, modulename, classtype, classlocation, startdate, starttime, enddate, endtime) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"
+    const { rows } = await db.query(queryText, [classid, userid, modulename, classtype, classlocation, startdate, starttime, enddate, endtime]);
+
+    if (rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Class added successfully!", 
+      success: true, 
+      newclass: rows[0] 
+    });
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+exports.setModule = async(req, res) => {
+  const {modulename, moduletitle, credits, instructor} = req.body
+
+  try {
+    const moduleid = crypto.randomUUID()
+    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor) VALUES ($1, $2, $3, $4, $5) RETURNING *"
+    const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor]);
+
+    if (rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Module added successfully!", 
+      success: true, 
+      module: rows[0] 
+    });
+
+  }catch (error){
+    console.error(error)
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
 }
 
 exports.getUser = async(req, res) => {
@@ -190,7 +261,7 @@ exports.addGroups = async(req, res) => {
     return res.status(201).json({
       message: "Group added successfully!", 
       success: true, 
-      newGroup: rows[0] 
+      group: rows[0] 
     });
   }
   catch (error){

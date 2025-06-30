@@ -42,20 +42,27 @@ const GrindHubFooter = ({ navigation, activeTab, token }) => {
           />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('TimerPage', { token: token })}
+        >
           <Ionicons 
             name="time" 
             size={24} 
-            color={getIconColor("TimeTracker")} 
+            color={getIconColor("TimerPage")} 
           />
         </TouchableOpacity>
+
         
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons 
-            name="bag" 
-            size={24} 
-            color={getIconColor("Bag")} 
-          />
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('SelectingModule', { token: token })}
+        >
+        <Ionicons 
+          name="bag" 
+          size={24} 
+          color={getIconColor("SelectingModule")} 
+        />
         </TouchableOpacity>
       </View>
     );

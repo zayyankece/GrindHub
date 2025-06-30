@@ -16,6 +16,14 @@ import GroupDescription from './screens/homepageScreens/groupChat/GroupDescripti
 import Timetable from './screens/homepageScreens/Timetable';
 import CreateGroup from './screens/homepageScreens/groupChat/CreateGroup';
 import JoinGroup from './screens/homepageScreens/groupChat/JoinGroup';
+import AddingAssignment from './screens/homepageScreens/assignmentTracker/AddingAssignment';
+import EditAssignment from './screens/homepageScreens/assignmentTracker/EditAssignment';
+import TrackerPage from './screens/homepageScreens/assignmentTracker/TrackerPage';
+import ReportPage from './screens/homepageScreens/studyTarget/ReportPage';
+import SelectingModule from './screens/homepageScreens/studyTarget/SelectingModule';
+import TimerPage from './screens/homepageScreens/studyTimer/TimerPage';
+import AddingClass from './screens/homepageScreens/components/AddingClass';
+import AddingModule from './screens/homepageScreens/components/AddingModule';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,7 +47,14 @@ export default function App() {
         <Stack.Screen name="HomePage" component={HomePage} />
         <Stack.Screen name="CreateGroup" component={CreateGroup}/>
         <Stack.Screen name="JoinGroup" component={JoinGroup}/>
-        
+        <Stack.Screen name="AddingAssignment" component={AddingAssignment} />
+        <Stack.Screen name="EditAssignment" component={EditAssignment} />
+        <Stack.Screen name="TrackerPage" component={TrackerPage} />
+        <Stack.Screen name="ReportPage" component={ReportPage} />
+        <Stack.Screen name="SelectingModule" component={SelectingModule} />
+        <Stack.Screen name="TimerPage" component={TimerPage} />
+        <Stack.Screen name="AddingClass" component={AddingClass} />
+        <Stack.Screen name="AddingModule" component={AddingModule} />
 
       </Stack.Navigator>
     </NavigationContainer>

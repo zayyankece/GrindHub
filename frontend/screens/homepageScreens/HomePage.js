@@ -27,7 +27,7 @@ const FreeTimeCard = () => (
   </View>
 );
 
-export default function GrindHub({navigation, route}) {
+export default function HomePage({navigation, route}) {
 
   const { token } = route.params
   const decodedToken = jwtDecode(token)
@@ -328,7 +328,7 @@ export default function GrindHub({navigation, route}) {
   
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}/>  
 
-        <GrindHubFooter navigation={navigation} activeTab="HomePage"/>
+        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
         
       </SafeAreaView>
     )
@@ -433,24 +433,27 @@ export default function GrindHub({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Assignments */}
-          <TouchableOpacity>
-            <View style={[styles.card, styles.lastCard]}>
-            <Text style={styles.cardTitle}>Your Assignments</Text>
-            <View style={styles.assignmentsList}>
-              {assignments.map((assignment, index) => (
-                <View key={index} style={styles.assignmentItem}>
-                  <View style={styles.assignmentHeader}>
-                    <Text style={styles.assignmentTitle}>
-                      {assignment.assignmentmodule} - {assignment.assignmentname}
-                    </Text>
-                    <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
-                  </View>
-                  <ProgressBar progress={assignment.assignmentpercentage} />
-                </View>
-              ))}
-            </View>
+<TouchableOpacity 
+  onPress={() => navigation.navigate('AssignmentTracker')}
+  activeOpacity={0.7}
+>
+  <View style={[styles.card, styles.lastCard]}>
+    <Text style={styles.cardTitle}>Your Assignments</Text>
+    <View style={styles.assignmentsList}>
+      {assignments.map((assignment, index) => (
+        <View key={index} style={styles.assignmentItem}>
+          <View style={styles.assignmentHeader}>
+            <Text style={styles.assignmentTitle}>
+              {assignment.assignmentmodule} - {assignment.assignmentname}
+            </Text>
+            <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
           </View>
-          </TouchableOpacity>
+          <ProgressBar progress={assignment.assignmentpercentage} />
+        </View>
+      ))}
+    </View>
+  </View>
+</TouchableOpacity>
           
         </ScrollView>
   
@@ -471,15 +474,15 @@ export default function GrindHub({navigation, route}) {
                   <View style={styles.innerContainer}>
 
                     {/* 👇 Simplified TouchableOpacity items */}
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingModule", {token:token})}}>
                       <Text style={styles.itemText}>Add Module</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingClass", {token:token})}}>
                       <Text style={styles.itemText}>Add Class</Text>
                     </TouchableOpacity>
                     
-                    <TouchableOpacity style={styles.itemBox}>
+                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingAssignment", {token:token})}}>
                       <Text style={styles.itemText}>Add Task</Text>
                     </TouchableOpacity>
 
@@ -496,7 +499,7 @@ export default function GrindHub({navigation, route}) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.fabButtonDark}
-            onPress={() => setAddModalVisible(true)}
+            onPress={() => {setAddModalVisible(true)}}
           >
             <Ionicons name="add" size={16} color="white" />
           </TouchableOpacity>

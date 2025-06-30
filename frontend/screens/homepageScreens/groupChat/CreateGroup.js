@@ -50,7 +50,7 @@ const CreateGroup = ({navigation, route}) => {
                 method : "POST",
                 headers : { 'Content-Type': 'application/json' },
                 body : JSON.stringify({
-                    invitationcode: data.newGroup.invitationcode,
+                    invitationcode: data.group.invitationcode,
                     userid:userid
                 }),
             });

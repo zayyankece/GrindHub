@@ -9,7 +9,7 @@ import { jwtDecode } from "jwt-decode";
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function ModuleDetailScreen({ navigation, route}) {
+export default function ReportPage({ navigation, route}) {
 
   const { token, moduleCode} = route.params
   const decodedToken = jwtDecode(token)

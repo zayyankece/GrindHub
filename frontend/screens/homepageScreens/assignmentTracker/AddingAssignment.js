@@ -5,7 +5,7 @@ import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
 
-export default function NewAssignmentScreen({navigation, route}) {
+export default function AddingAssignment({navigation, route}) {
   const { token } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 

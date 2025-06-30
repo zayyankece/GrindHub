@@ -3,12 +3,13 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
+import { jwtDecode } from "jwt-decode";
 
-export default function EditAssignmentScreen({navigation, route}) {
+export default function EditAssignment({navigation, route}) {
   const { token } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 
-  
+
   const [title, setTitle] = useState("Read Chapter 3");
   const [module, setModule] = useState("CS1101S");
   const [deadline, setDeadline] = useState("2025-07-01");

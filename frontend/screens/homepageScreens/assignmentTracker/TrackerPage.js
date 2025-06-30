@@ -18,7 +18,7 @@ const tasks = [
   { code: 'MA2002', title: 'Homework 1', progress: 0.8 },
 ];
 
-export default function TaskListScreen({navigation, route}) {
+export default function TrackerPage({navigation, route}) {
   const { token } = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 

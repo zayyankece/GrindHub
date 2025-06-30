@@ -6,7 +6,7 @@ import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
 import { jwtDecode } from "jwt-decode";
 
-export default function TargetPerformanceScreen({ navigation, route }) {
+export default function SelectingModule({ navigation, route }) {
   // const route = useRoute();
 
   const {token, name} = route.params
@@ -28,7 +28,7 @@ export default function TargetPerformanceScreen({ navigation, route }) {
           <TouchableOpacity
           key={index}
           style={styles.moduleButton}
-          onPress={() => navigation.navigate('StudyTargetReport', { token:token, moduleCode: module })}
+          onPress={() => navigation.navigate('ReportPage', { token:token, moduleCode: module })}
         >
           <Text style={styles.moduleText}>{module}</Text>
         </TouchableOpacity>

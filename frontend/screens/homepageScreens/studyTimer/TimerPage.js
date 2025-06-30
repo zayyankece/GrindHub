@@ -7,7 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 
-export default function GrindHubScreen({ navigation, route }) {
+export default function TimerPage({ navigation, route }) {
   const { token, name} = route.params
   const decodedToken = jwtDecode(token)
   const userid = decodedToken.userid 

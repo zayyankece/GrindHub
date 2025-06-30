@@ -15,13 +15,13 @@ import ChatScreen from './screens/homepageScreens/groupChat/ChatScreen';
 import GroupDescription from './screens/homepageScreens/groupChat/GroupDescription';
 import Timetable from './screens/homepageScreens/Timetable';
 import CreateGroup from './screens/homepageScreens/groupChat/CreateGroup';
-import AddingAssingment from './screens/homepageScreens/assignmentTracker/AddingAssignment';
+import JoinGroup from './screens/homepageScreens/groupChat/JoinGroup';
+import AddingAssignment from './screens/homepageScreens/assignmentTracker/AddingAssignment';
 import EditAssignment from './screens/homepageScreens/assignmentTracker/EditAssignment';
-import AssignmentTracker from './screens/homepageScreens/assignmentTracker/TrackerPage';
-import StudyTargetReport from './screens/homepageScreens/studyTarget/ReportPage';
+import TrackerPage from './screens/homepageScreens/assignmentTracker/TrackerPage';
+import ReportPage from './screens/homepageScreens/studyTarget/ReportPage';
 import SelectingModule from './screens/homepageScreens/studyTarget/SelectingModule';
 import TimerPage from './screens/homepageScreens/studyTimer/TimerPage';
-import JoinGroup from './screens/homepageScreens/groupChat/JoinGroup'
 
 const Stack = createNativeStackNavigator();
 
@@ -45,10 +45,10 @@ export default function App() {
         <Stack.Screen name="HomePage" component={HomePage} />
         <Stack.Screen name="CreateGroup" component={CreateGroup}/>
         <Stack.Screen name="JoinGroup" component={JoinGroup}/>
-        <Stack.Screen name="AddingAssignment" component={AddingAssingment} />
+        <Stack.Screen name="AddingAssignment" component={AddingAssignment} />
         <Stack.Screen name="EditAssignment" component={EditAssignment} />
-        <Stack.Screen name="AssignmentTracker" component={AssignmentTracker} />
-        <Stack.Screen name="StudyTargetReport" component={StudyTargetReport} />
+        <Stack.Screen name="TrackerPage" component={TrackerPage} />
+        <Stack.Screen name="ReportPage" component={ReportPage} />
         <Stack.Screen name="SelectingModule" component={SelectingModule} />
         <Stack.Screen name="TimerPage" component={TimerPage} />
 

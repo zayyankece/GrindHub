@@ -36,6 +36,9 @@ export default function HomePage({navigation, route}) {
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
   const [combinedData, setCombinedData] = useState([])
+  const [groups, setGroups] = useState([]);
+  const [username, setUsername] = useState("")
+
   const [isLoading, setIsLoading] = useState(true)
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(() => {
@@ -146,7 +149,56 @@ export default function HomePage({navigation, route}) {
         setIsLoading(false); 
       }
     };
+    const fetchGroups = async () => {
+      try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+          userid: userid,
+          }),
+        }); 
+
+        const data = await response.json();
+
+        if (data.success) {
+          setGroups(data.groups);
+        } else {
+          if (data.message == "No groups found!"){
+            console.log("No groups found, santai aja dulu bang!")
+          }
+          else {
+          console.error("Failed to fetch groups:", data.message);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    const getUsername = async() => {
+      try{
+        const response = await fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
+          method : "POST",
+          headers : { 'Content-Type': 'application/json' },
+          body : JSON.stringify({
+            userid: userid,
+          }),
+        });
+        const data = await response.json();
+ 
+        if (data.success){
+          setUsername(data.existingUser[0].username)
+        }
+      } catch (error) {
+        console.error("there are error", error)
+      }
+    }
+
+    fetchGroups();
     fetchAndCombineData();
+    getUsername();
 
   }, []); 
 
@@ -280,18 +332,18 @@ export default function HomePage({navigation, route}) {
 
   const [activeTimer, setActiveTimer] = useState(null);
 
-  const groups = [
-    { 
-      name: 'Only for people with 5.00 GPA', 
-      message: 'Guys, let\'s finish entire material tonight',
-      time: '13.54'
-    },
-    { 
-      name: 'Bombardillo Crocodilo Project', 
-      message: 'Cappucino assasino is bugged, need help',
-      time: '12.03'
-    }
-  ];
+  // const groups = [
+  //   { 
+  //     name: 'Only for people with 5.00 GPA', 
+  //     message: 'Guys, let\'s finish entire material tonight',
+  //     time: '13.54'
+  //   },
+  //   { 
+  //     name: 'Bombardillo Crocodilo Project', 
+  //     message: 'Cappucino assasino is bugged, need help',
+  //     time: '12.03'
+  //   }
+  // ];
 
   const startTimer = (type) => {
     setActiveTimer(type);
@@ -341,7 +393,7 @@ export default function HomePage({navigation, route}) {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
           <View style={styles.greetingContainer}>
-            <Text style={styles.greetingText}>Hello, Sanny!</Text>
+            <Text style={styles.greetingText}>Hello, {username}!</Text>
             <Ionicons name="search-outline" size={24} color="#374151" />
           </View>
 
@@ -410,19 +462,19 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Groups */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("GroupChat", {token:token})}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Groups</Text>
               <View style={styles.groupsList}>
                 {groups.map((group, index) => (
                   <View key={index} style={styles.groupItem}>
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupName}>{group.name}</Text>
-                      <Text style={styles.groupTime}>{group.time}</Text>
+                      <Text style={styles.groupName}>{group.groupname}</Text>
+                      {/* <Text style={styles.groupTime}>{group.time}</Text> */}
                     </View>
                     <View style={styles.groupMessage}>
                       <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-                      <Text style={styles.groupMessageText}>{group.message}</Text>
+                      <Text style={styles.groupMessageText}>this is a subtitle (not yet implemented)</Text>
                     </View>
                   </View>
                 ))}
@@ -432,7 +484,7 @@ export default function HomePage({navigation, route}) {
   
           {/* Your Assignments */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('AssignmentTracker')}
+            onPress={() => navigation.navigate('TrackerPage', {token:token})}
             activeOpacity={0.7}
           >
             <View style={[styles.card, styles.lastCard]}>

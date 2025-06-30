@@ -78,7 +78,6 @@ export default function HomePage({navigation, route}) {
       minute: '2-digit', // Ensures the minute is always two digits (e.g., 00)
       hour12: false      // CRITICAL: Use 24-hour clock (19:00 instead of 7:00 PM)
     };
-  
     return date.toLocaleTimeString('en-GB', options);
   }
 
@@ -187,7 +186,7 @@ export default function HomePage({navigation, route}) {
   const groupedEvents = useMemo(() => {
     const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
     return sorted.reduce((acc, event) => {
-        const dateKey = getDateKey(event.time);
+        const dateKey = getDateKey(event.date);
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(event);
         return acc;
@@ -206,7 +205,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       case 'Tutorial': // Cases are now combined
@@ -218,7 +217,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       case 'Assignment':
@@ -230,7 +229,7 @@ export default function HomePage({navigation, route}) {
                 {event.location && ` - ${event.location}`}
               </Text>
             </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.time)}</Text>
+            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
           </View>
         );
       default:
@@ -262,19 +261,18 @@ export default function HomePage({navigation, route}) {
   };
 
   const leftArrowPressed = () => {
-    console.log(userid)
-    setStartDate(currentMonday => {
-      const newDay = new Date(currentMonday);
-      newDay.setDate(currentMonday.getDate() - 1);
+    setStartDate(startDate => {
+      const newDay = new Date(startDate);
+      newDay.setDate(startDate.getDate() - 1);
       return newDay;
     });
 
   };
   
   const rightArrowPressed = () => {
-    setStartDate(currentMonday => {
-      const newDay = new Date(currentMonday);
-      newDay.setDate(currentMonday.getDate() + 1);
+    setStartDate(startDate => {
+      const newDay = new Date(startDate);
+      newDay.setDate(startDate.getDate() + 1);
       return newDay;
     });
 
@@ -433,27 +431,37 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
   
           {/* Your Assignments */}
-<TouchableOpacity 
-  onPress={() => navigation.navigate('AssignmentTracker')}
-  activeOpacity={0.7}
->
-  <View style={[styles.card, styles.lastCard]}>
-    <Text style={styles.cardTitle}>Your Assignments</Text>
-    <View style={styles.assignmentsList}>
-      {assignments.map((assignment, index) => (
-        <View key={index} style={styles.assignmentItem}>
-          <View style={styles.assignmentHeader}>
-            <Text style={styles.assignmentTitle}>
-              {assignment.assignmentmodule} - {assignment.assignmentname}
-            </Text>
-            <Text style={styles.assignmentDue}>Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}</Text>
-          </View>
-          <ProgressBar progress={assignment.assignmentpercentage} />
-        </View>
-      ))}
-    </View>
-  </View>
-</TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AssignmentTracker')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.card, styles.lastCard]}>
+              <Text style={styles.cardTitle}>Your Assignments</Text>
+              <View style={styles.assignmentsList}>
+                {assignments.length > 0 ? (
+                  assignments.map((assignment, index) => (
+                    <View key={index} style={styles.assignmentItem}>
+                      <View style={styles.assignmentHeader}>
+                        <Text style={styles.assignmentTitle}>
+                          {assignment.assignmentmodule} - {assignment.assignmentname}
+                        </Text>
+                        <Text style={styles.assignmentDue}>
+                          Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}
+                        </Text>
+                      </View>
+                      <ProgressBar progress={assignment.assignmentpercentage} />
+                    </View>
+                  ))
+                ) : (
+                  <View style={styles.noAssignmentsView}>
+                    <Text style={styles.noAssignmentsText}>
+                      No assignments at the moment!
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
           
         </ScrollView>
   
@@ -790,5 +798,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  noAssignmentsView: {
+    backgroundColor: '#FFD93D',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noAssignmentsText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
+    textAlign: 'center',
   },
 });

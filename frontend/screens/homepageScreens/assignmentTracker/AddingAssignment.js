@@ -1,81 +1,100 @@
-import React, {useState} from 'react';
-// Make sure to import Alert
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
 
-export default function AddingAssignment({navigation, route}) {
+export default function AddingAssignment({ navigation, route }) {
   const { token } = route.params;
   const decodedToken = jwtDecode(token);
   const userid = decodedToken.userid;
 
+  // Form state
   const [taskName, setTaskName] = useState('');
   const [taskGroup, setTaskGroup] = useState('');
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineTime, setDeadlineTime] = useState('');
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
-  const [description, setDescription] = useState(''); // Note: description is not sent to the backend in this example as the API doesn't handle it.
+  const [description, setDescription] = useState('');
+
+  // --- New state for Date and Time Pickers ---
+  const [date, setDate] = useState(new Date());
+  const [time, setTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // --- onChange handlers for pickers ---
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === 'ios'); // On iOS, the picker is a modal
+    setDate(currentDate);
+  };
+
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setShowTimePicker(Platform.OS === 'ios');
+    setTime(currentTime);
+  };
 
   /**
    * Handles creating the assignment by sending a POST request to the server.
-   * Navigates back on success and shows an alert on failure.
    */
   const handleCreateAssignment = async () => {
-    // Basic validation to ensure required fields are not empty
-    if (!taskName || !taskGroup || !deadlineDate || !deadlineTime || !hours || !minutes) {
+    // 1. Validate inputs
+    if (!taskName || !taskGroup || !hours || !minutes) {
       Alert.alert("Incomplete Form", "Please fill out all the required fields.");
       return;
     }
 
-    // Combine hours and minutes into a single string for 'timeneeded'
+    // 2. Format data for the API
+    // Format date to "YYYY-MM-DD"
+    const formattedDate = date.toISOString().split('T')[0];
+
+    // Convert selected time to total minutes from midnight (e.g., 1:00 AM = 60)
+    const totalTimeInMinutes = time.getHours() * 60 + time.getMinutes();
+    
+    // Convert 'time needed' to total minutes
     const timeNeeded = (parseInt(hours, 10) || 0) * 60 + (parseInt(minutes, 10) || 0);
 
+    // 3. Construct payload
+    const assignmentData = {
+      userid: userid,
+      assignmentname: taskName,
+      assignmentmodule: taskGroup,
+      assignmentduedate: formattedDate, // Stored as a formatted string
+      assignmenttimeduedate: totalTimeInMinutes, // Stored as an integer
+      timeneeded: timeNeeded,
+    };
+
     try {
-      // Replace 'http://your-api-url.com' with your actual API endpoint
+      // 4. Send fetch request
+      // IMPORTANT: Replace with your actual API endpoint
       const response = await fetch('https://grindhub-production.up.railway.app/api/auth/setAssignment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // If you use token-based authentication (like Bearer), add it here
-          // 'Authorization': `Bearer ${token}`
+          // 'Authorization': `Bearer ${token}` // Uncomment if needed
         },
-        body: JSON.stringify({
-          userid: userid,
-          assignmentname: taskName,
-          assignmentmodule: taskGroup,
-          assignmentduedate: deadlineDate,
-          assignmenttimeduedate: deadlineTime,
-          timeneeded: timeNeeded,
-        }),
+        body: JSON.stringify(assignmentData),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        Alert.alert(
-          "Success!", 
-          "Your assignment has been created successfully."
-        );
-        // Navigate back to the previous screen
+        Alert.alert("Success!", "Your assignment has been created successfully.");
         navigation.goBack(); 
       } else {
-        // Handle server-side errors (e.g., validation failed)
         Alert.alert("Creation Failed", data.message || "An unexpected error occurred.");
       }
     } catch (error) {
-      // Handle network errors or other exceptions
       console.error("Fetch error:", error);
-      Alert.alert("Network Error", "Could not connect to the server. Please check your connection and try again.");
+      Alert.alert("Network Error", "Could not connect to the server.");
     }
   };
 
-
-  // ... rest of your component code (return statement, styles) remains the same
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF7ED' }}>
       <GrindHubHeader navigation={navigation} token={token} />
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
@@ -89,87 +108,68 @@ export default function AddingAssignment({navigation, route}) {
 
         {/* Form */}
         <View style={styles.formContainer}>
-          {/* Task Name */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Task Name</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., Mission 1 - Time Travel"
-              value={taskName}
-              onChangeText={setTaskName}
-            />
+            <TextInput style={styles.inputField} placeholder="e.g., Mission 1 - Time Travel" value={taskName} onChangeText={setTaskName} />
           </View>
-
-          {/* Task Group */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Task Group</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="e.g., CS1010S"
-              value={taskGroup}
-              onChangeText={setTaskGroup}
-            />
+            <TextInput style={styles.inputField} placeholder="e.g., CS1010S" value={taskGroup} onChangeText={setTaskGroup} />
           </View>
 
-          {/* Deadline */}
+          {/* --- Updated Deadline Section --- */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Deadline</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <TextInput
-                style={[styles.inputField, { flex: 1, marginRight: 8 }]}
-                placeholder="23 December 2025"
-                value={deadlineDate}
-                onChangeText={setDeadlineDate}
-              />
-              <TextInput
-                style={[styles.inputField, { flex: 0.5 }]}
-                placeholder="23:59"
-                value={deadlineTime}
-                onChangeText={setDeadlineTime}
-              />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+              {/* Date Picker Button */}
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.inputField, styles.pickerButton, { flex: 1 }]}>
+                <Text style={styles.inputText}>{date.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+              {/* Time Picker Button */}
+              <TouchableOpacity onPress={() => setShowTimePicker(true)} style={[styles.inputField, styles.pickerButton, { flex: 0.6 }]}>
+                <Text style={styles.inputText}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Time Needed */}
+          {/* --- DateTimePicker Modals --- */}
+          {showDatePicker && (
+            <DateTimePicker
+              testID="datePicker"
+              value={date}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
+          {showTimePicker && (
+            <DateTimePicker
+              testID="timePicker"
+              value={time}
+              mode="time"
+              is24Hour={true}
+              display="default"
+              onChange={onTimeChange}
+            />
+          )}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Time Needed</Text>
             <View style={styles.timeInputContainer}>
-              <TextInput
-                style={styles.timeInput}
-                keyboardType="numeric"
-                placeholder="1"
-                value={hours}
-                onChangeText={setHours}
-              />
+              <TextInput style={styles.timeInput} keyboardType="numeric" placeholder="1" value={hours} onChangeText={setHours} />
               <Text style={styles.timeLabel}>Hour(s)</Text>
-              <TextInput
-                style={styles.timeInput}
-                keyboardType="numeric"
-                placeholder="30"
-                value={minutes}
-                onChangeText={setMinutes}
-              />
+              <TextInput style={styles.timeInput} keyboardType="numeric" placeholder="30" value={minutes} onChangeText={setMinutes} />
               <Text style={styles.timeLabel}>Minutes</Text>
             </View>
           </View>
-
-          {/* Description */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.inputField, { minHeight: 100, textAlignVertical: 'top' }]}
-              placeholder="Need to learn cobra language first"
-              value={description}
-              onChangeText={setDescription}
-              multiline={true}
-            />
+            <TextInput style={[styles.inputField, { minHeight: 100, textAlignVertical: 'top' }]} placeholder="Need to learn cobra language first" value={description} onChangeText={setDescription} multiline={true} />
           </View>
         </View>
 
-        {/* Divider */}
         <View style={styles.divider} />
-
-        {/* Create Button */}
         <TouchableOpacity style={styles.createButton} onPress={handleCreateAssignment}>
           <Text style={styles.createButtonText}>Create Assignment</Text>
         </TouchableOpacity>
@@ -179,7 +179,6 @@ export default function AddingAssignment({navigation, route}) {
   );
 }
 
-// ... Styles remain the same
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
@@ -193,6 +192,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    backgroundColor: 'white',
   },
   headerTitle: {
     fontSize: 18,
@@ -212,9 +212,13 @@ const styles = StyleSheet.create({
   inputField: {
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#D1D5DB',
+  },
+  pickerButton: {
+    justifyContent: 'center',
   },
   inputText: {
     fontSize: 16,
@@ -230,12 +234,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#D1D5DB',
+    textAlign: 'center',
     minWidth: 60,
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   timeLabel: {
     fontSize: 14,

@@ -10,7 +10,7 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 from langchain.chat_models import init_chat_model
-from langchain.memory import ChatMessageHistory, ConversationBufferMemory
+# from langchain.memory import ChatMessageHistory, ConversationBufferMemory
 from langchain.chains import ConversationChain
 import requests
 import os
@@ -20,15 +20,14 @@ import greeting_farewell
 import motivation_stress_support
 import performance_assignment_query
 import study_plan_request
+from helpers import *
 
 class UserIntent(BaseModel):
     """
     This class will define the user intent based on the user message.
     It will be used to classify the intent of the user message.
     """
-    user_message: str = Field(..., description="User message to classify intent")
     intent: str = Field(..., description="Intent of the user message")
-    thread_id: str = Field(..., description="Thread ID for the conversation")
 
 def get_user_message():
     """
@@ -49,14 +48,35 @@ def save_user_message(user_message):
     """
     pass
 
-def classify_intent():
+def classify_intent(user_message):
     """
     This function will classify the intent of the user message.
 
     Input : User message (string)
     Output: Intent (string)
     """
-    pass
+
+    prompt_template = """
+    You are an AI assistant that classifies user intents based on their messages.
+    Given the user message, classify the intent into one of the following categories:
+    1. General Information
+    2. Greeting and Farewell
+    3. Motivation and Stress Support
+    4. Performance and Assignment Query
+    5. Study Plan Request
+    
+    User Message: {user_message}
+    Return the intent as a string. Please make sure that the string is exactly the same as the categories above. 
+    """
+    
+    intent = call_llm(
+        prompt_template=prompt_template,
+        model=UserIntent,
+        params={"user_message": user_message}
+    )
+
+    return intent.intent
+
 
 def create_or_find_thread():
     """
@@ -67,14 +87,18 @@ def create_or_find_thread():
     """
     pass
 
-def delegation_to_specific_ai_agent():
+def delegation_to_specific_ai_agent(intent: str, user_message: str):
     """
     This function will delegate the user message to a specific AI agent based on the intent classification.
 
     Input : User message (string), Intent (string)
     Output: AI Agent (object)
     """
-    pass
+    
+    if intent == "Motivation and Stress Support":
+        ai_agent = motivation_stress_support.MotivationStressSupport(api_key=os.getenv("GOOGLE_API_KEY"))
+        response = ai_agent.process_message(user_message=user_message)
+        return response
 
 def send_message_to_user():
     """
@@ -107,7 +131,21 @@ def local_test():
     This function is for local testing of the chatbot core functionality.
     It will simulate a conversation with the AI agent.
     """
-    pass
+    user_message = input("User message: ")
+    intent = classify_intent(user_message=user_message)
+
+    print(f"Classified Intent: {intent}")
+
+    if intent == "Motivation and Stress Support":
+        delegation_to_specific_ai_agent(intent=intent, user_message=user_message)
+
+    
+
+if __name__ == "__main__":
+    local_test()
+
+    # Uncomment the line below to run the main function
+    # main()
     
 
 

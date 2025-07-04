@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any
 from langchain_core.output_parsers import JsonOutputParser
 
-class PerformanceAssignmentQuery():
+class GreetingFarewell():
     """
     Main class for the Motivation and Stress Support AI Agent.
     """
@@ -62,21 +62,16 @@ class PerformanceAssignmentQuery():
         # print(f"text result: {text_result}")
         # return text_result
         
-    # def extract_user_message (self, user_message: str) -> Dict[str, Any]:
-    #     """
-    #     Extract user message and context from the input.
-    #     :param user_message: The message from the user.
-    #     :return: A dictionary containing the user message and context.
-    #     """
-    #     # Here we can implement any extraction logic if needed
+    def extract_user_message (self, user_message: str) -> Dict[str, Any]:
+        """
+        Extract user message and context from the input.
+        :param user_message: The message from the user.
+        :return: A dictionary containing the user message and context.
+        """
+        # Here we can implement any extraction logic if needed
 
-    #     # extract:
-    #     # time range, ex: today, this week
-    #     # module/class
-    #     # assignment type and details, ex: essay, project, exam
-
-    #     # need data from backend
-    #     return {
-    #         "user_message": user_message,
-    #         "context": "No additional context provided."
-    #     }
+        # need data from backend
+        return {
+            "user_message": user_message,
+            "context": "No additional context provided."
+        }

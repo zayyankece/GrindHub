@@ -15,11 +15,11 @@ from langchain.chains import ConversationChain
 import requests
 import os
 
-import general_information
-import greeting_farewell
-import motivation_stress_support
-import performance_assignment_query
-import study_plan_request
+from AI_Agents.general_information import GeneralInformation
+from AI_Agents.greeting_farewell import GreetingFarewell
+from AI_Agents.motivation_stress_support import MotivationStressSupport
+from AI_Agents.performance_assignment_query import PerformanceAssignmentQuery
+from AI_Agents.study_plan_request import StudyPlanRequest
 from helpers import *
 
 class UserIntent(BaseModel):
@@ -97,7 +97,7 @@ def delegation_to_specific_ai_agent(intent: str, user_message: str, context: str
     """
     
     if intent == "Motivation and Stress Support":
-        ai_agent = motivation_stress_support.MotivationStressSupport(api_key=os.getenv("GOOGLE_API_KEY"))
+        ai_agent = MotivationStressSupport(api_key=os.getenv("GOOGLE_API_KEY"))
         response = ai_agent.process_message(user_message=user_message, context=context)
         return response
 

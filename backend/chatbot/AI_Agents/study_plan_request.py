@@ -9,7 +9,13 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any
 from langchain_core.output_parsers import JsonOutputParser
 
-class PerformanceAssignmentQuery():
+class ExtractedUserMessageComponent(BaseModel):
+    """
+    Represents a component of the extracted user message.
+    """
+    time_range: str = Field(..., description="Time range of the study plan, e.g., 'today', 'this week'.")
+
+class StudyPlanRequest():
     """
     Main class for the Motivation and Stress Support AI Agent.
     """
@@ -36,31 +42,29 @@ class PerformanceAssignmentQuery():
 
         llm = self.chat_model
 
-        # system_prompt = """
-        # You are an AI assistant that provides motivation and stress support to users.
-        # Users are most likely stressed due to academic pressures, personal issues, or general life challenges.
-        # You should respond with empathetic and supportive messages that help alleviate stress and provide motivation.
-        # Your responses should be encouraging and uplifting, focusing on positive reinforcement and practical advice.
-        # Your response should also be easily readable from a mobile device, so keep it concise and to the point.
-        # """
+        system_prompt = """
+        You are an AI assistant that helps to manage user's assignments, classes, study logs, study plan, and preferences.
+        You can analyze deadlines, user's past performance, and suggest a prioritized list of tasks for the day/week based on user input.
+        Your response should also be easily readable from a mobile device, so keep it concise and to the point.
+        """
 
-        # user_prompt = f"""
-        # User: {user_message}
-        # Context: {context}
-        # Please provide a motivational and supportive response to the user's message.
-        # """
+        user_prompt = f"""
+        User: {user_message}
+        Context: {context}
+        Please provide a detailed study plan based on the user's message and context.
+        """
 
-        # # formatted_prompt = prompt_template.format(user_message=user_message)
+        # formatted_prompt = prompt_template.format(user_message=user_message)
 
-        # messages = [
-        #     SystemMessage(content=system_prompt),
-        #     HumanMessage(content=user_prompt)
-        # ]
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt)
+        ]
 
-        # result = llm.invoke(messages)
-        # text_result = result.content
-        # print(f"text result: {text_result}")
-        # return text_result
+        result = llm.invoke(messages)
+        text_result = result.content
+        print(f"text result: {text_result}")
+        return text_result
         
     def extract_user_message (self, user_message: str) -> Dict[str, Any]:
         """
@@ -69,13 +73,8 @@ class PerformanceAssignmentQuery():
         :return: A dictionary containing the user message and context.
         """
         # Here we can implement any extraction logic if needed
-
-        # extract:
         # time range, ex: today, this week
-        # module/class
-        # assignment type and details, ex: essay, project, exam
-
-        # need data from backend
+        # need data from database to give more personalized response
         return {
             "user_message": user_message,
             "context": "No additional context provided."

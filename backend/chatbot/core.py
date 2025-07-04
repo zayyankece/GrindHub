@@ -40,6 +40,15 @@ def get_user_message():
     user_message = input("User: ")
     return user_message
 
+def save_user_message(user_message):
+    """
+    This function will save the user message to the database.
+
+    Input : User message (string)
+    Output: None
+    """
+    pass
+
 def classify_intent():
     """
     This function will classify the intent of the user message.
@@ -73,6 +82,23 @@ def send_message_to_user():
 
     Input : AI Agent response (string)
     Output: None
+    """
+    pass
+
+def save_ai_agent_response():
+    """
+    This function will save the AI agent's response to the database.
+
+    Input : AI Agent response (string)
+    Output: None
+    """
+    pass
+
+def main():
+    """
+    This function will be the main function of the chatbot feature.
+    It will handle the user message, intent classification, delegation to specific AI agent,
+    and sending the message to the user.
     """
     pass
 

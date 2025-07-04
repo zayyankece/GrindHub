@@ -27,7 +27,7 @@ class MotivationStressSupport():
         )
         self.parser = JsonOutputParser(pydantic_object=BaseModel)
     
-    def process_message(self, user_message):
+    def process_message(self, user_message, context):
         """
         Process the user message and return a response.
         :param user_message: The message from the user.
@@ -46,6 +46,7 @@ class MotivationStressSupport():
 
         user_prompt = f"""
         User: {user_message}
+        Context: {context}
         Please provide a motivational and supportive response to the user's message.
         """
 
@@ -59,4 +60,5 @@ class MotivationStressSupport():
         result = llm.invoke(messages)
         text_result = result.content
         print(f"text result: {text_result}")
+        return text_result
         

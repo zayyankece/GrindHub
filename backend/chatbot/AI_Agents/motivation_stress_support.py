@@ -8,6 +8,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 from typing import Dict, Any
 from langchain_core.output_parsers import JsonOutputParser
+import json
+import requests
 
 class MotivationStressSupport():
     """
@@ -61,4 +63,34 @@ class MotivationStressSupport():
         text_result = result.content
         print(f"text result: {text_result}")
         return text_result
+    
+    def get_data_from_database():
+        """
+        Based on user message, get some data from database to add more context. 
+        Input : time range, userid
+        Output : data from database
+        """
+        try:
+            url = "https://grindhub-production.up.railway.app/api/auth/getPerformanceAssignmentQuery"
+            headers = {'Content-Type': 'application/json'}
+            payload = {'userid': 'example_user_id', "time_range":"time_range", "class":"class"}  # Replace with actual user ID
+
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('success'):
+                print("Data fetched successfully:", data)
+            else:
+                print("Failed to fetch data:", data.get('message', 'No message provided.'))
+        
+        except requests.exceptions.RequestException as e:
+            print(f"Error during API request: {e}")
+            return {"success": False, "message": f"Request error: {e}"}
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON response: {e}")
+            return {"success": False, "message": f"JSON parsing error: {e}"}
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return {"success": False, "message": f"An unexpected error occurred: {e}"}
         

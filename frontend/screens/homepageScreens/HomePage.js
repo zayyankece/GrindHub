@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,14 @@ import {
   Image,
   Modal,
   Button,
-  Pressable
+  Pressable,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from './components/GrindHubFooter';
 import GrindHubHeader from './components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
+import io from 'socket.io-client'; // 👈 Import socket.io-client
 
 const FreeTimeCard = () => (
   <View style={styles.scheduleItem}>
@@ -27,11 +29,17 @@ const FreeTimeCard = () => (
   </View>
 );
 
+// Define your Socket.IO server URL here
+// IMPORTANT: Use your actual local IP address if testing on a physical device,
+// otherwise 'http://localhost:5000' for emulators/simulators.
+// For Android emulator, 'http://10.0.2.2:5000' is typically used to access host machine's localhost.
+const SOCKET_SERVER_URL = 'https://grindhubchatbot-production.up.railway.app'; // Example for Android emulator
+
 export default function HomePage({navigation, route}) {
 
   const { token } = route.params
   const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const userid = decodedToken.userid
 
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
@@ -41,6 +49,7 @@ export default function HomePage({navigation, route}) {
 
   const [isLoading, setIsLoading] = useState(true)
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const todayDate = new Date(today);
@@ -48,6 +57,64 @@ export default function HomePage({navigation, route}) {
     todayDate.setHours(0, 0, 0, 0);
     return todayDate;
   })
+
+  // 👇 New state for chat messages
+  const [messages, setMessages] = useState([]);
+  // 👇 New state for chat input
+  const [chatInput, setChatInput] = useState('');
+  // 👇 Ref for auto-scrolling chat
+  const chatScrollViewRef = useRef();
+
+  // 👇 Socket.IO instance
+  const socket = useMemo(() => io(SOCKET_SERVER_URL, {
+    transports: ['websocket'], // Prefer WebSocket for React Native
+    forceNew: true, // Forces a new connection every time
+  }), []); // Empty dependency array means it's created once
+
+  useEffect(() => {
+    // Socket.IO event listeners
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server!');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server!');
+    });
+
+    socket.on('chat_message', (msg) => {
+      console.log('Received message:', msg);
+      setMessages((prevMessages) => [...prevMessages, msg]);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket.IO connection error:', err.message);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('chat_message');
+      socket.off('connect_error');
+      socket.disconnect(); // Disconnect when component unmounts
+    };
+  }, [socket]); // Re-run effect if socket instance changes (which it won't with useMemo)
+
+  // Scroll to bottom of chat when new message arrives
+  useEffect(() => {
+    if (chatScrollViewRef.current) {
+      chatScrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (chatInput.trim()) {
+      const userMessage = { sender: 'User', message: chatInput.trim() };
+      setMessages((prevMessages) => [...prevMessages, userMessage]); // Add user message to UI immediately
+      socket.emit('user_message', { message: chatInput.trim() }); // Send to server
+      setChatInput(''); // Clear input
+    }
+  };
 
   const getDateKey = (isoString) => isoString.substring(0, 10);
 
@@ -73,7 +140,7 @@ export default function HomePage({navigation, route}) {
   function formatTimeToHHMM(dateInput, timeZone) {
     // Ensure we are working with a Date object
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-  
+
     // Formatting options to get HH:mm in 24-hour format
     const options = {
       timeZone: timeZone,
@@ -93,7 +160,7 @@ export default function HomePage({navigation, route}) {
       userid : userid,
       }),
     });
-    
+
     const data = await response.json()
 
     if (data.success == false){
@@ -115,7 +182,7 @@ export default function HomePage({navigation, route}) {
       userid : userid,
       }),
     });
-    
+
     const data = await response.json()
 
     if (data.success == false){
@@ -146,7 +213,7 @@ export default function HomePage({navigation, route}) {
       } catch (error) {
         console.error("Failed to fetch or combine data:", error);
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
     const fetchGroups = async () => {
@@ -157,7 +224,7 @@ export default function HomePage({navigation, route}) {
           body: JSON.stringify({
           userid: userid,
           }),
-        }); 
+        });
 
         const data = await response.json();
 
@@ -187,7 +254,7 @@ export default function HomePage({navigation, route}) {
           }),
         });
         const data = await response.json();
- 
+
         if (data.success){
           setUsername(data.existingUser[0].username)
         }
@@ -200,7 +267,7 @@ export default function HomePage({navigation, route}) {
     fetchAndCombineData();
     getUsername();
 
-  }, []); 
+  }, []);
 
   function combineAndExtract(classesArray, assignmentsArray) {
     // Process the classes array using map to transform each item
@@ -213,7 +280,7 @@ export default function HomePage({navigation, route}) {
       time: classItem.starttime,
       percentage: null
     }));
-  
+
     // Process the assignments array
     const extractedAssignments = assignmentsArray.map(assignmentItem => ({
       module_code: assignmentItem.assignmentmodule,
@@ -224,14 +291,14 @@ export default function HomePage({navigation, route}) {
       time: assignmentItem.assignmenttimeduedate,
       percentage: assignmentItem.assignmentpercentage
     }));
-  
+
     // Combine both transformed arrays into one
     const combinedList = [...extractedClasses, ...extractedAssignments];
 
     combinedList.sort((a, b) => {
       return new Date(a.time) - new Date(b.time); // Just swap a and b
     });
-  
+
     return combinedList;
   }
 
@@ -243,7 +310,7 @@ export default function HomePage({navigation, route}) {
         acc[dateKey].push(event);
         return acc;
     }, {});
-  }, [combinedData]); 
+  }, [combinedData]);
 
   const renderEventCard = (event, index) => {
 
@@ -288,19 +355,19 @@ export default function HomePage({navigation, route}) {
         return null
     }
   };
-  
+
   // The modified, cleaner renderDays function
   const renderDays = ({ todayDate }) => {
     const days = [];
     const numberOfDaysToShow = 1; // Kept for future flexibility
-  
+
     for (let i = 0; i < numberOfDaysToShow; i++) {
       const currentDate = new Date(todayDate);
       currentDate.setDate(todayDate.getDate() + i);
-  
+
       const dateKey = getDateKey(currentDate.toISOString());
       const eventsForDay = groupedEvents[dateKey] || [];
-  
+
       days.push(
         <View key={dateKey}>
           {eventsForDay.length > 0
@@ -320,7 +387,7 @@ export default function HomePage({navigation, route}) {
     });
 
   };
-  
+
   const rightArrowPressed = () => {
     setStartDate(startDate => {
       const newDay = new Date(startDate);
@@ -332,19 +399,6 @@ export default function HomePage({navigation, route}) {
 
   const [activeTimer, setActiveTimer] = useState(null);
 
-  // const groups = [
-  //   { 
-  //     name: 'Only for people with 5.00 GPA', 
-  //     message: 'Guys, let\'s finish entire material tonight',
-  //     time: '13.54'
-  //   },
-  //   { 
-  //     name: 'Bombardillo Crocodilo Project', 
-  //     message: 'Cappucino assasino is bugged, need help',
-  //     time: '12.03'
-  //   }
-  // ];
-
   const startTimer = (type) => {
     setActiveTimer(type);
   };
@@ -352,14 +406,14 @@ export default function HomePage({navigation, route}) {
   const ProgressBar = ({ progress }) => (
     <View style={styles.progressBarContainer}>
       <View style={styles.progressBarBackground}>
-        <View 
+        <View
           style={[
-            styles.progressBarFill, 
-            { 
+            styles.progressBarFill,
+            {
               width: `${progress}%`,
               backgroundColor: progress >= 50 ? '#10B981' : '#22C55E'
             }
-          ]} 
+          ]}
         />
       </View>
       <Text style={styles.progressText}>{progress}% Completed</Text>
@@ -373,13 +427,13 @@ export default function HomePage({navigation, route}) {
     return (
     <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
-        
+
         <GrindHubHeader navigation={navigation}/>
-  
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}/>  
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}/>
 
         <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
-        
+
       </SafeAreaView>
     )
   }
@@ -387,9 +441,9 @@ export default function HomePage({navigation, route}) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
-        
+
         <GrindHubHeader navigation={navigation} token={token}/>
-  
+
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
           <View style={styles.greetingContainer}>
@@ -408,10 +462,10 @@ export default function HomePage({navigation, route}) {
                     style={styles.arrowIcon}
                   />
                 </TouchableOpacity>
-          
+
                 {/* Date Range Text */}
                 <Text style={styles.dateText}>{formattedToday}</Text>
-          
+
                 {/* Interactive Right Arrow */}
                 <TouchableOpacity onPress={() => rightArrowPressed()}>
                   <Image
@@ -423,13 +477,13 @@ export default function HomePage({navigation, route}) {
               {renderDays({todayDate : startDate})}
             </View>
           {/* </TouchableOpacity> */}
-  
+
           {/* Study Timer */}
           <TouchableOpacity>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Study Timer</Text>
               <View style={styles.timerButtons}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.timerButton,
                     activeTimer === 'CS2030' && styles.timerButtonActive
@@ -443,7 +497,7 @@ export default function HomePage({navigation, route}) {
                     Start CS2030 Timer
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.timerButton,
                     activeTimer === 'Other' && styles.timerButtonActive
@@ -460,7 +514,7 @@ export default function HomePage({navigation, route}) {
               </View>
             </View>
           </TouchableOpacity>
-  
+
           {/* Your Groups */}
           <TouchableOpacity onPress={() => navigation.navigate("GroupChat", {token:token})}>
             <View style={styles.card}>
@@ -481,7 +535,7 @@ export default function HomePage({navigation, route}) {
               </View>
             </View>
           </TouchableOpacity>
-  
+
           {/* Your Assignments */}
           <TouchableOpacity
             onPress={() => navigation.navigate('TrackerPage', {token:token})}
@@ -514,26 +568,26 @@ export default function HomePage({navigation, route}) {
               </View>
             </View>
           </TouchableOpacity>
-          
+
         </ScrollView>
-  
-        {/* 👇 The Modal Component */}
+
+        {/* Modal for "Add" functionality */}
         <Modal
             transparent={true}
             animationType="fade"
             visible={addModalVisible}
             onRequestClose={() => setAddModalVisible(false)}>
-            
+
             {/* This Pressable now covers the full screen thanks to the style fix */}
             <Pressable
               style={styles.modalOverlay}
               onPress={() => setAddModalVisible(false)}>
-              
+
               {/* This inner Pressable stops touches on the modal from closing it */}
                 <View style={styles.modalView}>
                   <View style={styles.innerContainer}>
 
-                    {/* 👇 Simplified TouchableOpacity items */}
+                    {/* Simplified TouchableOpacity items */}
                     <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingModule", {token:token})}}>
                       <Text style={styles.itemText}>Add Module</Text>
                     </TouchableOpacity>
@@ -541,7 +595,7 @@ export default function HomePage({navigation, route}) {
                     <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingClass", {token:token})}}>
                       <Text style={styles.itemText}>Add Class</Text>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingAssignment", {token:token})}}>
                       <Text style={styles.itemText}>Add Task</Text>
                     </TouchableOpacity>
@@ -551,10 +605,60 @@ export default function HomePage({navigation, route}) {
             </Pressable>
         </Modal>
 
-      {/* 👇 Your FAB code, which now sits "under" the modal */}
+        {/* New Modal for Chatbot */}
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={chatModalVisible}
+          onRequestClose={() => setChatModalVisible(false)}>
+          <Pressable
+            style={styles.chatModalOverlay}
+            onPress={() => setChatModalVisible(false)}>
+            <Pressable style={styles.chatModalContainer} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.chatHeader}>
+                <Text style={styles.chatTitle}>GrindHub Bot</Text>
+                <TouchableOpacity onPress={() => setChatModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#1F2937" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                style={styles.chatContent}
+                ref={chatScrollViewRef} // Attach ref for auto-scrolling
+                onContentSizeChange={() => chatScrollViewRef.current.scrollToEnd({ animated: true })}
+              >
+                {/* Dynamically rendered chat messages */}
+                {messages.map((msg, index) => (
+                  <View
+                    key={index}
+                    style={msg.sender === 'Bot' ? styles.chatMessageBot : styles.chatMessageUser}
+                  >
+                    <Text style={styles.chatMessageText}>{msg.message}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={styles.chatInputContainer}>
+                <TextInput
+                  style={styles.chatTextInput}
+                  placeholder="Type your message..."
+                  placeholderTextColor="#6B7280"
+                  value={chatInput}
+                  onChangeText={setChatInput}
+                  onSubmitEditing={sendMessage} // Send message on pressing enter/return
+                  returnKeyType="send"
+                />
+                <TouchableOpacity style={styles.chatSendButton} onPress={sendMessage}>
+                  <Ionicons name="send" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+
+      {/* Your FAB code, which now sits "under" the modal */}
       <View style={styles.fab}>
         <View style={styles.fabContainer}>
-          <TouchableOpacity style={styles.fabButton}>
+          <TouchableOpacity style={styles.fabButton} onPress={() => setChatModalVisible(true)}>
             <Ionicons name="chatbubble" size={16} color="white" />
           </TouchableOpacity>
           <TouchableOpacity
@@ -565,10 +669,10 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
         </View>
       </View>
-  
+
         {/* Bottom Navigation */}
         <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
-        
+
       </SafeAreaView>
     );
   }
@@ -863,5 +967,83 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#1F2937',
     textAlign: 'center',
+  },
+  // New styles for Chat Modal
+  chatModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  chatModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '75%', // Adjust height as needed
+    width: '100%',
+    paddingTop: 10,
+    paddingHorizontal: 15,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  chatTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  chatContent: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  chatMessageBot: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    maxWidth: '80%',
+    alignSelf: 'flex-start',
+  },
+  chatMessageUser: {
+    backgroundColor: '#DCF8C6', // A light green for user messages
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    maxWidth: '80%',
+    alignSelf: 'flex-end',
+  },
+  chatMessageText: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  chatInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  chatTextInput: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginRight: 10,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  chatSendButton: {
+    backgroundColor: '#F97316',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

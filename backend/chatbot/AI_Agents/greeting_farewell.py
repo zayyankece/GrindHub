@@ -45,7 +45,6 @@ class GreetingFarewell(): # Renamed the class for clarity
         - If the user's message is a farewell (e.g., "goodbye", "bye", "see you", "farewell", "talk to you later"), respond with a polite and friendly farewell.
         - Acknowledge the current time of day (morning, afternoon, evening) if the greeting implies it.
         - Keep your responses brief, positive, and natural.
-        - The current time is {context.get('current_time', 'unknown')}. The current location is {context.get('current_location', 'unknown')}. Use this if relevant for time-based greetings.
         - Your response should also be easily readable from a mobile device, so keep it concise and to the point.
         """
 

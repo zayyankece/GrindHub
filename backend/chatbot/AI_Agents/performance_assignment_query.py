@@ -51,21 +51,21 @@ class PerformanceAssignmentQuery(): # Renamed the class for clarity
         llm = self.chat_model
 
         # Step 1: Extract relevant parameters from the user message
-        extracted_params = self.extract_user_message(user_message)
-        time_range = extracted_params.get("time_range")
-        module_class = extracted_params.get("module_class")
-        assignment_type = extracted_params.get("assignment_type")
+        # extracted_params = self.extract_user_message(user_message)
+        # time_range = extracted_params.get("time_range")
+        # module_class = extracted_params.get("module_class")
+        # assignment_type = extracted_params.get("assignment_type")
 
-        # Step 2: Fetch data from the database using extracted parameters
-        performance_data = self.get_data_from_database(
-            time_range=time_range,
-            class_name=module_class # Using module_class for the database function's class_name parameter
-        )
+        # # Step 2: Fetch data from the database using extracted parameters
+        # performance_data = self.get_data_from_database(
+        #     time_range=time_range,
+        #     class_name=module_class # Using module_class for the database function's class_name parameter
+        # )
 
         # Append fetched data to context for the LLM
-        if context is None:
-            context = {}
-        context['performance_data'] = performance_data # Add fetched data to context
+        # if context is None:
+        #     context = {}
+        # context['performance_data'] = performance_data # Add fetched data to context
 
         system_prompt = """
         You are an AI assistant specialized in providing users with their academic performance data.
@@ -81,7 +81,6 @@ class PerformanceAssignmentQuery(): # Renamed the class for clarity
 
         user_prompt = f"""
         User query: "{user_message}"
-        Available performance data: {json.dumps(performance_data, indent=2) if performance_data else "No specific data available for this query."}
         
         Please provide a concise summary of the user's academic performance based on the query and the provided data.
         """

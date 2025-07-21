@@ -20,6 +20,7 @@ from AI_Agents.greeting_farewell import GreetingFarewell
 from AI_Agents.motivation_stress_support import MotivationStressSupport
 from AI_Agents.performance_assignment_query import PerformanceAssignmentQuery
 from AI_Agents.study_plan_request import StudyPlanRequest
+from AI_Agents.others import Others
 from helpers import *
 
 class UserIntent(BaseModel):
@@ -78,7 +79,6 @@ def classify_intent(user_message):
 
     return intent.intent
 
-
 def create_or_find_thread():
     """
     This function will create a new thread or find an existing thread based on user email.
@@ -93,13 +93,44 @@ def delegation_to_specific_ai_agent(intent: str, user_message: str, context: str
     This function will delegate the user message to a specific AI agent based on the intent classification.
 
     Input : User message (string), Intent (string)
-    Output: AI Agent (object)
+    Output: AI Agent response (object)
     """
     
     if intent == "Motivation and Stress Support":
-        ai_agent = MotivationStressSupport(api_key=os.getenv("GOOGLE_API_KEY"))
+        ai_agent = MotivationStressSupport(api_key=os.getenv("GOOGLE_API_KEY"), userid="nabilrakaiza")
         response = ai_agent.process_message(user_message=user_message, context=context)
         return response
+    
+    elif intent == "Performance and Assignment Query":
+        ai_agent = PerformanceAssignmentQuery(api_key=os.getenv("GOOGLE_API_KEY"), userid="nabilrakaiza")
+        response = ai_agent.process_message(user_message=user_message, context=context)
+        return response
+    
+    elif intent == "Study Plan Request":
+        ai_agent = StudyPlanRequest(api_key=os.getenv("GOOGLE_API_KEY"), userid="nabilrakaiza")
+        response = ai_agent.process_message(user_message=user_message, context=context)
+        return response
+    
+    elif intent == "General Information":
+        ai_agent = GeneralInformation(api_key=os.getenv("GOOGLE_API_KEY"))
+        response = ai_agent.process_message(user_message=user_message, context=context)
+        return response
+    
+    elif intent == "Greeting and Farewell":
+        ai_agent = GreetingFarewell(api_key=os.getenv("GOOGLE_API_KEY"))
+        response = ai_agent.process_message(user_message=user_message, context=context)
+        return response
+    
+    elif intent == "Others":
+        # Handle other intents or fallback to a default response
+        # You can create a generic AI agent or return a predefined message
+        ai_agent = Others(api_key=os.getenv("GOOGLE_API_KEY"), userid="nabilrakaiza")
+        response = ai_agent.process_message(user_message=user_message, context=context)
+        return response
+    
+    else:
+        # If the intent is not recognized, return a default response or handle accordingly
+        return "I'm sorry, I don't understand your request. Can you please rephrase it?"
 
 def send_message_to_user():
     """
@@ -142,10 +173,13 @@ def local_test():
     
     # print(f"Classified Intent: {intent}")
 
-    for a in range(3):
+    user_message = ""
+
+    while user_message != "exit":
         # if intent == "Motivation and Stress Support":
             user_message = input("User message: ")
-            response = delegation_to_specific_ai_agent(intent="Motivation and Stress Support", user_message=user_message, context=context)
+            intent = classify_intent(user_message=user_message)
+            response = delegation_to_specific_ai_agent(intent=intent, user_message=user_message, context=context)
             context = call_llm_text_response(
                 prompt_template="""Summarise the following conversation between a user and a chatbot AI Agent. Please make sure that current context is included in the summary.
                 context : {context}
@@ -158,7 +192,7 @@ def local_test():
                 }
             ) ## update context to database after every chatbot response?, and reset context to empty if no message from user for 30 minutes ?
             # so there will be a database dedicated to holding the context of the conversation, and delete the context if no message from user for 30 minutes
-            print(context)
+            print(context, intent)
     # context = None # get new context by summarising last context + last user message + last chatbot response
 
     
@@ -168,82 +202,3 @@ if __name__ == "__main__":
 
     # Uncomment the line below to run the main function
     # main()
-    
-
-
-
-
-
-## GEMINI CODE 
-# # Ensure GOOGLE_API_KEY is set
-# # In a real application, you'd use a more secure way to manage API keys
-# if not os.environ.get("GOOGLE_API_KEY"):
-#   os.environ["GOOGLE_API_KEY"] = input("Enter API key for Google Gemini: ")
-
-# # Initialize the chat model
-# # Using gemini-2.5-flash for faster responses
-# model = init_chat_model("gemini-2.5-flash", model_provider="google_genai")
-
-# # 1. Memory Management: Initialize ChatMessageHistory to store messages
-# # This object will hold the entire conversation history, acting as the agent's "memory".
-# # Each message (HumanMessage, AIMessage, SystemMessage) is stored sequentially.
-# history = ChatMessageHistory()
-
-# # 2. ConversationBufferMemory: Wrap the history in a ConversationBufferMemory
-# # ConversationBufferMemory is a type of memory that stores all previous messages
-# # and passes them to the LLM. `chat_memory` is where our `ChatMessageHistory`
-# # instance is linked. `return_messages=True` ensures the memory returns
-# # a list of message objects, which is suitable for chat models.
-# memory = ConversationBufferMemory(chat_memory=history, return_messages=True)
-
-# # 3. ConversationChain: Create a conversation chain with the model and memory
-# # The ConversationChain is a simple chain that takes the latest input,
-# # combines it with the conversation history from `memory`, and passes it to the `llm`.
-# # `verbose=True` is very useful for debugging, as it prints out the prompt
-# # that is sent to the LLM and the parsed response.
-# conversation = ConversationChain(
-#     llm=model,
-#     memory=memory,
-#     verbose=True # Set to True to see the internal workings of the chain
-# )
-
-# # Optional: Add an initial system message or AI message to the memory
-# # This can help set the persona or initial context for the AI agent
-# # before the user even types anything.
-# memory.chat_memory.add_message(SystemMessage(content="You are a helpful AI assistant that remembers past conversations. Your goal is to provide concise and relevant answers."))
-# memory.chat_memory.add_message(AIMessage(content="Hello! I'm ready to chat. I will remember our conversation as we go along."))
-
-# print("AI Agent: Hello! I'm ready to chat. I will remember our conversation as we go along.")
-
-# # 4. Conversation Loop: Engage in a continuous conversation
-# print("Type 'exit' to end the conversation.")
-# while True:
-#     try:
-#         user_input = input("You: ")
-#         if user_input.lower() == 'exit':
-#             print("AI Agent: Goodbye! It was nice chatting.")
-#             break
-
-#         # Predict the AI's response using the conversation chain
-#         # When `predict` is called, the ConversationChain automatically:
-#         # a) Retrieves the current conversation history from `memory`.
-#         # b) Formats the history along with the new `user_input` into a prompt.
-#         # c) Sends this prompt to the `llm` (our Gemini model).
-#         # d) Receives the LLM's response.
-#         # e) Adds both the `user_input` (as HumanMessage) and the LLM's response
-#         #    (as AIMessage) to the `memory` (our `history` object).
-#         response = conversation.predict(input=user_input)
-
-#         print(f"AI Agent: {response}")
-
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-#         print("Please ensure your GOOGLE_API_KEY is correctly set and you have an active internet connection.")
-#         break
-
-# print("\n--- Conversation History (Agent's Memory) ---")
-# # After the loop exits, we can inspect the full conversation history
-# # stored in the `history` object.
-# for message in history.messages:
-#     # Print each message with its type (Human, AI, System) and content
-#     print(f"{message.type.capitalize()}: {message.content}")

@@ -50,21 +50,23 @@ class StudyPlanRequest(): # Renamed the class for clarity
         :return: A detailed study plan for the user.
         """
         llm = self.chat_model
+        
+        study_data = None
 
         # Step 1: Extract relevant parameters from the user message
-        extracted_params = self.extract_user_message(user_message)
-        time_range = extracted_params.get("time_range")
-        focus_area = extracted_params.get("focus_area") # New extracted field
-        plan_type = extracted_params.get("plan_type") # New extracted field
+        # extracted_params = self.extract_user_message(user_message)
+        # time_range = extracted_params.time_range
+        # focus_area = extracted_params.focus_area # New extracted field
+        # plan_type = extracted_params.plan_type # New extracted field
 
-        # Step 2: Fetch user-specific study data from the database
-        study_data = self.get_data_from_database(time_range=time_range)
+        # # Step 2: Fetch user-specific study data from the database
+        # study_data = self.get_data_from_database(time_range=time_range)
 
-        # Append fetched data and extracted params to context for the LLM
+        # # Append fetched data and extracted params to context for the LLM
         if context is None:
             context = {}
-        context['study_data'] = study_data
-        context['extracted_plan_params'] = extracted_params
+        # context['study_data'] = study_data
+        # context['extracted_plan_params'] = extracted_params
 
         system_prompt = f"""
         You are an intelligent AI assistant dedicated to creating personalized study plans.
@@ -78,12 +80,10 @@ class StudyPlanRequest(): # Renamed the class for clarity
         - If 'plan_type' is specific (e.g., 'summary', 'detailed'), adhere to it.
         - If key information is missing for a good plan (e.g., no upcoming assignments), inform the user.
         - Ensure the response is easily readable from a mobile device, keeping it concise and clearly formatted.
-        - Current date: {context.get('current_date', 'unknown')}, Current time: {context.get('current_time', 'unknown')}.
         """
 
         user_prompt = f"""
         User request for study plan: "{user_message}"
-        Extracted plan parameters: {json.dumps(extracted_params.dict(), indent=2)}
         User's study data (assignments, classes, logs, preferences): {json.dumps(study_data, indent=2) if study_data else "No specific study data available."}
         
         Please generate a personalized and detailed study plan based on this information.

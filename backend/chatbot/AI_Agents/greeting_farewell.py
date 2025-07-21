@@ -1,7 +1,6 @@
 """
-This file is for AI Agent that provides motivation and stress support to users.
+This file is for an AI Agent that handles user greetings and farewells.
 """
-
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -9,9 +8,10 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any
 from langchain_core.output_parsers import JsonOutputParser
 
-class GreetingFarewell():
+class GreetingFarewell(): # Renamed the class for clarity
     """
-    Main class for the Motivation and Stress Support AI Agent.
+    Main class for the Greeting and Farewell AI Agent.
+    Handles user greetings and farewells with appropriate and friendly responses.
     """
 
     def __init__(self, api_key: str):
@@ -23,55 +23,47 @@ class GreetingFarewell():
         self.chat_model = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash",
             google_api_key=self.api_key,
-            temperature=0.2
+            temperature=0.7 # Increased temperature slightly for more natural, varied greetings/farewells
         )
-        self.parser = JsonOutputParser(pydantic_object=BaseModel)
+        self.parser = JsonOutputParser(pydantic_object=BaseModel) # Parser retained, though not strictly used for simple text output
     
-    def process_message(self, user_message, context):
+    def process_message(self, user_message, context=None): # Added default None for context
         """
-        Process the user message and return a response.
+        Process the user message and return an appropriate greeting or farewell response.
         :param user_message: The message from the user.
-        :return: Response from the AI agent.
+        :param context: Optional additional context (e.g., current time of day for "Good morning").
+        :return: Response from the AI agent (greeting or farewell).
         """
 
         llm = self.chat_model
 
-        # system_prompt = """
-        # You are an AI assistant that provides motivation and stress support to users.
-        # Users are most likely stressed due to academic pressures, personal issues, or general life challenges.
-        # You should respond with empathetic and supportive messages that help alleviate stress and provide motivation.
-        # Your responses should be encouraging and uplifting, focusing on positive reinforcement and practical advice.
-        # Your response should also be easily readable from a mobile device, so keep it concise and to the point.
-        # """
+        # --- System Prompt for the Greeting/Farewell Agent ---
+        system_prompt = f"""
+        You are a friendly and polite AI assistant specialized in handling greetings and farewells.
+        Your task is to respond appropriately and courteously to user messages that are clearly a greeting or a farewell.
+        - If the user's message is a greeting (e.g., "hello", "hi", "good morning", "good afternoon", "good evening", "how are you"), respond with a warm and friendly greeting back.
+        - If the user's message is a farewell (e.g., "goodbye", "bye", "see you", "farewell", "talk to you later"), respond with a polite and friendly farewell.
+        - Acknowledge the current time of day (morning, afternoon, evening) if the greeting implies it.
+        - Keep your responses brief, positive, and natural.
+        - The current time is {context.get('current_time', 'unknown')}. The current location is {context.get('current_location', 'unknown')}. Use this if relevant for time-based greetings.
+        - Your response should also be easily readable from a mobile device, so keep it concise and to the point.
+        """
 
-        # user_prompt = f"""
-        # User: {user_message}
-        # Context: {context}
-        # Please provide a motivational and supportive response to the user's message.
-        # """
+        user_prompt = f"""
+        User: {user_message}
+        Please provide an appropriate greeting or farewell response to the user's message.
+        """
 
-        # # formatted_prompt = prompt_template.format(user_message=user_message)
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt)
+        ]
 
-        # messages = [
-        #     SystemMessage(content=system_prompt),
-        #     HumanMessage(content=user_prompt)
-        # ]
-
-        # result = llm.invoke(messages)
-        # text_result = result.content
-        # print(f"text result: {text_result}")
-        # return text_result
+        result = llm.invoke(messages)
+        text_result = result.content
+        print(f"text result: {text_result}")
+        return text_result
         
-    def extract_user_message (self, user_message: str) -> Dict[str, Any]:
-        """
-        Extract user message and context from the input.
-        :param user_message: The message from the user.
-        :return: A dictionary containing the user message and context.
-        """
-        # Here we can implement any extraction logic if needed
-
-        # need data from backend
-        return {
-            "user_message": user_message,
-            "context": "No additional context provided."
-        }
+    # The 'extract_user_message' function from the previous context is not needed
+    # for a dedicated greeting/farewell agent, as the LLM directly handles the intent.
+    # Therefore, it has been removed.

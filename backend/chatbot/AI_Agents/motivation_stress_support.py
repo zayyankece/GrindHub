@@ -2,7 +2,6 @@
 This file is for AI Agent that provides motivation and stress support to users.
 """
 
-
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
@@ -16,11 +15,12 @@ class MotivationStressSupport():
     Main class for the Motivation and Stress Support AI Agent.
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, userid, api_key: str):
         """
         Initialize the agent with the API key.
         :param api_key: API key for Google Generative AI.
         """
+        self.userid = userid
         self.api_key = api_key
         self.chat_model = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash",
@@ -64,7 +64,7 @@ class MotivationStressSupport():
         print(f"text result: {text_result}")
         return text_result
     
-    def get_data_from_database():
+    def get_data_from_database(self, time_range: str, class_name: str):
         """
         Based on user message, get some data from database to add more context. 
         Input : time range, userid
@@ -73,7 +73,7 @@ class MotivationStressSupport():
         try:
             url = "https://grindhub-production.up.railway.app/api/auth/getPerformanceAssignmentQuery"
             headers = {'Content-Type': 'application/json'}
-            payload = {'userid': 'example_user_id', "time_range":"time_range", "class":"class"}  # Replace with actual user ID
+            payload = {'userid': self.userid, "time_range":time_range, "class":class_name}  # Replace with actual user ID
 
             response = requests.post(url, headers=headers, data=json.dumps(payload))
             response.raise_for_status()

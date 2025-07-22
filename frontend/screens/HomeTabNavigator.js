@@ -123,6 +123,7 @@ const HomeTabNavigator = () => {
             paddingVertical: 12,
             height: 60,
         },
+        tabBarHideOnKeyboard: true, // Hide tab bar when keyboard is open
         tabBarLabelStyle: {
             fontSize: 12,
         },

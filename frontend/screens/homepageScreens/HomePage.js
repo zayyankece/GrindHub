@@ -100,7 +100,7 @@ export default function HomePage({ navigation, route }) {
     if (chatInput.trim()) {
       const userMessage = { sender: 'User', message: chatInput.trim() };
       setMessages((prevMessages) => [...prevMessages, userMessage]);
-      socket.emit('user_message', { message: chatInput.trim() });
+      socket.emit('user_message', { message: chatInput.trim(), context:messages });
       setChatInput('');
     }
   };

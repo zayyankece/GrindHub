@@ -9,15 +9,16 @@ import {
   StatusBar,
   Image,
   Modal,
-  Button,
+  Button, // Not used, can be removed
   Pressable,
-  TextInput
+  TextInput,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from './components/GrindHubFooter';
 import GrindHubHeader from './components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
-import io from 'socket.io-client'; // 👈 Import socket.io-client
+import io from 'socket.io-client';
 
 const FreeTimeCard = () => (
   <View style={styles.scheduleItem}>
@@ -29,25 +30,20 @@ const FreeTimeCard = () => (
   </View>
 );
 
-// Define your Socket.IO server URL here
-// IMPORTANT: Use your actual local IP address if testing on a physical device,
-// otherwise 'http://localhost:5000' for emulators/simulators.
-// For Android emulator, 'http://10.0.2.2:5000' is typically used to access host machine's localhost.
-const SOCKET_SERVER_URL = 'https://grindhubchatbot-production.up.railway.app'; // Example for Android emulator
+const SOCKET_SERVER_URL = 'https://grindhubchatbot-production.up.railway.app';
 
-export default function HomePage({navigation, route}) {
+export default function HomePage({ navigation, route }) {
+  const { token } = route.params;
+  const decodedToken = jwtDecode(token);
+  const userid = decodedToken.userid;
 
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid
-
-  const [assignments, setAssignments] = useState([])
-  const [classes, setClasses] = useState([])
-  const [combinedData, setCombinedData] = useState([])
+  const [assignments, setAssignments] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [combinedData, setCombinedData] = useState([]);
   const [groups, setGroups] = useState([]);
-  const [username, setUsername] = useState("")
+  const [username, setUsername] = useState("");
 
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(() => {
@@ -56,23 +52,18 @@ export default function HomePage({navigation, route}) {
     todayDate.setDate(today.getDate());
     todayDate.setHours(0, 0, 0, 0);
     return todayDate;
-  })
+  });
 
-  // 👇 New state for chat messages
   const [messages, setMessages] = useState([]);
-  // 👇 New state for chat input
   const [chatInput, setChatInput] = useState('');
-  // 👇 Ref for auto-scrolling chat
   const chatScrollViewRef = useRef();
 
-  // 👇 Socket.IO instance
   const socket = useMemo(() => io(SOCKET_SERVER_URL, {
-    transports: ['websocket'], // Prefer WebSocket for React Native
-    forceNew: true, // Forces a new connection every time
-  }), []); // Empty dependency array means it's created once
+    transports: ['websocket'],
+    forceNew: true,
+  }), []);
 
   useEffect(() => {
-    // Socket.IO event listeners
     socket.on('connect', () => {
       console.log('Connected to Socket.IO server!');
     });
@@ -90,17 +81,15 @@ export default function HomePage({navigation, route}) {
       console.error('Socket.IO connection error:', err.message);
     });
 
-    // Cleanup on unmount
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('chat_message');
       socket.off('connect_error');
-      socket.disconnect(); // Disconnect when component unmounts
+      socket.disconnect();
     };
-  }, [socket]); // Re-run effect if socket instance changes (which it won't with useMemo)
+  }, [socket]);
 
-  // Scroll to bottom of chat when new message arrives
   useEffect(() => {
     if (chatScrollViewRef.current) {
       chatScrollViewRef.current.scrollToEnd({ animated: true });
@@ -110,193 +99,148 @@ export default function HomePage({navigation, route}) {
   const sendMessage = () => {
     if (chatInput.trim()) {
       const userMessage = { sender: 'User', message: chatInput.trim() };
-      setMessages((prevMessages) => [...prevMessages, userMessage]); // Add user message to UI immediately
-      socket.emit('user_message', { message: chatInput.trim() }); // Send to server
-      setChatInput(''); // Clear input
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      socket.emit('user_message', { message: chatInput.trim() });
+      setChatInput('');
     }
   };
 
   const getDateKey = (isoString) => isoString.substring(0, 10);
 
-  // Formats a Date object into "Tue, 27th May 2025"
   const formatSectionDate = (date) => {
-      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-      const day = date.getDate();
-      let suffix = 'th';
-      if (day === 1 || day === 21 || day === 31) suffix = 'st';
-      else if (day === 2 || day === 22) suffix = 'nd';
-      else if (day === 3 || day === 23) suffix = 'rd';
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    const day = date.getDate();
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
 
-      const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
-      return formatted;
-  }
+    const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
+    return formatted;
+  };
 
-  // Formats a time string into "13:00"
   const formatTime = (isoString) => {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-  }
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
 
-  function formatTimeToHHMM(dateInput, timeZone) {
-    // Ensure we are working with a Date object
+  function formatTimeToHHMM(dateInput, timeZone = "Asia/Singapore") { // Added default timezone
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-
-    // Formatting options to get HH:mm in 24-hour format
     const options = {
       timeZone: timeZone,
-      hour: '2-digit',   // Ensures the hour is always two digits (e.g., 07)
-      minute: '2-digit', // Ensures the minute is always two digits (e.g., 00)
-      hour12: false      // CRITICAL: Use 24-hour clock (19:00 instead of 7:00 PM)
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
     };
     return date.toLocaleTimeString('en-GB', options);
   }
 
-  const getAssignments = async ({userid}) => {
+  const getAssignments = async ({ userid }) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
-      method : "POST",
-      headers : { 'Content-Type': 'application/json' },
-      body : JSON.stringify({
-      userid : userid,
-      }),
-    });
-
-    const data = await response.json()
-
-    if (data.success == false){
-      return []
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid: userid }),
+      });
+      const data = await response.json();
+      return data.success ? data.assignments : [];
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      return [];
     }
-    return data.assignments
-    }
-    catch (error){
-      console.error(error)
-    }
-  }
+  };
 
-  const getClass = async ({userid}) =>{
+  const getClass = async ({ userid }) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getClass", {
-      method : "POST",
-      headers : { 'Content-Type': 'application/json' },
-      body : JSON.stringify({
-      userid : userid,
-      }),
-    });
-
-    const data = await response.json()
-
-    if (data.success == false){
-      return []
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid: userid }),
+      });
+      const data = await response.json();
+      return data.success ? data.classes : [];
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      return [];
     }
-    return data.classes
-
-    }
-    catch (error){
-      console.error(error)
-    }
-  }
+  };
 
   useEffect(() => {
-    const fetchAndCombineData = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const [fetchedAssignments, fetchedClasses] = await Promise.all([
+        const [fetchedAssignments, fetchedClasses, groupsData, userData] = await Promise.all([
           getAssignments({ userid: userid }),
-          getClass({ userid: userid })
+          getClass({ userid: userid }),
+          fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid: userid }),
+          }).then(res => res.json()),
+          fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid: userid }),
+          }).then(res => res.json()),
         ]);
 
         setAssignments(fetchedAssignments);
         setClasses(fetchedClasses);
+        setCombinedData(combineAndExtract(fetchedClasses, fetchedAssignments));
 
-        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
-        setCombinedData(combinedData);
+        if (groupsData.success) {
+          setGroups(groupsData.groups);
+        } else if (groupsData.message !== "No groups found!") {
+          console.error("Failed to fetch groups:", groupsData.message);
+        }
 
-      } catch (error) {
-        console.error("Failed to fetch or combine data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    const fetchGroups = async () => {
-      try {
-        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
-          method: "POST",
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-          userid: userid,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setGroups(data.groups);
+        if (userData.success) {
+          setUsername(userData.existingUser[0].username);
         } else {
-          if (data.message == "No groups found!"){
-            console.log("No groups found, santai aja dulu bang!")
-          }
-          else {
-          console.error("Failed to fetch groups:", data.message);
-          }
+          console.error("Failed to fetch username:", userData.message);
         }
+
       } catch (error) {
-        console.error("Error fetching groups:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    const getUsername = async() => {
-      try{
-        const response = await fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
-          method : "POST",
-          headers : { 'Content-Type': 'application/json' },
-          body : JSON.stringify({
-            userid: userid,
-          }),
-        });
-        const data = await response.json();
 
-        if (data.success){
-          setUsername(data.existingUser[0].username)
-        }
-      } catch (error) {
-        console.error("there are error", error)
-      }
-    }
-
-    fetchGroups();
-    fetchAndCombineData();
-    getUsername();
-
-  }, []);
+    fetchData();
+  }, [userid]); // Depend on userid
 
   function combineAndExtract(classesArray, assignmentsArray) {
-    // Process the classes array using map to transform each item
     const extractedClasses = classesArray.map(classItem => ({
       module_code: classItem.modulename,
       name: classItem.classtype,
       type: classItem.classtype,
       location: classItem.classlocation,
-      date: classItem.startdate, // Using startdate as the primary time
+      date: classItem.startdate,
       time: classItem.starttime,
       percentage: null
     }));
 
-    // Process the assignments array
     const extractedAssignments = assignmentsArray.map(assignmentItem => ({
       module_code: assignmentItem.assignmentmodule,
       name: assignmentItem.assignmentname,
-      type: "Assignment", // Explicitly defining the type
-      location: null,     // Assignments don't have a physical location
+      type: "Assignment",
+      location: null,
       date: assignmentItem.assignmentduedate,
       time: assignmentItem.assignmenttimeduedate,
       percentage: assignmentItem.assignmentpercentage
     }));
 
-    // Combine both transformed arrays into one
     const combinedList = [...extractedClasses, ...extractedAssignments];
 
     combinedList.sort((a, b) => {
-      return new Date(a.time) - new Date(b.time); // Just swap a and b
+      // Assuming 'date' is a full ISO string or similar that can be directly compared
+      // and 'time' is part of it or secondary sort. If 'time' is just "HH:MM",
+      // you need to combine date and time for proper comparison.
+      // For now, if date includes time, just comparing new Date(a.date) is sufficient.
+      // If 'time' is a separate "HH:MM", you'd need to construct a full Date object.
+      // Given your formatTimeToHHMM, it seems 'date' might be sufficient for sorting.
+      return new Date(a.date) - new Date(b.date);
     });
 
     return combinedList;
@@ -305,61 +249,30 @@ export default function HomePage({navigation, route}) {
   const groupedEvents = useMemo(() => {
     const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
     return sorted.reduce((acc, event) => {
-        const dateKey = getDateKey(event.date);
-        if (!acc[dateKey]) acc[dateKey] = [];
-        acc[dateKey].push(event);
-        return acc;
+      const dateKey = getDateKey(event.date);
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(event);
+      return acc;
     }, {});
   }, [combinedData]);
 
   const renderEventCard = (event, index) => {
-
-    switch (event.type) {
-      case 'Lecture':
-        return (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={styles.scheduleItemLeft}>
-              <Text style={styles.scheduleItemText}>
-                {event.module_code} - {event.name}
-                {event.location && ` - ${event.location}`}
-              </Text>
-            </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
-          </View>
-        );
-      case 'Tutorial': // Cases are now combined
-        return (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={styles.scheduleItemLeft}>
-              <Text style={styles.scheduleItemText}>
-                {event.module_code} - {event.name}
-                {event.location && ` - ${event.location}`}
-              </Text>
-            </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
-          </View>
-        );
-      case 'Assignment':
-        return (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={styles.scheduleItemLeft}>
-              <Text style={styles.scheduleItemText}>
-                {event.module_code} - {event.name}
-                {event.location && ` - ${event.location}`}
-              </Text>
-            </View>
-            <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
-          </View>
-        );
-      default:
-        return null
-    }
+    return (
+      <View key={index} style={styles.scheduleItem}>
+        <View style={styles.scheduleItemLeft}>
+          <Text style={styles.scheduleItemText}>
+            {event.module_code} - {event.name}
+            {event.location && ` - ${event.location}`}
+          </Text>
+        </View>
+        <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
+      </View>
+    );
   };
 
-  // The modified, cleaner renderDays function
   const renderDays = ({ todayDate }) => {
     const days = [];
-    const numberOfDaysToShow = 1; // Kept for future flexibility
+    const numberOfDaysToShow = 1;
 
     for (let i = 0; i < numberOfDaysToShow; i++) {
       const currentDate = new Date(todayDate);
@@ -371,7 +284,7 @@ export default function HomePage({navigation, route}) {
       days.push(
         <View key={dateKey}>
           {eventsForDay.length > 0
-            ? eventsForDay.map(renderEventCard) // Use the new helper function
+            ? eventsForDay.map(renderEventCard)
             : <FreeTimeCard />}
         </View>
       );
@@ -385,7 +298,6 @@ export default function HomePage({navigation, route}) {
       newDay.setDate(startDate.getDate() - 1);
       return newDay;
     });
-
   };
 
   const rightArrowPressed = () => {
@@ -394,7 +306,6 @@ export default function HomePage({navigation, route}) {
       newDay.setDate(startDate.getDate() + 1);
       return newDay;
     });
-
   };
 
   const [activeTimer, setActiveTimer] = useState(null);
@@ -421,28 +332,23 @@ export default function HomePage({navigation, route}) {
   );
 
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
-  const formattedToday= startDate.toLocaleDateString('en-US', options);
+  const formattedToday = startDate.toLocaleDateString('en-US', options);
 
-  if (isLoading){
+  if (isLoading) {
     return (
-    <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
-
-        <GrindHubHeader navigation={navigation}/>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}/>
-
-        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
-
+        <GrindHubHeader navigation={navigation} />
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} />
+        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token} />
       </SafeAreaView>
-    )
-  }
-  else {
+    );
+  } else {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-        <GrindHubHeader navigation={navigation} token={token}/>
+        <GrindHubHeader navigation={navigation} token={token} />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
@@ -452,31 +358,24 @@ export default function HomePage({navigation, route}) {
           </View>
 
           {/* Schedule Card */}
-          {/* <TouchableOpacity onPress={() => navigation.navigate("Timetable")}> */}
-            <View style={[styles.card]}>
-              <View style={styles.container2}>
-                {/* Interactive Left Arrow */}
-                <TouchableOpacity onPress={() => leftArrowPressed()}>
-                  <Image
-                    source={require("../../assets/Arrow to left.png")}
-                    style={styles.arrowIcon}
-                  />
-                </TouchableOpacity>
-
-                {/* Date Range Text */}
-                <Text style={styles.dateText}>{formattedToday}</Text>
-
-                {/* Interactive Right Arrow */}
-                <TouchableOpacity onPress={() => rightArrowPressed()}>
-                  <Image
-                    source={require("../../assets/Arrow to right.png")}
-                    style={styles.arrowIcon}
-                  />
-                </TouchableOpacity>
-              </View>
-              {renderDays({todayDate : startDate})}
+          <View style={[styles.card]}>
+            <View style={styles.container2}>
+              <TouchableOpacity onPress={leftArrowPressed}>
+                <Image
+                  source={require("../../assets/Arrow to left.png")}
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+              <Text style={styles.dateText}>{formattedToday}</Text>
+              <TouchableOpacity onPress={rightArrowPressed}>
+                <Image
+                  source={require("../../assets/Arrow to right.png")}
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
             </View>
-          {/* </TouchableOpacity> */}
+            {renderDays({ todayDate: startDate })}
+          </View>
 
           {/* Study Timer */}
           <TouchableOpacity>
@@ -516,7 +415,7 @@ export default function HomePage({navigation, route}) {
           </TouchableOpacity>
 
           {/* Your Groups */}
-          <TouchableOpacity onPress={() => navigation.navigate("GroupChat", {token:token})}>
+          <TouchableOpacity onPress={() => navigation.navigate("GroupChat", { token: token })}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Groups</Text>
               <View style={styles.groupsList}>
@@ -524,7 +423,6 @@ export default function HomePage({navigation, route}) {
                   <View key={index} style={styles.groupItem}>
                     <View style={styles.groupHeader}>
                       <Text style={styles.groupName}>{group.groupname}</Text>
-                      {/* <Text style={styles.groupTime}>{group.time}</Text> */}
                     </View>
                     <View style={styles.groupMessage}>
                       <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
@@ -538,7 +436,7 @@ export default function HomePage({navigation, route}) {
 
           {/* Your Assignments */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('TrackerPage', {token:token})}
+            onPress={() => navigation.navigate('TrackerPage', { token: token })}
             activeOpacity={0.7}
           >
             <View style={[styles.card, styles.lastCard]}>
@@ -552,7 +450,7 @@ export default function HomePage({navigation, route}) {
                           {assignment.assignmentmodule} - {assignment.assignmentname}
                         </Text>
                         <Text style={styles.assignmentDue}>
-                          Due {formatTimeToHHMM(assignment.assignmentduedate, "Asia/Singapore")}
+                          Due {formatTimeToHHMM(assignment.assignmentduedate)}
                         </Text>
                       </View>
                       <ProgressBar progress={assignment.assignmentpercentage} />
@@ -568,41 +466,31 @@ export default function HomePage({navigation, route}) {
               </View>
             </View>
           </TouchableOpacity>
-
         </ScrollView>
 
         {/* Modal for "Add" functionality */}
         <Modal
-            transparent={true}
-            animationType="fade"
-            visible={addModalVisible}
-            onRequestClose={() => setAddModalVisible(false)}>
-
-            {/* This Pressable now covers the full screen thanks to the style fix */}
-            <Pressable
-              style={styles.modalOverlay}
-              onPress={() => setAddModalVisible(false)}>
-
-              {/* This inner Pressable stops touches on the modal from closing it */}
-                <View style={styles.modalView}>
-                  <View style={styles.innerContainer}>
-
-                    {/* Simplified TouchableOpacity items */}
-                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingModule", {token:token})}}>
-                      <Text style={styles.itemText}>Add Module</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingClass", {token:token})}}>
-                      <Text style={styles.itemText}>Add Class</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.itemBox} onPress={() => {setAddModalVisible(false);navigation.navigate("AddingAssignment", {token:token})}}>
-                      <Text style={styles.itemText}>Add Task</Text>
-                    </TouchableOpacity>
-
-                  </View>
-                </View>
-            </Pressable>
+          transparent={true}
+          animationType="fade"
+          visible={addModalVisible}
+          onRequestClose={() => setAddModalVisible(false)}>
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setAddModalVisible(false)}>
+            <View style={styles.modalView}>
+              <View style={styles.innerContainer}>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingModule", { token: token }) }}>
+                  <Text style={styles.itemText}>Add Module</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingClass", { token: token }) }}>
+                  <Text style={styles.itemText}>Add Class</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingAssignment", { token: token }) }}>
+                  <Text style={styles.itemText}>Add Task</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
         </Modal>
 
         {/* New Modal for Chatbot */}
@@ -611,22 +499,32 @@ export default function HomePage({navigation, route}) {
           animationType="slide"
           visible={chatModalVisible}
           onRequestClose={() => setChatModalVisible(false)}>
-          <Pressable
-            style={styles.chatModalOverlay}
-            onPress={() => setChatModalVisible(false)}>
-            <Pressable style={styles.chatModalContainer} onPress={(e) => e.stopPropagation()}>
+          
+          <View style={styles.chatModalOverlay}>
+            {/* Background touchable area to close modal */}
+            <TouchableOpacity 
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatModalVisible(false)}
+            />
+            
+            {/* Main modal content - NOT wrapped in Pressable */}
+            <View style={styles.chatModalContainer}>
               <View style={styles.chatHeader}>
-                <Text style={styles.chatTitle}>GrindHub Bot</Text>
+                <Text style={styles.chatTitle}>GrindHub Chatbot</Text>
                 <TouchableOpacity onPress={() => setChatModalVisible(false)}>
                   <Ionicons name="close" size={24} color="#1F2937" />
                 </TouchableOpacity>
               </View>
+              
               <ScrollView
                 style={styles.chatContent}
-                ref={chatScrollViewRef} // Attach ref for auto-scrolling
-                onContentSizeChange={() => chatScrollViewRef.current.scrollToEnd({ animated: true })}
+                ref={chatScrollViewRef}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode={Platform.OS === 'ios' ? "interactive" : "on-drag"}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
               >
-                {/* Dynamically rendered chat messages */}
                 {messages.map((msg, index) => (
                   <View
                     key={index}
@@ -636,6 +534,7 @@ export default function HomePage({navigation, route}) {
                   </View>
                 ))}
               </ScrollView>
+              
               <View style={styles.chatInputContainer}>
                 <TextInput
                   style={styles.chatTextInput}
@@ -643,36 +542,32 @@ export default function HomePage({navigation, route}) {
                   placeholderTextColor="#6B7280"
                   value={chatInput}
                   onChangeText={setChatInput}
-                  onSubmitEditing={sendMessage} // Send message on pressing enter/return
+                  onSubmitEditing={sendMessage}
                   returnKeyType="send"
                 />
                 <TouchableOpacity style={styles.chatSendButton} onPress={sendMessage}>
                   <Ionicons name="send" size={20} color="white" />
                 </TouchableOpacity>
               </View>
-            </Pressable>
-          </Pressable>
+            </View>
+          </View>
         </Modal>
 
-
-      {/* Your FAB code, which now sits "under" the modal */}
-      <View style={styles.fab}>
-        <View style={styles.fabContainer}>
-          <TouchableOpacity style={styles.fabButton} onPress={() => setChatModalVisible(true)}>
-            <Ionicons name="chatbubble" size={16} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.fabButtonDark}
-            onPress={() => {setAddModalVisible(true)}}
-          >
-            <Ionicons name="add" size={16} color="white" />
-          </TouchableOpacity>
+        <View style={styles.fab}>
+          <View style={styles.fabContainer}>
+            <TouchableOpacity style={styles.fabButton} onPress={() => setChatModalVisible(true)}>
+              <Ionicons name="chatbubble" size={16} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabButtonDark}
+              onPress={() => { setAddModalVisible(true) }}
+            >
+              <Ionicons name="add" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-        {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
-
+        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token} />
       </SafeAreaView>
     );
   }
@@ -684,16 +579,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FED7AA',
   },
   container2: {
-    marginBottom:10,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f0f2f5', // A light, neutral background
+    backgroundColor: '#f0f2f5',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 30, // Creates the pill shape
-    marginHorizontal: 26, // Adds space on the sides of the screen
-    // Shadow for iOS
+    borderRadius: 30,
+    marginHorizontal: 26,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -701,7 +595,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    // Shadow for Android
     elevation: 5,
   },
   content: {
@@ -744,6 +637,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 8, // Added margin for better spacing between schedule items
   },
   scheduleItemLeft: {
     flex: 1,
@@ -757,6 +651,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: '#374151',
+    marginLeft: 10, // Added margin for spacing between text and time
   },
   cardTitle: {
     fontSize: 16,
@@ -794,6 +689,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
+    marginBottom: 8, // Added margin for better spacing between group items
   },
   groupHeader: {
     flexDirection: 'row',
@@ -830,6 +726,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
+    marginBottom: 8, // Added margin for better spacing between assignment items
   },
   assignmentHeader: {
     marginBottom: 8,
@@ -898,46 +795,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
   // --- Modal Styles ---
   modalOverlay: {
-    flex:1,
+    flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
-    top:0,
-    left:0,
-    bottom: 0,
-    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   modalView: {
-    bottom:30,
-    width: '200',
-    marginBottom:120,
-    marginRight:15,
+    bottom: 30,
+    width: 'auto',
+    minWidth: 150,
+    marginBottom: 120,
+    marginRight: 15,
     backgroundColor: '#f5f1e9',
     borderRadius: 25,
     padding: 10,
     alignItems: 'center',
-    // Shadow for the modal
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 0,
+    elevation: 5,
   },
   innerContainer: {
     width: '100%',
     backgroundColor: '#eae6db',
     borderRadius: 20,
-    paddingVertical: 2, // Add vertical space inside
+    paddingVertical: 2,
     paddingHorizontal: 15,
     alignItems: 'center',
   },
@@ -946,7 +834,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#FFA333',
     borderRadius: 20,
-    marginVertical: 6, // Creates space between the two boxes
+    marginVertical: 6,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -968,28 +856,40 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
   },
-  // New styles for Chat Modal
+  // --- CHAT MODAL STYLES (Focus here) ---
   chatModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0)',
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   chatModalContainer: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: '75%', // Adjust height as needed
+    height: '75%',
     width: '100%',
-    paddingTop: 10,
-    paddingHorizontal: 15,
+    flexDirection: 'column',
+    // Remove any Pressable wrapping
   },
   chatHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop:10,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    marginRight:10,
+    marginLeft:10,
+    // DEBUG: Add a background color
+    // backgroundColor: 'lightcoral',
   },
   chatTitle: {
     fontSize: 20,
@@ -999,6 +899,9 @@ const styles = StyleSheet.create({
   chatContent: {
     flex: 1,
     paddingVertical: 10,
+    paddingHorizontal: 10,
+    // Ensure it can scroll
+    maxHeight: undefined,
   },
   chatMessageBot: {
     backgroundColor: '#F3F4F6',
@@ -1009,7 +912,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   chatMessageUser: {
-    backgroundColor: '#DCF8C6', // A light green for user messages
+    backgroundColor: '#DCF8C6',
     borderRadius: 10,
     padding: 10,
     marginBottom: 8,
@@ -1027,6 +930,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
     paddingVertical: 10,
     paddingHorizontal: 5,
+    // DEBUG: Add a background color
+    // backgroundColor: 'lightyellow',
   },
   chatTextInput: {
     flex: 1,

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
@@ -132,6 +133,35 @@ const UserProfile = ({navigation}) => {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Sign Out Cancelled"),
+          style: "cancel"
+        },
+        {
+          text: "Sign Out",
+          onPress: async () => {
+            try {
+              await signOut(); // Call the signOut function from AuthContext
+              // AuthContext will handle navigation to LoginScreen
+              console.log("User signed out successfully.");
+            } catch (error) {
+              console.error("Error during sign out:", error);
+              Alert.alert("Sign Out Failed", "There was an issue signing you out. Please try again.");
+            }
+          },
+          style: "destructive" // Red color for destructive action on iOS
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   const menuItems = [
     { title: 'Status Message', icon: 'chevron-forward' },
     { title: 'Change Username', icon: 'chevron-forward' }
@@ -195,12 +225,13 @@ const UserProfile = ({navigation}) => {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
     </SafeAreaView>
   );
 };

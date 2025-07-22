@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD93D',
     borderRadius: 12,
     padding: 12,
-    marginBottom: 8, // Added margin for better spacing between group items
+    marginBottom: 5, // Added margin for better spacing between group items
   },
   groupHeader: {
     flexDirection: 'row',

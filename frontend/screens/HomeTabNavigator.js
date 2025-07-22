@@ -121,7 +121,7 @@ const HomeTabNavigator = () => {
         tabBarStyle: {
             backgroundColor: '#FF8400',
             paddingVertical: 12,
-            height: 70,
+            height: 60,
         },
         tabBarLabelStyle: {
             fontSize: 12,

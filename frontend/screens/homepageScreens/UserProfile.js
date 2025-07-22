@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,28 @@ import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../AuthContext';
 
-const UserProfile = ({navigation, route}) => {
+const UserProfile = ({navigation}) => {
 
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   const [user, setUser] = useState(null); // Changed to null initially
   const [notifications, setNotifications] = useState({
@@ -144,7 +160,7 @@ const UserProfile = ({navigation, route}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <View style={styles.profilePicture} />
@@ -185,7 +201,6 @@ const UserProfile = ({navigation, route}) => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-      <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
     </SafeAreaView>
   );
 };

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import {
   View,
-  Text,
+  Text, // Keep Text imported
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -9,16 +9,17 @@ import {
   StatusBar,
   Image,
   Modal,
-  Button, // Not used, can be removed
   Pressable,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GrindHubFooter from './components/GrindHubFooter';
 import GrindHubHeader from './components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
 import io from 'socket.io-client';
+
+import { AuthContext } from '../AuthContext'; // Adjust the path to your AuthContext.js file
 
 const FreeTimeCard = () => (
   <View style={styles.scheduleItem}>
@@ -32,10 +33,28 @@ const FreeTimeCard = () => (
 
 const SOCKET_SERVER_URL = 'https://grindhubchatbot-production.up.railway.app';
 
-export default function HomePage({ navigation, route }) {
-  const { token } = route.params;
-  const decodedToken = jwtDecode(token);
-  const userid = decodedToken.userid;
+// Moved the comment directly above the export default function
+// Removed 'route' prop comment from the function line to prevent misinterpretation
+export default function HomePage({ navigation }) {
+  const { userToken, signOut } = useContext(AuthContext); // Get userToken and signOut from AuthContext
+
+  // Decode token from context
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token:", e);
+        // Handle token decoding error, maybe sign out user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid from decoded token
+  const userid = decodedToken?.userid; // Use optional chaining to safely access userid
 
   const [assignments, setAssignments] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -58,12 +77,21 @@ export default function HomePage({ navigation, route }) {
   const [chatInput, setChatInput] = useState('');
   const chatScrollViewRef = useRef();
 
-  const socket = useMemo(() => io(SOCKET_SERVER_URL, {
-    transports: ['websocket'],
-    forceNew: true,
-  }), []);
+  // Initialize socket only if userToken (and thus userid) is available
+  const socket = useMemo(() => {
+    if (userid) {
+      const newSocket = io(SOCKET_SERVER_URL, {
+        transports: ['websocket'],
+        forceNew: true,
+      });
+      return newSocket;
+    }
+    return null; // Return null if userid is not available
+  }, [userid]); // Depend on userid
 
   useEffect(() => {
+    if (!socket) return; // Don't setup listeners if socket is null
+
     socket.on('connect', () => {
       console.log('Connected to Socket.IO server!');
     });
@@ -86,7 +114,7 @@ export default function HomePage({ navigation, route }) {
       socket.off('disconnect');
       socket.off('chat_message');
       socket.off('connect_error');
-      socket.disconnect();
+      socket.disconnect(); // Disconnect socket when component unmounts or socket changes
     };
   }, [socket]);
 
@@ -97,7 +125,7 @@ export default function HomePage({ navigation, route }) {
   }, [messages]);
 
   const sendMessage = () => {
-    if (chatInput.trim()) {
+    if (chatInput.trim() && socket) { // Ensure socket exists before sending
       const userMessage = { sender: 'User', message: chatInput.trim() };
       setMessages((prevMessages) => [...prevMessages, userMessage]);
       socket.emit('user_message', { message: chatInput.trim(), context:messages});
@@ -119,12 +147,12 @@ export default function HomePage({ navigation, route }) {
     return formatted;
   };
 
-  const formatTime = (isoString) => {
+  const formatTime = (isoString) => { // This function might not be used, check usage
     const date = new Date(isoString);
     return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  function formatTimeToHHMM(dateInput, timeZone = "Asia/Singapore") { // Added default timezone
+  function formatTimeToHHMM(dateInput, timeZone = "Asia/Singapore") {
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const options = {
       timeZone: timeZone,
@@ -135,12 +163,12 @@ export default function HomePage({ navigation, route }) {
     return date.toLocaleTimeString('en-GB', options);
   }
 
-  const getAssignments = async ({ userid }) => {
+  const getAssignments = async (currentUserId) => { // Accepts userid as parameter
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userid: userid }),
+        body: JSON.stringify({ userid: currentUserId }),
       });
       const data = await response.json();
       return data.success ? data.assignments : [];
@@ -150,12 +178,12 @@ export default function HomePage({ navigation, route }) {
     }
   };
 
-  const getClass = async ({ userid }) => {
+  const getClass = async (currentUserId) => { // Accepts userid as parameter
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getClass", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userid: userid }),
+        body: JSON.stringify({ userid: currentUserId }),
       });
       const data = await response.json();
       return data.success ? data.classes : [];
@@ -166,12 +194,18 @@ export default function HomePage({ navigation, route }) {
   };
 
   useEffect(() => {
+    // Only fetch data if userid is available
+    if (!userid) {
+        setIsLoading(false); // If no userid, ensure loading is off
+        return;
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const [fetchedAssignments, fetchedClasses, groupsData, userData] = await Promise.all([
-          getAssignments({ userid: userid }),
-          getClass({ userid: userid }),
+          getAssignments(userid), // Pass userid
+          getClass(userid),       // Pass userid
           fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
@@ -208,7 +242,7 @@ export default function HomePage({ navigation, route }) {
     };
 
     fetchData();
-  }, [userid]); // Depend on userid
+  }, [userid]); // Depend on userid. Data refetches if userid changes.
 
   function combineAndExtract(classesArray, assignmentsArray) {
     const extractedClasses = classesArray.map(classItem => ({
@@ -247,7 +281,23 @@ export default function HomePage({ navigation, route }) {
   }
 
   const groupedEvents = useMemo(() => {
-    const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
+    // Sort by date first, then by time within the same date
+    const sorted = [...combinedData].sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        // Compare dates
+        if (dateA.toDateString() !== dateB.toDateString()) {
+            return dateA.getTime() - dateB.getTime();
+        }
+
+        // If dates are the same, compare times
+        // Assuming time is also part of the date string or can be combined
+        const timeA = new Date(`${a.date}T${a.time}`); // Combine date and time for robust comparison
+        const timeB = new Date(`${b.date}T${b.time}`);
+        return timeA.getTime() - timeB.getTime();
+    });
+
     return sorted.reduce((acc, event) => {
       const dateKey = getDateKey(event.date);
       if (!acc[dateKey]) acc[dateKey] = [];
@@ -312,6 +362,8 @@ export default function HomePage({ navigation, route }) {
 
   const startTimer = (type) => {
     setActiveTimer(type);
+    // You might want to navigate to the TimerPage here or trigger actual timer logic
+    navigation.navigate('TimerPage'); // Navigate to timer page if it's meant to be full-screen
   };
 
   const ProgressBar = ({ progress }) => (
@@ -334,13 +386,15 @@ export default function HomePage({ navigation, route }) {
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
   const formattedToday = startDate.toLocaleDateString('en-US', options);
 
-  if (isLoading) {
+  // If isLoading or userid is null, show a full-screen loading indicator
+  if (isLoading || !userid) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
-        <GrindHubHeader navigation={navigation} />
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} />
-        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF8400" />
+          <Text style={{ marginTop: 10, color: "#FF8400" }}>Loading your GrindHub...</Text>
+        </View>
       </SafeAreaView>
     );
   } else {
@@ -348,7 +402,9 @@ export default function HomePage({ navigation, route }) {
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-        <GrindHubHeader navigation={navigation} token={token} />
+        {/* Removed token prop from GrindHubHeader and GrindHubFooter.
+            They should also consume AuthContext directly if they need userToken/userid. */}
+        <GrindHubHeader navigation={navigation} />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
@@ -378,10 +434,11 @@ export default function HomePage({ navigation, route }) {
           </View>
 
           {/* Study Timer */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('TimerPage')}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Study Timer</Text>
               <View style={styles.timerButtons}>
+                {/* These buttons could trigger specific timer settings or just navigate */}
                 <TouchableOpacity
                   style={[
                     styles.timerButton,
@@ -414,8 +471,10 @@ export default function HomePage({ navigation, route }) {
             </View>
           </TouchableOpacity>
 
+
           {/* Your Groups */}
-          <TouchableOpacity onPress={() => navigation.navigate("GroupChat", { token: token })}>
+          {/* No need to pass token via params anymore */}
+          <TouchableOpacity onPress={() => navigation.navigate("GroupChat")}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Groups</Text>
               <View style={styles.groupsList}>
@@ -435,8 +494,9 @@ export default function HomePage({ navigation, route }) {
           </TouchableOpacity>
 
           {/* Your Assignments */}
+          {/* No need to pass token via params anymore */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('TrackerPage', { token: token })}
+            onPress={() => navigation.navigate('TrackerPage')}
             activeOpacity={0.7}
           >
             <View style={[styles.card, styles.lastCard]}>
@@ -479,13 +539,14 @@ export default function HomePage({ navigation, route }) {
             onPress={() => setAddModalVisible(false)}>
             <View style={styles.modalView}>
               <View style={styles.innerContainer}>
-                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingModule", { token: token }) }}>
+                {/* No need to pass token via params anymore */}
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingModule") }}>
                   <Text style={styles.itemText}>Add Module</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingClass", { token: token }) }}>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingClass") }}>
                   <Text style={styles.itemText}>Add Class</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingAssignment", { token: token }) }}>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingAssignment") }}>
                   <Text style={styles.itemText}>Add Task</Text>
                 </TouchableOpacity>
               </View>
@@ -499,15 +560,15 @@ export default function HomePage({ navigation, route }) {
           animationType="slide"
           visible={chatModalVisible}
           onRequestClose={() => setChatModalVisible(false)}>
-          
+
           <View style={styles.chatModalOverlay}>
             {/* Background touchable area to close modal */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalBackdrop}
               activeOpacity={1}
               onPress={() => setChatModalVisible(false)}
             />
-            
+
             {/* Main modal content - NOT wrapped in Pressable */}
             <View style={styles.chatModalContainer}>
               <View style={styles.chatHeader}>
@@ -516,7 +577,7 @@ export default function HomePage({ navigation, route }) {
                   <Ionicons name="close" size={24} color="#1F2937" />
                 </TouchableOpacity>
               </View>
-              
+
               <ScrollView
                 style={styles.chatContent}
                 ref={chatScrollViewRef}
@@ -534,7 +595,7 @@ export default function HomePage({ navigation, route }) {
                   </View>
                 ))}
               </ScrollView>
-              
+
               <View style={styles.chatInputContainer}>
                 <TextInput
                   style={styles.chatTextInput}
@@ -567,7 +628,6 @@ export default function HomePage({ navigation, route }) {
           </View>
         </View>
 
-        <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token} />
       </SafeAreaView>
     );
   }
@@ -577,6 +637,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FED7AA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FED7AA', // Match background color
   },
   container2: {
     marginBottom: 10,
@@ -800,7 +866,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0)',
   },
   modalView: {
     bottom: 30,
@@ -856,7 +922,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
   },
-  // --- CHAT MODAL STYLES (Focus here) ---
+  // --- CHAT MODAL STYLES ---
   chatModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0)',
@@ -876,20 +942,17 @@ const styles = StyleSheet.create({
     height: '75%',
     width: '100%',
     flexDirection: 'column',
-    // Remove any Pressable wrapping
   },
   chatHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop:10,
+    paddingTop: 10,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-    marginRight:10,
-    marginLeft:10,
-    // DEBUG: Add a background color
-    // backgroundColor: 'lightcoral',
+    marginRight: 10,
+    marginLeft: 10,
   },
   chatTitle: {
     fontSize: 20,
@@ -900,8 +963,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 10,
-    marginBottom:10,
-    // Ensure it can scroll
+    marginBottom: 10,
     maxHeight: undefined,
   },
   chatMessageBot: {
@@ -931,8 +993,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
     paddingVertical: 10,
     paddingHorizontal: 5,
-    // DEBUG: Add a background color
-    // backgroundColor: 'lightyellow',
   },
   chatTextInput: {
     flex: 1,

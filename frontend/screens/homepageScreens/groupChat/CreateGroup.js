@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,31 @@ import {
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const SERVER_URL = "https://grindhub-production.up.railway.app"
 
-const CreateGroup = ({navigation, route}) => {
-    const { token } = route.params
-    const decodedToken = jwtDecode(token)
-    const userid = decodedToken.userid 
+const CreateGroup = ({navigation}) => {
+  const { userToken, signOut } = useContext(AuthContext);
+
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
+
     const [groupName, setGroupName] = useState('');
     const [groupDescription, setGroupDescription] = useState('');
   
@@ -64,7 +82,7 @@ const CreateGroup = ({navigation, route}) => {
             if (data2.success) {
                 setGroupName('')
                 setGroupDescription('')
-                navigation.navigate("GroupChat", {token:token})
+                navigation.navigate("GroupChat")
             }
             else {
                 console.error("there are some error", data2)
@@ -82,7 +100,7 @@ const CreateGroup = ({navigation, route}) => {
           style={styles.keyboardAvoidingView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <GrindHubHeader navigation={navigation} token={token}/>
+          <GrindHubHeader navigation={navigation}/>
           
           <View style={styles.content}>
             <Text style={styles.title}>Create New Group</Text>
@@ -118,8 +136,7 @@ const CreateGroup = ({navigation, route}) => {
               </TouchableOpacity>
             </View>
           </View>
-          
-          <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
+
         </KeyboardAvoidingView>
       </SafeAreaView>
     );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,29 @@ import {
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const SERVER_URL = "https://grindhub-production.up.railway.app"
 
-const JoinGroup = ({navigation, route}) => {
-    const { token } = route.params
-    const decodedToken = jwtDecode(token)
-    const userid = decodedToken.userid 
+const JoinGroup = ({navigation}) => {
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
     const [invitationCode, setInvitationCode] = useState('');
   
     const handleJoinGroup = async () => {
@@ -39,7 +55,7 @@ const JoinGroup = ({navigation, route}) => {
 
         if (data.success) {
             setInvitationCode('')
-            navigation.navigate("GroupChat", {token:token})
+            navigation.navigate("GroupChat")
         }
         else {
             console.error("there are some error")
@@ -56,7 +72,7 @@ const JoinGroup = ({navigation, route}) => {
           style={styles.keyboardAvoidingView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <GrindHubHeader navigation={navigation} token={token}/>
+          <GrindHubHeader navigation={navigation}/>
           
           <View style={styles.content}>
             <Text style={styles.title}>Join New Group</Text>
@@ -79,7 +95,6 @@ const JoinGroup = ({navigation, route}) => {
             </View>
           </View>
           
-          <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
         </KeyboardAvoidingView>
       </SafeAreaView>
     );

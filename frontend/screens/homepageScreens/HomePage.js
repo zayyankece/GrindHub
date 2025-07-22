@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 20,
     right: 16,
   },
   fabContainer: {
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0)',
   },
   modalView: {
-    bottom: 30,
+    bottom: 20,
     width: 'auto',
     minWidth: 150,
     marginBottom: 120,
@@ -901,6 +901,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFA333',
     borderRadius: 20,
     marginVertical: 6,
+    paddingHorizontal: 18,
     justifyContent: 'center',
     alignItems: 'center'
   },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator
-} from 'react-native'; 
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
@@ -21,22 +22,47 @@ import { AuthContext } from '../AuthContext';
 const getDateKey = (isoString) => isoString.substring(0, 10);
 
 // Formats a Date object into "Tue, 27th May 2025"
-const formatSectionDate = (date) => {
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    const day = date.getDate();
-    let suffix = 'th';
-    if (day === 1 || day === 21 || day === 31) suffix = 'st';
-    else if (day === 2 || day === 22) suffix = 'nd';
-    else if (day === 3 || day === 23) suffix = 'rd';
+const formatSectionDate = (dateString) => {
+  // Create a Date object from the input string.
+  const date = new Date(dateString);
+  const day = date.getDate();
 
-    const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
-    return formatted;
-}
+
+  let suffix = 'th';
+  if (day === 1 || day === 21 || day === 31) {
+      suffix = 'st';
+  } else if (day === 2 || day === 22) {
+      suffix = 'nd';
+  } else if (day === 3 || day === 23) {
+      suffix = 'rd';
+  }
+
+  const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+
+  // Format the date parts individually to correctly place the suffix
+  const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
+  const month = date.toLocaleDateString('en-GB', { month: 'short' });
+  const year = date.toLocaleDateString('en-GB', { year: 'numeric' });
+
+  // Construct the string manually to insert the suffix after the day number
+  return `${weekday}, ${day}${suffix} ${month} ${year}`;
+};
 
 // Formats a time string into "13:00"
-const formatTime = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+const formatTime = (utcMinutes) => {
+  const date = new Date();
+
+  // Calculate UTC hours and remaining minutes
+  const utcHours = Math.floor(utcMinutes / 60);
+  const remainingUtcMinutes = utcMinutes % 60;
+
+  // Set the UTC hours and minutes for the date object
+  // This will automatically adjust the local time representation
+  date.setUTCHours(utcHours, remainingUtcMinutes, 0, 0); // Set seconds and milliseconds to 0
+
+  // Format the date to a local time string (e.g., "10:00", "22:30")
+  // 'en-GB' is used for 24-hour format without AM/PM.
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 const ProgressBar = ({ percentage }) => (
@@ -109,11 +135,11 @@ const Timetable = ({navigation}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [weekStartDate, setWeekStartDate] = useState(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dayOfWeek = today.getUTCDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust for Sunday (0)
     const mondayDate = new Date(today);
     mondayDate.setDate(today.getDate() - daysToSubtract);
-    mondayDate.setHours(0, 0, 0, 0);
+    mondayDate.setHours(7, 0, 0, 0); // Set to 7 AM to ensure consistent date key
     return mondayDate;
   });
 
@@ -126,7 +152,7 @@ const Timetable = ({navigation}) => {
       userid : userid,
       }),
     });
-    
+
     const data = await response.json()
 
     if (data.success == false){
@@ -136,6 +162,7 @@ const Timetable = ({navigation}) => {
     }
     catch (error){
       console.error(error)
+      return [] // Return empty array on error
     }
   }
 
@@ -148,7 +175,7 @@ const Timetable = ({navigation}) => {
       userid : userid,
       }),
     });
-    
+
     const data = await response.json()
 
     if (data.success == false){
@@ -159,6 +186,7 @@ const Timetable = ({navigation}) => {
     }
     catch (error){
       console.error(error)
+      return [] // Return empty array on error
     }
   }
 
@@ -173,7 +201,7 @@ const Timetable = ({navigation}) => {
       time: classItem.starttime,
       percentage: null
     }));
-  
+
     // Process the assignments array
     const extractedAssignments = assignmentsArray.map(assignmentItem => ({
       module_code: assignmentItem.assignmentmodule,
@@ -184,50 +212,87 @@ const Timetable = ({navigation}) => {
       time: assignmentItem.assignmenttimeduedate,
       percentage: assignmentItem.assignmentpercentage
     }));
-  
+
     // Combine both transformed arrays into one
     const combinedList = [...extractedClasses, ...extractedAssignments];
 
     combinedList.sort((a, b) => {
-      return new Date(a.time) - new Date(b.time); // Just swap a and b
+      // Sort by date first, then by time
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
+      }
+
+      // If dates are the same, sort by time (assuming time is a number representing minutes)
+      return a.time - b.time;
     });
-  
+
+
     return combinedList;
   }
 
-  useEffect(() => {
-    const fetchAndCombineData = async () => { 
-      try {
-        const [fetchedAssignments, fetchedClasses] = await Promise.all([
-          getAssignments({ userid: userid }),
-          getClass({ userid: userid })
-        ]);
+  // Use useFocusEffect instead of useEffect for data fetching
+  useFocusEffect(
+    useCallback(() => {
+      const fetchAndCombineData = async () => {
+        if (!userid) {
+          setIsLoading(false);
+          return; // Don't fetch if userid is not available
+        }
 
-        setAssignments(fetchedAssignments);
-        setClasses(fetchedClasses);
+        try {
+          setIsLoading(true); // Set loading to true when fetching starts
+          const [fetchedAssignments, fetchedClasses] = await Promise.all([
+            getAssignments({ userid: userid }),
+            getClass({ userid: userid })
+          ]);
 
-        const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
-        setCombinedData(combinedData);
+          setAssignments(fetchedAssignments);
+          setClasses(fetchedClasses);
 
-      } catch (error) {
-        console.error("Failed to fetch or combine data:", error);
-      } finally {
-        setIsLoading(false); 
-      }
-    };
-    fetchAndCombineData();
+          const combinedData = combineAndExtract(fetchedClasses, fetchedAssignments);
+          setCombinedData(combinedData);
 
-  }, []); 
+        } catch (error) {
+          console.error("Failed to fetch or combine data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchAndCombineData();
+      console.log("useFocusEffect ran!");
+
+      // Optional cleanup function (runs when screen blurs or unmounts)
+      return () => {
+        // You can add cleanup logic here if needed,
+        // e.g., to cancel ongoing network requests.
+        console.log("Timetable screen blurred or unmounted.");
+      };
+    }, [userid]) // Add userid as a dependency for useCallback
+  );
 
   const groupedEvents = useMemo(() => {
-    const sorted = [...combinedData].sort((a, b) => new Date(a.time) - new Date(b.time));
+    // Ensure combinedData is not empty and sort it before reducing
+    const sorted = [...combinedData].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
+      }
+      return a.time - b.time; // Sort by time if dates are identical
+    });
+
     return sorted.reduce((acc, event) => {
         const dateKey = getDateKey(event.date);
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(event);
         return acc;
     }, {});
-  }, [combinedData]); 
+  }, [combinedData]);
 
   const renderDays = ({mondayDate}) => {
 
@@ -236,8 +301,8 @@ const Timetable = ({navigation}) => {
 
     for (let i = 0; i < numberOfDaysToShow; i++) {
       const currentDate = new Date(mondayDate);
-      currentDate.setDate(mondayDate.getDate() + i);
 
+      currentDate.setDate(mondayDate.getDate() + i);
       const dateKey = getDateKey(currentDate.toISOString());
       const eventsForDay = groupedEvents[dateKey] || [];
 
@@ -245,6 +310,7 @@ const Timetable = ({navigation}) => {
           <DateSection key={dateKey} date={formatSectionDate(currentDate)}>
               {eventsForDay.length > 0 ? (
                   eventsForDay.map((event, index) => {
+                      // console.log(currentDate, event.module_code, event.type, "event")
                       // ... switch statement to render cards (no change here)
                       switch (event.type) {
                           case 'Lecture':
@@ -255,7 +321,7 @@ const Timetable = ({navigation}) => {
                                   room={event.location}
                                   time={formatTime(event.time)}
                               />
-                              );  
+                              );
                           case 'Tutorial':
                             return (
                                     <LectureCard
@@ -264,7 +330,7 @@ const Timetable = ({navigation}) => {
                                         room={event.location}
                                         time={formatTime(event.time)}
                                     />
-                                    );    
+                                    );
                           case 'Assignment':
                             return (
                                     <AssignmentCard
@@ -273,9 +339,16 @@ const Timetable = ({navigation}) => {
                                         percentage={event.percentage}
                                         dueDate={`Due at ${formatTime(event.time)}`}
                                     />
-                                  );  
+                                  );
                           default:
-                              return null;
+                            return (
+                              <LectureCard
+                                  key={index}
+                                  title={`${event.module_code} - ${event.type}`}
+                                  room={event.location}
+                                  time={formatTime(event.time)}
+                              />
+                              );
                       }
                   })
               ) : (
@@ -294,7 +367,7 @@ const Timetable = ({navigation}) => {
       return newMonday;
     });
   };
-  
+
   const rightArrowPressed = () => {
     setWeekStartDate(currentMonday => {
       const newMonday = new Date(currentMonday);
@@ -304,8 +377,8 @@ const Timetable = ({navigation}) => {
   };
 
   const sundayDate = new Date(weekStartDate);
-  sundayDate.setDate(weekStartDate.getDate() + 6); 
-  
+  sundayDate.setDate(weekStartDate.getDate() + 6);
+
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
   const formattedMonday = weekStartDate.toLocaleDateString('en-US', options);
   const formattedSunday = sundayDate.toLocaleDateString('en-US', options);
@@ -315,13 +388,15 @@ const Timetable = ({navigation}) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-        
+
         {/* Header */}
         <GrindHubHeader navigation={navigation}/>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        </ScrollView>
-  
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF8C42" />
+          <Text style={styles.loadingText}>Loading your timetable...</Text>
+        </View>
+
       </SafeAreaView>
     );
   }
@@ -329,10 +404,10 @@ const Timetable = ({navigation}) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-        
+
         {/* Header */}
         <GrindHubHeader navigation={navigation}/>
-  
+
         <View style={styles.container2}>
         {/* Interactive Left Arrow */}
         <TouchableOpacity onPress={() => leftArrowPressed()}>
@@ -341,10 +416,10 @@ const Timetable = ({navigation}) => {
             style={styles.arrowIcon}
           />
         </TouchableOpacity>
-  
+
         {/* Date Range Text */}
         <Text style={styles.dateText}>{displayRange}</Text>
-  
+
         {/* Interactive Right Arrow */}
         <TouchableOpacity onPress={() => rightArrowPressed()}>
           <Image
@@ -353,11 +428,11 @@ const Timetable = ({navigation}) => {
           />
         </TouchableOpacity>
       </View>
-  
+
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {renderDays({mondayDate: weekStartDate})}
         </ScrollView>
-  
+
       </SafeAreaView>
     );
   }
@@ -367,6 +442,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FED7AA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FED7AA', // Match the main container background
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#333',
   },
   container2: {
     marginTop:15,
@@ -453,7 +539,6 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 4,
-    marginBottom: 6,
   },
   progressBar: {
     height: '100%',

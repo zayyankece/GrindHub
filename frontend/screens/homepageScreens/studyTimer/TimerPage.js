@@ -1,16 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 
-export default function TimerPage({ navigation, route }) {
-  const { token, name} = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+export default function TimerPage({ navigation }) {
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
   // const route = useRoute();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isRunning, setIsRunning] = useState(false);
@@ -128,7 +144,7 @@ export default function TimerPage({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#f58220" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
 
       <View style={styles.timeContainer}>
         <Text style={styles.date}>{getDayMonthString(currentTime)}</Text>
@@ -221,8 +237,6 @@ export default function TimerPage({ navigation, route }) {
           </View>
         ))}
       </ScrollView>
-
-      <GrindHubFooter navigation={navigation} activeTab={"TimerPage"}  token={token}/>
     </SafeAreaView>
   );
 }

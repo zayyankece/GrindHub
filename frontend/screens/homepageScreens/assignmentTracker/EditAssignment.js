@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
-export default function EditAssignment({navigation, route}) {
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+export default function EditAssignment({navigation}) {
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   const [title, setTitle] = useState("Read Chapter 3");
   const [module, setModule] = useState("CS1101S");
@@ -27,7 +43,7 @@ export default function EditAssignment({navigation, route}) {
 
   return (
     <View style={styles.container}>
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
       <Text style={styles.header}>Edit Assignment</Text>
 
       <Text style={styles.label}>Module</Text>
@@ -68,7 +84,6 @@ export default function EditAssignment({navigation, route}) {
         <Ionicons name="trash" size={20} color="#fff" />
         <Text style={styles.deleteText}>Delete Assignment</Text>
       </TouchableOpacity>
-      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token}/>
     </View>
   );
 }

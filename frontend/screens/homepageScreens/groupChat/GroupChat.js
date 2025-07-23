@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,13 +17,30 @@ import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-const GroupChat = ({ navigation, route }) => {
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+const GroupChat = ({navigation}) => {
+  const { userToken, signOut } = useContext(AuthContext);
+
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
   
   // --- State Management ---
   const [groups, setGroups] = useState([]);
@@ -114,13 +131,13 @@ const GroupChat = ({ navigation, route }) => {
   const handleCreateGroup = () => {
     setModalVisible(false);
     // Navigate to Create Group screen
-    navigation.navigate('CreateGroup', { token:token });
+    navigation.navigate('CreateGroup');
   };
 
   const handleJoinGroup = () => {
     setModalVisible(false);
     // Navigate to Join Group screen
-    navigation.navigate('JoinGroup', { token:token });
+    navigation.navigate('JoinGroup');
   };
 
   // --- Child Component for List Items ---
@@ -130,7 +147,6 @@ const GroupChat = ({ navigation, route }) => {
       activeOpacity={0.7}
       onPress={() => {
         navigation.navigate("ChatScreen", {
-          token:token,
           groupid: group.groupid,
           groupname: group.groupname
         });
@@ -155,7 +171,7 @@ const GroupChat = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
       
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
@@ -267,7 +283,6 @@ const GroupChat = ({ navigation, route }) => {
         </Animated.View>
       </Modal>
 
-      <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
   );
 };

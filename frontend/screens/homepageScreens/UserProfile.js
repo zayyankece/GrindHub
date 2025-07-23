@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,34 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../AuthContext';
 
-const UserProfile = ({navigation, route}) => {
+const UserProfile = ({navigation}) => {
 
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   const [user, setUser] = useState(null); // Changed to null initially
   const [notifications, setNotifications] = useState({
@@ -116,6 +133,35 @@ const UserProfile = ({navigation, route}) => {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Sign Out Cancelled"),
+          style: "cancel"
+        },
+        {
+          text: "Sign Out",
+          onPress: async () => {
+            try {
+              await signOut(); // Call the signOut function from AuthContext
+              // AuthContext will handle navigation to LoginScreen
+              console.log("User signed out successfully.");
+            } catch (error) {
+              console.error("Error during sign out:", error);
+              Alert.alert("Sign Out Failed", "There was an issue signing you out. Please try again.");
+            }
+          },
+          style: "destructive" // Red color for destructive action on iOS
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   const menuItems = [
     { title: 'Status Message', icon: 'chevron-forward' },
     { title: 'Change Username', icon: 'chevron-forward' }
@@ -144,7 +190,7 @@ const UserProfile = ({navigation, route}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <View style={styles.profilePicture} />
@@ -179,13 +225,13 @@ const UserProfile = ({navigation, route}) => {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.signOutCard} activeOpacity={0.7} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-      <GrindHubFooter navigation={navigation} activeTab="HomePage" token={token}/>
+
     </SafeAreaView>
   );
 };

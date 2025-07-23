@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo  } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import io from 'socket.io-client';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const SERVER_URL = "https://grindhub-production.up.railway.app"
 
@@ -35,11 +36,27 @@ const MessageBubble = ({ message, isOwn }) => (
   </View>
 );
 
-const ChatScreen = ({route, navigation}) => {
-  // const { groupid, groupname, userid, username } = route.params;
-  const { token, groupid, groupname} = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+const ChatScreen = ({navigation, route}) => {
+  const { userToken, signOut } = useContext(AuthContext);
+  const { groupid, groupname } = route.params;
+
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
   const [username, setUsername] = useState('')
 
   const [isLoading, setIsLoading] = useState(true);
@@ -226,9 +243,9 @@ const ChatScreen = ({route, navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
       
-      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", { token:token, groupid:groupid })}>
+      <TouchableOpacity onPress={() => navigation.navigate("GroupDescription", {groupid:groupid })}>
         <View style={styles.groupInfoContainer}>
           <View style={styles.groupInfoCard}>
             <View style={styles.groupInfoLeft}>
@@ -273,7 +290,6 @@ const ChatScreen = ({route, navigation}) => {
         </View>
       </KeyboardAvoidingView>
 
-      <GrindHubFooter navigation={navigation} activeTab="GroupChat" token={token}/>
     </SafeAreaView>
   );
 };

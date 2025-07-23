@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import GrindHubHeader from './components/GrindHubHeader';
 import GrindHubFooter from './components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../AuthContext';
 
 // --- HELPER FUNCTIONS ---
 
@@ -81,11 +82,26 @@ const DateSection = ({ date, children }) => (
   </View>
 );
 
-const Timetable = ({navigation, route}) => {
+const Timetable = ({navigation}) => {
 
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   const [assignments, setAssignments] = useState([])
   const [classes, setClasses] = useState([])
@@ -301,13 +317,11 @@ const Timetable = ({navigation, route}) => {
         <StatusBar backgroundColor="#FF8C42" barStyle="dark-content" />
         
         {/* Header */}
-        <GrindHubHeader navigation={navigation} token={token}/>
+        <GrindHubHeader navigation={navigation}/>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         </ScrollView>
   
-        {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="Timetable" token={token}/>
       </SafeAreaView>
     );
   }
@@ -344,8 +358,6 @@ const Timetable = ({navigation, route}) => {
           {renderDays({mondayDate: weekStartDate})}
         </ScrollView>
   
-        {/* Bottom Navigation */}
-        <GrindHubFooter navigation={navigation} activeTab="Timetable" token={token}/>
       </SafeAreaView>
     );
   }

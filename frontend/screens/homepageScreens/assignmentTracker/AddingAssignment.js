@@ -65,10 +65,12 @@ export default function AddingAssignment({ navigation }) {
 
     // 2. Format data for the API
     // Format date to "YYYY-MM-DD"
-    const formattedDate = date.toISOString().split('T')[0];
+    // const formattedDate = date.toISOString().split('T')[0];
 
     // Convert selected time to total minutes from midnight (e.g., 1:00 AM = 60)
     const totalTimeInMinutes = time.getHours() * 60 + time.getMinutes();
+
+    const { utcFormattedDate, utcLocalDueDateTime } = convertLocalToUtc(date, totalTimeInMinutes);
     
     // Convert 'time needed' to total minutes
     const timeNeeded = (parseInt(hours, 10) || 0) * 60 + (parseInt(minutes, 10) || 0);
@@ -78,8 +80,8 @@ export default function AddingAssignment({ navigation }) {
       userid: userid,
       assignmentname: taskName,
       assignmentmodule: taskGroup,
-      assignmentduedate: formattedDate, // Stored as a formatted string
-      assignmenttimeduedate: totalTimeInMinutes, // Stored as an integer
+      assignmentduedate: utcFormattedDate, // Stored as a formatted string
+      assignmenttimeduedate: utcLocalDueDateTime, // Stored as an integer
       timeneeded: timeNeeded,
     };
 
@@ -275,3 +277,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+// helper function
+function convertLocalToUtc(localDateOnly, dueDateTime) {
+
+  const localDueDateTime = new Date(
+      localDateOnly.getFullYear(),
+      localDateOnly.getMonth(),
+      localDateOnly.getDate(),
+      Math.floor(dueDateTime / 60), // Hours
+      dueDateTime % 60            // Minutes
+  );
+
+
+  const utcFormattedDate = localDueDateTime.toISOString().split('T')[0];
+  const utcLocalDueDateTime = localDueDateTime.getUTCHours() * 60 + localDueDateTime.getUTCMinutes();
+
+  return {
+      utcFormattedDate: utcFormattedDate,
+      utcLocalDueDateTime: utcLocalDueDateTime,
+  };
+}

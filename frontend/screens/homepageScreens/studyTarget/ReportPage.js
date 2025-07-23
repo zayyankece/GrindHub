@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, StatusBar, TextInput, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
@@ -6,14 +6,30 @@ import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function ReportPage({ navigation, route}) {
+export default function ReportPage({ navigation}) {
 
-  const { token, moduleCode} = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   // const route = useRoute();
   const [targetType, setTargetType] = useState('Weekly');
@@ -52,7 +68,7 @@ export default function ReportPage({ navigation, route}) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
 
       <View style={styles.content}>
         <View style={styles.moduleCodeBox}>
@@ -169,8 +185,6 @@ export default function ReportPage({ navigation, route}) {
           </View>
         </Modal>
       </View>
-
-      <GrindHubFooter navigation={navigation} activeTab={"SelectingModule"}  token={token}/>
     </SafeAreaView>
   );
 }

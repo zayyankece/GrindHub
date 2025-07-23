@@ -40,6 +40,7 @@ function HomeStackScreens() {
       <HomeStack.Screen name="UserProfile" component={UserProfile} />
       <HomeStack.Screen name="AddingClass" component={AddingClass} />
       <HomeStack.Screen name="AddingModule" component={AddingModule} />
+      <HomeStack.Screen name="AddingAssignment" component={AddingAssignment} />
     </HomeStack.Navigator>
   );
 }
@@ -77,13 +78,12 @@ function TimerStackScreens() {
   );
 }
 
-const ReportStack = createNativeStackNavigator(); // This stack will contain ReportPage and SelectingModule
+const ReportStack = createNativeStackNavigator();
 function ReportStackScreens() {
   return (
     <ReportStack.Navigator screenOptions={{ headerShown: false }}>
       <ReportStack.Screen name="ReportPageContent" component={ReportPage} />
-      <ReportStack.Screen name="SelectingModuleContent" component={SelectingModule} /> // Renamed for clarity
-      {/* If TrackerPage is always accessed *from* Report or SelectingModule, put it here */}
+      <ReportStack.Screen name="SelectingModuleContent" component={SelectingModule} />
       <ReportStack.Screen name="TrackerPage" component={TrackerPage} />
       <ReportStack.Screen name="AddingAssignment" component={AddingAssignment} />
       <ReportStack.Screen name="EditAssignment" component={EditAssignment} />

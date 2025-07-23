@@ -140,7 +140,7 @@ exports.setModule = async(req, res) => {
 
   try {
     const moduleid = crypto.randomUUID()
-    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor) VALUES ($1, $2, $3, $4, $5) RETURNING *"
+    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor, userid) VALUES ($1, $2, $3, $4, $5) RETURNING *"
     const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor]);
 
     if (rows.length == 0){
@@ -151,6 +151,29 @@ exports.setModule = async(req, res) => {
       message: "Module added successfully!", 
       success: true, 
       module: rows[0] 
+    });
+
+  }catch (error){
+    console.error(error)
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+exports.getModule = async(req, res) => {
+  const {userid} = req.body
+
+  try {
+    const queryText = "SELECT * FROM modules WHERE userid = $1"
+    const existingModules = await db.query(queryText, [userid]);
+
+    if (existingModules.rows.length == 0){
+      return res.status(500).json({ message: 'Something went wrong', success : false});
+    }
+
+    return res.status(201).json({
+      message: "Module added successfully!", 
+      success: true, 
+      modules: existingModules.rows
     });
 
   }catch (error){

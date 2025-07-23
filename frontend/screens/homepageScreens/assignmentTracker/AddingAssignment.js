@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
-export default function AddingAssignment({ navigation, route }) {
-  const { token } = route.params;
-  const decodedToken = jwtDecode(token);
-  const userid = decodedToken.userid;
+export default function AddingAssignment({ navigation }) {
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   // Form state
   const [taskName, setTaskName] = useState('');
@@ -49,10 +65,12 @@ export default function AddingAssignment({ navigation, route }) {
 
     // 2. Format data for the API
     // Format date to "YYYY-MM-DD"
-    const formattedDate = date.toISOString().split('T')[0];
+    // const formattedDate = date.toISOString().split('T')[0];
 
     // Convert selected time to total minutes from midnight (e.g., 1:00 AM = 60)
     const totalTimeInMinutes = time.getHours() * 60 + time.getMinutes();
+
+    const { utcFormattedDate, utcLocalDueDateTime } = convertLocalToUtc(date, totalTimeInMinutes);
     
     // Convert 'time needed' to total minutes
     const timeNeeded = (parseInt(hours, 10) || 0) * 60 + (parseInt(minutes, 10) || 0);
@@ -62,8 +80,8 @@ export default function AddingAssignment({ navigation, route }) {
       userid: userid,
       assignmentname: taskName,
       assignmentmodule: taskGroup,
-      assignmentduedate: formattedDate, // Stored as a formatted string
-      assignmenttimeduedate: totalTimeInMinutes, // Stored as an integer
+      assignmentduedate: utcFormattedDate, // Stored as a formatted string
+      assignmenttimeduedate: utcLocalDueDateTime, // Stored as an integer
       timeneeded: timeNeeded,
     };
 
@@ -95,7 +113,7 @@ export default function AddingAssignment({ navigation, route }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF7ED' }}>
-      <GrindHubHeader navigation={navigation} token={token} />
+      <GrindHubHeader navigation={navigation}/>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -174,7 +192,6 @@ export default function AddingAssignment({ navigation, route }) {
           <Text style={styles.createButtonText}>Create Assignment</Text>
         </TouchableOpacity>
       </ScrollView>
-      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token} />
     </SafeAreaView>
   );
 }
@@ -260,3 +277,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+// helper function
+function convertLocalToUtc(localDateOnly, dueDateTime) {
+
+  const localDueDateTime = new Date(
+      localDateOnly.getFullYear(),
+      localDateOnly.getMonth(),
+      localDateOnly.getDate(),
+      Math.floor(dueDateTime / 60), // Hours
+      dueDateTime % 60            // Minutes
+  );
+
+
+  const utcFormattedDate = localDueDateTime.toISOString().split('T')[0];
+  const utcLocalDueDateTime = localDueDateTime.getUTCHours() * 60 + localDueDateTime.getUTCMinutes();
+
+  return {
+      utcFormattedDate: utcFormattedDate,
+      utcLocalDueDateTime: utcLocalDueDateTime,
+  };
+}

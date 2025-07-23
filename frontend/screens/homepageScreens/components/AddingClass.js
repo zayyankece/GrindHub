@@ -76,10 +76,13 @@ export default function AddingClass({ navigation }) {
     const startTimeInMinutes = startTime.getHours() * 60 + startTime.getMinutes();
     const endTimeInMinutes = endTime.getHours() * 60 + endTime.getMinutes();
 
+    const { utcFormattedDate, utcStartTimeInMinutes, utcEndTimeInMinutes } = convertLocalToUtc(date, startTimeInMinutes, endTimeInMinutes);
+    
     if (startTimeInMinutes >= endTimeInMinutes) {
         Alert.alert("Invalid Time", "End time must be after start time.");
         return;
     }
+    
 
     // 3. Construct payload for the API
     const classData = {
@@ -87,11 +90,13 @@ export default function AddingClass({ navigation }) {
       modulename: moduleCode,
       classtype: classType,
       classlocation: venue,
-      startdate: formattedDate,
-      starttime: startTimeInMinutes,
-      enddate: formattedDate, // Class is assumed to be on the same day
-      endtime: endTimeInMinutes,
+      startdate: utcFormattedDate,
+      starttime: utcStartTimeInMinutes,
+      enddate: utcFormattedDate, // Class is assumed to be on the same day
+      endtime: utcEndTimeInMinutes,
     };
+
+    console.log(classData); // Debugging: Log the class data being sent
 
     try {
       // 4. Send fetch request
@@ -256,3 +261,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+// helper function
+function convertLocalToUtc(localDateOnly, timeStartInMinutes, timeEndInMinutes) {
+
+  const localStartDateTime = new Date(
+      localDateOnly.getFullYear(),
+      localDateOnly.getMonth(),
+      localDateOnly.getDate(),
+      Math.floor(timeStartInMinutes / 60), // Hours
+      timeStartInMinutes % 60            // Minutes
+  );
+
+  const localEndDateTime = new Date(
+      localDateOnly.getFullYear(),
+      localDateOnly.getMonth(),
+      localDateOnly.getDate(),
+      Math.floor(timeEndInMinutes / 60), // Hours
+      timeEndInMinutes % 60              // Minutes
+  );
+
+  const utcFormattedDate = localStartDateTime.toISOString().split('T')[0];
+  const utcStartTimeInMinutesForDay = localStartDateTime.getUTCHours() * 60 + localStartDateTime.getUTCMinutes();
+  const utcEndTimeInMinutesForDay = localEndDateTime.getUTCHours() * 60 + localEndDateTime.getUTCMinutes();
+
+  return {
+      utcFormattedDate: utcFormattedDate,
+      utcStartTimeInMinutes: utcStartTimeInMinutesForDay,
+      utcEndTimeInMinutes: utcEndTimeInMinutesForDay
+  };
+}

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, {useContext, useMemo} from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
 const tasks = [
   { code: 'CS1010S', title: 'Mission 1', progress: 0.9 },
@@ -18,14 +19,29 @@ const tasks = [
   { code: 'MA2002', title: 'Homework 1', progress: 0.8 },
 ];
 
-export default function TrackerPage({navigation, route}) {
-  const { token } = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+export default function TrackerPage({navigation}) {
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid; 
 
   return (
     <View style={styles.container}>
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
       <View style={styles.searchContainer}>
         <TextInput placeholder="Search" style={styles.searchInput} />
         <Ionicons name="search" size={20} color="#333" style={styles.icon} />
@@ -45,7 +61,6 @@ export default function TrackerPage({navigation, route}) {
           </View>
         ))}
       </ScrollView>
-      <GrindHubFooter navigation={navigation} activeTab={"Timetable"} token={token}/>
     </View>
   );
 }

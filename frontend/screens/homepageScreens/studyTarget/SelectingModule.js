@@ -1,17 +1,33 @@
-import React from 'react';
+import React, {useContext, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
 import { jwtDecode } from "jwt-decode";
+import { AuthContext } from '../../AuthContext';
 
-export default function SelectingModule({ navigation, route }) {
+export default function SelectingModule({ navigation }) {
   // const route = useRoute();
 
-  const {token, name} = route.params
-  const decodedToken = jwtDecode(token)
-  const userid = decodedToken.userid 
+  const { userToken, signOut } = useContext(AuthContext);
+  // Decode token to get userid
+  const decodedToken = useMemo(() => {
+    if (userToken) {
+      try {
+        return jwtDecode(userToken);
+      } catch (e) {
+        console.error("Failed to decode token in ChatScreen:", e);
+        // If token is invalid, sign out the user
+        signOut();
+        return null;
+      }
+    }
+    return null;
+  }, [userToken, signOut]);
+
+  // Derive userid and username from the decoded token
+  const userid = decodedToken?.userid;
 
   const modules = ['ST2131','CS1231','DSA1101','DSA2102','DSA3101','DSA4288M','CS2040','CS3230'];
 
@@ -19,7 +35,7 @@ export default function SelectingModule({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-      <GrindHubHeader navigation={navigation} token={token}/>
+      <GrindHubHeader navigation={navigation}/>
 
       <Text style={styles.title}>Target and Performance</Text>
 
@@ -28,15 +44,13 @@ export default function SelectingModule({ navigation, route }) {
           <TouchableOpacity
           key={index}
           style={styles.moduleButton}
-          onPress={() => navigation.navigate('ReportPage', { token:token, moduleCode: module })}
+          onPress={() => navigation.navigate('ReportPage', {moduleCode: module })}
         >
           <Text style={styles.moduleText}>{module}</Text>
         </TouchableOpacity>
         
         ))}
       </ScrollView>
-
-      <GrindHubFooter navigation={navigation} activeTab={"SelectingModule"} token={token}/>
     </SafeAreaView>
   );
 }

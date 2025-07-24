@@ -346,7 +346,7 @@ exports.getAllLatestMessages = async(req, res) => {
   const {userid} = req.body
 
   try {
-    const queryText = "SELECT message_content FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY groupid ORDER BY datesent DESC, timesent DESC) AS rn FROM messagecollections WHERE userid = $1) AS subquery WHERE rn = 1"
+    const queryText = "SELECT groupid, messagecontent FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY groupid ORDER BY datesent DESC, timesent DESC) AS rn FROM messagecollections WHERE userid = $1) AS subquery WHERE rn = 1"
     const existingMessages = await db.query(queryText, [userid])
 
     if (existingMessages.rows.length == 0){

@@ -172,8 +172,10 @@ export default function HomePage({ navigation }) {
         body: JSON.stringify({ userid: currentUserId }),
       });
       const data = await response.json();
+
+      console.log("Latest messages data:", data); // Log the response data for debugging
       return data.success ? data.messages : [];
-      
+
     } catch (error) {
       console.error("Error fetching assignments:", error);
       return [];
@@ -360,6 +362,12 @@ export default function HomePage({ navigation }) {
   };
 
   const leftArrowPressed = () => {
+
+    console.log("helo")
+    const latestmessages = getAllLatestMessages(userid);
+    console.log(latestmessages)
+    console.log("helo2")
+
     setStartDate(startDate => {
       const newDay = new Date(startDate);
       newDay.setDate(startDate.getDate() - 1);

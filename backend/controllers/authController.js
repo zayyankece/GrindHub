@@ -136,12 +136,12 @@ exports.setClass = async(req, res) => {
 }
 
 exports.setModule = async(req, res) => {
-  const {modulename, moduletitle, credits, instructor} = req.body
+  const {modulename, moduletitle, credits, instructor, userid} = req.body
 
   try {
     const moduleid = crypto.randomUUID()
-    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor, userid) VALUES ($1, $2, $3, $4, $5) RETURNING *"
-    const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor]);
+    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"
+    const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor, userid]);
 
     if (rows.length == 0){
       return res.status(500).json({ message: 'Something went wrong', success : false});

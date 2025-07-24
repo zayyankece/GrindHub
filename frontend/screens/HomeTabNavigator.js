@@ -82,8 +82,8 @@ const ReportStack = createNativeStackNavigator();
 function ReportStackScreens() {
   return (
     <ReportStack.Navigator screenOptions={{ headerShown: false }}>
-      <ReportStack.Screen name="ReportPageContent" component={ReportPage} />
       <ReportStack.Screen name="SelectingModuleContent" component={SelectingModule} />
+      <ReportStack.Screen name="ReportPage" component={ReportPage} />
       <ReportStack.Screen name="TrackerPage" component={TrackerPage} />
       <ReportStack.Screen name="AddingAssignment" component={AddingAssignment} />
       <ReportStack.Screen name="EditAssignment" component={EditAssignment} />

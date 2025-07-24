@@ -61,6 +61,7 @@ export default function HomePage({ navigation }) {
   const [combinedData, setCombinedData] = useState([]);
   const [groups, setGroups] = useState([]);
   const [username, setUsername] = useState("");
+  const [latestMessages, setLatestMessages] = useState(new Map()); // State for latest messages
 
   const [isLoading, setIsLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -222,7 +223,7 @@ export default function HomePage({ navigation }) {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [fetchedAssignments, fetchedClasses, groupsData, userData] = await Promise.all([
+        const [fetchedAssignments, fetchedClasses, groupsData, userData, latestMessages] = await Promise.all([
           getAssignments(userid), // Pass userid
           getClass(userid),       // Pass userid
           fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
@@ -235,11 +236,19 @@ export default function HomePage({ navigation }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userid: userid }),
           }).then(res => res.json()),
+          getAllLatestMessages(userid) // Pass userid
         ]);
+
+        const latestMessagesMap = new Map();
+        for (let i = 0; i < latestMessages.length; i++) {
+          const message = latestMessages[i];
+          latestMessagesMap.set(message.groupid, message.messagecontent);
+        }
 
         setAssignments(fetchedAssignments);
         setClasses(fetchedClasses);
         setCombinedData(combineAndExtract(fetchedClasses, fetchedAssignments));
+        setLatestMessages(latestMessagesMap);
 
         if (groupsData.success) {
           setGroups(groupsData.groups);
@@ -362,11 +371,6 @@ export default function HomePage({ navigation }) {
   };
 
   const leftArrowPressed = () => {
-
-    console.log("helo")
-    const latestmessages = getAllLatestMessages(userid);
-    console.log(latestmessages)
-    console.log("helo2")
 
     setStartDate(startDate => {
       const newDay = new Date(startDate);
@@ -510,7 +514,7 @@ export default function HomePage({ navigation }) {
                     </View>
                     <View style={styles.groupMessage}>
                       <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-                      <Text style={styles.groupMessageText}>this is a subtitle (not yet implemented)</Text>
+                      <Text style={styles.groupMessageText}>{latestMessages.get(group.groupid)}</Text>
                     </View>
                   </View>
                 ))}

@@ -46,6 +46,7 @@ const GroupChat = ({navigation}) => {
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
+  const [latestMessages, setLatestMessages] = useState(new Map());
   
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -97,7 +98,6 @@ const GroupChat = ({navigation}) => {
         }); 
 
         const data = await response.json();
-        console.log(data)
 
         if (data.success) {
           setGroups(data.groups);
@@ -116,6 +116,35 @@ const GroupChat = ({navigation}) => {
       }
     };
 
+    const getAllLatestMessages = async (currentUserId) => { // Accepts userid as parameter 
+      try {
+        const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAllLatestMessages", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userid: currentUserId }),
+        });
+        const data = await response.json();
+  
+        if (data.success){
+          const latestMessagesMap = new Map();
+          for (let i = 0; i < data.messages.length; i++) {
+            const message = data.messages[i];
+            latestMessagesMap.set(message.groupid, message.messagecontent);// Log each message for debugging
+          }
+          setLatestMessages(latestMessagesMap);
+        }
+        else {
+          console.error("Failed to fetch latest messages:", data.message);
+          return [];
+        }
+  
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+        return [];
+      }
+    };
+
+    getAllLatestMessages(userid); // Fetch latest messages for the current user
     fetchGroups();
   }, []);
 
@@ -160,7 +189,7 @@ const GroupChat = ({navigation}) => {
           <Text style={styles.groupTitle}>{group.groupname}</Text>
           <View style={styles.subtitleContainer}>
             <Ionicons name="chatbubble" size={12} color="#666" />
-            <Text style={styles.groupSubtitle}>this is a subtitle (not yet implemented)</Text>
+            <Text style={styles.groupSubtitle}>{latestMessages.get(group.groupid)}</Text>
           </View>
         </View>
       </View>

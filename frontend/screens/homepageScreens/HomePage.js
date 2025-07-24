@@ -125,6 +125,7 @@ export default function HomePage({ navigation }) {
   }, [messages]);
 
   const sendMessage = () => {
+
     if (chatInput.trim() && socket) { // Ensure socket exists before sending
       const userMessage = { sender: 'User', message: chatInput.trim() };
       setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -162,6 +163,22 @@ export default function HomePage({ navigation }) {
     };
     return date.toLocaleTimeString('en-GB', options);
   }
+
+  const getAllLatestMessages = async (currentUserId) => { // Accepts userid as parameter
+    try {
+      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAllLatestMessages", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid: currentUserId }),
+      });
+      const data = await response.json();
+      return data.success ? data.messages : [];
+      
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      return [];
+    }
+  };
 
   const getAssignments = async (currentUserId) => { // Accepts userid as parameter
     try {

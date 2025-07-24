@@ -342,6 +342,23 @@ exports.getMessages = async(req, res) => {
   }
 }
 
+exports.getAllLatestMessages = async(req, res) => {
+  const {userid} = req.body
+
+  try {
+    const queryText = "SELECT message_content FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY groupid ORDER BY datesent DESC, timesent DESC) AS rn FROM messagecollections WHERE userid = $1) AS subquery WHERE rn = 1"
+    const existingMessages = await db.query(queryText, [userid])
+
+    if (existingMessages.rows.length == 0){
+      return res.status(404).json({message: "No messages found!", success: false, messages:existingMessages})
+    }
+    return res.status(200).json({message: "Messages retrieved!", success:true, messages:existingMessages.rows})
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 exports.addMessage = async(req, res) => {
   // 1. Destructure the required information from the request body.
   const { groupid, userid, messagecontent} = req.body;

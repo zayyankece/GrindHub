@@ -3,13 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import HomeTabNavigator from './HomeTabNavigator';
 
-// REMOVE these imports from AppStack.js if they are now within HomeTabNavigator's stacks
-// import GroupChat from './homepageScreens/groupChat/GroupChat';
-// import ChatScreen from './homepageScreens/groupChat/ChatScreen';
-// import GroupDescription from './homepageScreens/groupChat/GroupDescription';
-// import CreateGroup from './homepageScreens/groupChat/CreateGroup';
-// import JoinGroup from './homepageScreens/groupChat/JoinGroup';
-
 const App = createNativeStackNavigator();
 
 const AppStack = () => {

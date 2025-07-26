@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import GrindHubHeader from '../components/GrindHubHeader';
 import GrindHubFooter from '../components/GrindHubFooter';
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from '../../AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -86,7 +87,8 @@ const GroupChat = ({navigation}) => {
   }, [modalVisible]);
 
   // --- Data Fetching ---
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     const fetchGroups = async () => {
       try {
         const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
@@ -146,7 +148,8 @@ const GroupChat = ({navigation}) => {
 
     getAllLatestMessages(userid); // Fetch latest messages for the current user
     fetchGroups();
-  }, []);
+  }, [])
+  )
 
   // --- Modal Handlers ---
   const handleOpenModal = () => {
@@ -171,6 +174,10 @@ const GroupChat = ({navigation}) => {
 
   // --- Child Component for List Items ---
   const GroupListItem = ({ group }) => (
+
+    ((group.groupname.includes(searchText) || searchText === '') ?
+
+    (
     <TouchableOpacity
       style={styles.groupItem}
       activeOpacity={0.7}
@@ -194,6 +201,7 @@ const GroupChat = ({navigation}) => {
         </View>
       </View>
     </TouchableOpacity>
+    ) : (<View/>))
   );
 
   return (

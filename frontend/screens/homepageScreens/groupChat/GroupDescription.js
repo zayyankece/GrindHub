@@ -18,25 +18,123 @@ import { jwtDecode } from "jwt-decode";
 import { AuthContext } from '../../AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 
+const FreeTimeSolutionModal = ({ isVisible, onClose, solution, isSolutionFound }) => {
+  // Helper function to convert minutes to readable time format
+  const minutesToTime = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const renderSolutionContent = () => {
+    if (!isSolutionFound) {
+      return (
+        <View style={solutionModalStyles.noSolutionContainer}>
+          <Text style={solutionModalStyles.noSolutionTitle}>No Common Free Time Found</Text>
+          <Text style={solutionModalStyles.noSolutionText}>
+            Unfortunately, we couldn't find a common free time slot that meets your requirements within the specified date range and duration.
+          </Text>
+          <Text style={solutionModalStyles.suggestionText}>
+            Try adjusting your search criteria:
+          </Text>
+          <Text style={solutionModalStyles.suggestionItem}>• Extend the date range</Text>
+          <Text style={solutionModalStyles.suggestionItem}>• Reduce the duration requirement</Text>
+          <Text style={solutionModalStyles.suggestionItem}>• Adjust the preferred time hours</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={solutionModalStyles.solutionContainer}>
+        <Text style={solutionModalStyles.successTitle}>Free Time Found!</Text>
+        <Text style={solutionModalStyles.successSubtitle}>
+          Here's when your group can meet:
+        </Text>
+        
+        <ScrollView style={solutionModalStyles.solutionList} showsVerticalScrollIndicator={false}>
+          {Array.from(solution.entries()).map(([date, timeSlots]) => (
+            <View key={date} style={solutionModalStyles.dateSection}>
+              <Text style={solutionModalStyles.dateHeader}>
+                {formatDate(date)}
+              </Text>
+              {timeSlots.map((slot, index) => (
+                <View key={index} style={solutionModalStyles.timeSlot}>
+                  <Text style={solutionModalStyles.timeText}>
+                    {minutesToTime(slot[0])} - {minutesToTime(slot[1])}
+                  </Text>
+                  <Text style={solutionModalStyles.durationText}>
+                    ({slot[1] - slot[0]} minutes)
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={solutionModalStyles.centeredView}>
+        <View style={solutionModalStyles.modalView}>
+          {renderSolutionContent()}
+          
+          <TouchableOpacity
+            style={[
+              solutionModalStyles.closeButton, 
+              isSolutionFound ? solutionModalStyles.successButton : solutionModalStyles.errorButton
+            ]}
+            onPress={onClose}
+          >
+            <Text style={solutionModalStyles.closeButtonText}>
+              {isSolutionFound ? 'Great!' : 'Try Again'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // --- FreeTimeModal Component ---
 const FreeTimeModal = ({ isVisible, onClose, onSubmit, members }) => {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [startHour, setStartHour] = useState(new Date(0, 0, 0, 9, 0)); // Default 9 AM
-  const [endHour, setEndHour] = useState(new Date(0, 0, 0, 17, 0));   // Default 5 PM
+  const [starttime, setStarttime] = useState(new Date()); // Default 9 AM
+  const [endtime, setEndtime] = useState(new Date());   // Default 5 PM
+  const [duration, setDuration] = useState(120); // Default duration in minutes
 
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [showStartHourPicker, setShowStartHourPicker] = useState(false);
-  const [showEndHourPicker, setShowEndHourPicker] = useState(false);
+  const [showStarttimePicker, setShowStarttimePicker] = useState(false);
+  const [showEndtimePicker, setShowEndtimePicker] = useState(false);
+  const [showDurationPicker, setShowDurationPicker] = useState(false);
 
   // Reset states when modal becomes visible
   useEffect(() => {
     if (isVisible) {
       setStartDate(new Date());
       setEndDate(new Date());
-      setStartHour(new Date(0, 0, 0, 9, 0));
-      setEndHour(new Date(0, 0, 0, 17, 0));
+      setStarttime(new Date()); 
+      setEndtime(new Date());
+      setDuration(120);
     }
   }, [isVisible]);
 
@@ -52,24 +150,37 @@ const FreeTimeModal = ({ isVisible, onClose, onSubmit, members }) => {
     setEndDate(currentDate);
   };
 
-  const onChangeStartHour = (event, selectedTime) => {
-    const currentTime = selectedTime || startHour;
-    setShowStartHourPicker(Platform.OS === 'ios');
-    setStartHour(currentTime);
+  const onChangeStarttime = (event, selectedTime) => {
+    const currentTime = selectedTime || starttime;
+    setShowStarttimePicker(Platform.OS === 'ios');
+    setStarttime(currentTime);
   };
 
-  const onChangeEndHour = (event, selectedTime) => {
-    const currentTime = selectedTime || endHour;
-    setShowEndHourPicker(Platform.OS === 'ios');
-    setEndHour(currentTime);
+  const onChangeEndtime = (event, selectedTime) => {
+    const currentTime = selectedTime || endtime;
+    setShowEndtimePicker(Platform.OS === 'ios');
+    setEndtime(currentTime);
   };
+
+  const onChangeDuration = (event, selectedDuration) => {
+    const currentDuration = selectedDuration || duration;
+    setDuration(currentDuration);
+  };
+
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   const handleSubmitPress = () => {
     onSubmit({
-      startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD
-      endDate: endDate.toISOString().split('T')[0],     // YYYY-MM-DD
-      startHour: startHour.getHours(),
-      endHour: endHour.getHours(),
+      startdate: formatDate(startDate), // YYYY-MM-DD
+      enddate: formatDate(endDate),     // YYYY-MM-DD
+      starttime: starttime.getHours() * 60 + starttime.getMinutes(), // Convert to minutes
+      endtime: endtime.getHours() * 60 + endtime.getMinutes(), // Convert to minutes
+      duration: parseInt(duration), // Duration in minutes
     });
     onClose(); // Close modal after submission
   };
@@ -121,36 +232,48 @@ const FreeTimeModal = ({ isVisible, onClose, onSubmit, members }) => {
           {/* Time Range */}
           <View style={modalStyles.inputGroup}>
             <Text style={modalStyles.label}>Start Hour:</Text>
-            <TouchableOpacity onPress={() => setShowStartHourPicker(true)} style={modalStyles.dateInput}>
-              <Text>{startHour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <TouchableOpacity onPress={() => setShowStarttimePicker(true)} style={modalStyles.dateInput}>
+              <Text>{starttime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
             </TouchableOpacity>
-            {showStartHourPicker && (
+            {showStarttimePicker && (
               <DateTimePicker
-                testID="startHourPicker"
-                value={startHour}
+                testID="starttimePicker"
+                value={starttime}
                 mode="time"
                 is24Hour={true} // Use 24-hour format
                 display="default"
-                onChange={onChangeStartHour}
+                onChange={onChangeStarttime}
               />
             )}
           </View>
 
           <View style={modalStyles.inputGroup}>
             <Text style={modalStyles.label}>End Hour:</Text>
-            <TouchableOpacity onPress={() => setShowEndHourPicker(true)} style={modalStyles.dateInput}>
-              <Text>{endHour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <TouchableOpacity onPress={() => setShowEndtimePicker(true)} style={modalStyles.dateInput}>
+              <Text>{endtime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
             </TouchableOpacity>
-            {showEndHourPicker && (
+            {showEndtimePicker && (
               <DateTimePicker
-                testID="endHourPicker"
-                value={endHour}
+                testID="endtimePicker"
+                value={endtime}
                 mode="time"
                 is24Hour={true} // Use 24-hour format
                 display="default"
-                onChange={onChangeEndHour}
+                onChange={onChangeEndtime}
               />
             )}
+          </View>
+
+          <View style={modalStyles.inputGroup}>
+            <Text style={modalStyles.label}>Duration :</Text>
+              <TextInput
+                style={modalStyles.dateInput}
+                value={duration}
+                onChangeText={setDuration}
+                placeholder='Duration in minutes'
+                keyboardType='numeric'
+                defaultValue='120'
+              />
           </View>
 
           <View style={modalStyles.buttonContainer}>
@@ -203,6 +326,9 @@ const GroupDescription = ({ route, navigation }) => {
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
+  const [isSolutionModalVisible, setIsSolutionModalVisible] = useState(false);
+  const [solutionResult, setSolutionResult] = useState(null);
+  const [isSolutionFound, setIsSolutionFound] = useState(false);
 
   // --- Data Fetching ---
   // This useEffect hook fetches all necessary data when the screen loads.
@@ -275,9 +401,7 @@ const GroupDescription = ({ route, navigation }) => {
   };
 
   // --- Handler Function for Finding Free Time ---
-  const handleFindFreeTime = async ({ startDate, startHour, endHour }) => {
-    console.log("Finding free time with:", { startDate, startHour, endHour });
-
+  const handleFindFreeTime = async ({ startdate, enddate, starttime, endtime, duration }) => {
     try {
       // Example of a backend call (you need to implement this API endpoint)
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getGroupMemberClassTime", {
@@ -292,45 +416,111 @@ const GroupDescription = ({ route, navigation }) => {
       });
 
       const data = await response.json();
-      console.log("API response for free time:", data);
 
       if (data.success) {
 
-        const intervals = []
+        const intervalsMaps = new Map()
+        for (const comp in data.classTime) {
+          const component = data.classTime[comp];
+          if (intervalsMaps.has(component.startdate) === false) {
+            intervalsMaps.set(component.startdate, [])
+          }
+          intervalsMaps.get(component.startdate).push([component.starttime, component.endtime]);
+        }
 
-        // const formattedFreeTimes = data.freeTimeSlots.map(slot => {
-        //   const startMinutes = slot[0];
-        //   const endMinutes = slot[1];
+        const startDate = new Date(startdate);
+        const endDate = new Date(enddate);
 
-        //   const startH = Math.floor(startMinutes / 60);
-        //   const startM = startMinutes % 60;
-        //   const endH = Math.floor(endMinutes / 60);
-        //   const endM = endMinutes % 60;
+        const freeTimesArray = new Map()
 
-        //   const formatTime = (h, m) => `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        while (startDate <= endDate) {
+          if (intervalsMaps.has(startDate.toISOString())){
+            const intervals = intervalsMaps.get(startDate.toISOString());
+            intervals.sort((a, b) => a[0] - b[0]); // Sort intervals by start time
 
-        //   return `${formatTime(startH, startM)} - ${formatTime(endH, endM)}`;
-        // }).join('\n');
+            const freeTimes = findFreeTimeLogic(intervals);
+            if (freeTimes.length > 0) {
+              freeTimesArray.set(startDate.toISOString(), freeTimes);
+            }
+          } else {
+            freeTimesArray.set(startDate.toISOString(), [[0, 1440]]);
+          }
+          startDate.setDate(startDate.getDate() + 1); // Move to the next day
+        }
 
-        Alert.alert(
-          "Free Time Found!",
-          `Within the selected range, the group has free time during:\n\n${formattedFreeTimes}`,
-          [{ text: "OK" }]
-        );
+        let durationLeft = duration
+        let isSolutionFound = false;
+
+        const solution = new Map()
+
+        freeTimesArray.forEach (function(value, key){
+
+          if (isSolutionFound == false){
+            let dayStarttime = starttime
+            let dayStartend = endtime
+
+            for (let val in value) {
+              if (solution.has(key) === false){
+                solution.set(key, [])
+              }
+              if (dayStarttime < value[val][0] && dayStarttime < value[val][1]){
+                dayStarttime = Math.max(value[val][0], dayStarttime)
+                dayStartend = Math.min(value[val][1], dayStartend)
+                if (dayStarttime + durationLeft > dayStartend) {
+                  solution.get(key).push([dayStarttime, dayStartend])
+                  durationLeft -= (dayStartend - dayStarttime);
+                  dayStarttime = dayStartend;
+                } else {
+                  solution.get(key).push([dayStarttime, dayStarttime + durationLeft])
+                  isSolutionFound = true;
+                  break
+                }
+              }
+              else if (dayStarttime >= value[val][0] && dayStarttime < value[val][1]){
+                dayStarttime = Math.max(value[val][0], dayStarttime)
+                dayStartend = Math.min(value[val][1], dayStartend)
+                if (dayStarttime + durationLeft > dayStartend) {
+                  solution.get(key).push([dayStarttime, dayStartend])
+                  durationLeft -= (dayStartend - dayStarttime);
+                  dayStarttime = dayStartend;
+                } else {
+                  solution.get(key).push([dayStarttime, dayStarttime + durationLeft])
+                  isSolutionFound = true;
+                  break
+                }
+              } else {
+                continue
+              }
+            }
+          }
+        })
+
+        if (isSolutionFound) {
+          // Set the solution data and show modal
+          setSolutionResult(solution);
+          setIsSolutionFound(true);
+          setIsSolutionModalVisible(true);
+        } else {
+          // Set no solution and show modal
+          setSolutionResult(null);
+          setIsSolutionFound(false);
+          setIsSolutionModalVisible(true);
+        }
+        
       } else {
-        Alert.alert(
-          "No Common Free Time",
-          data.message || "Could not find a common free time slot for the group within the specified range.",
-          [{ text: "OK" }]
-        );
+          console.error("Data fetching failed:", data.message);
+          // Show error in the solution modal
+          setSolutionResult(null);
+          setIsSolutionFound(false);
+          setIsSolutionModalVisible(true);
       }
+
     } catch (error) {
       console.error("Error finding free time:", error);
-      Alert.alert(
-        "Error",
-        "An error occurred while trying to find free time. Please try again later.",
-        [{ text: "OK" }]
-      );
+      // Show error in the solution modal
+      setSolutionResult(null);
+      setIsSolutionFound(false);
+      setIsSolutionModalVisible(true);
     }
   };
 
@@ -391,6 +581,13 @@ const GroupDescription = ({ route, navigation }) => {
         onClose={() => setIsModalVisible(false)}
         onSubmit={handleFindFreeTime}
         members={members} // Pass members if needed for logic inside modal (e.g., displaying names)
+      />
+
+      <FreeTimeSolutionModal
+        isVisible={isSolutionModalVisible}
+        onClose={() => setIsSolutionModalVisible(false)}
+        solution={solutionResult}
+        isSolutionFound={isSolutionFound}
       />
 
     </SafeAreaView>
@@ -550,6 +747,150 @@ const modalStyles = StyleSheet.create({
   },
   buttonClose: {
     backgroundColor: '#F44336', // Red for close
+  },
+});
+
+const solutionModalStyles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  // Success styles
+  solutionContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 15,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  solutionList: {
+    width: '100%',
+    maxHeight: 300,
+  },
+  dateSection: {
+    marginBottom: 20,
+    width: '100%',
+  },
+  dateHeader: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+    backgroundColor: '#F0F0F0',
+    padding: 10,
+    borderRadius: 8,
+  },
+  timeSlot: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: '#E8F5E8',
+    marginVertical: 3,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  timeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#2E7D32',
+  },
+  durationText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  // No solution styles
+  noSolutionContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  noSolutionIcon: {
+    fontSize: 48,
+    marginBottom: 15,
+  },
+  noSolutionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#F44336',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  noSolutionText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  suggestionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  suggestionItem: {
+    fontSize: 14,
+    color: '#666',
+    marginVertical: 2,
+    textAlign: 'center',
+  },
+  // Button styles
+  closeButton: {
+    borderRadius: 10,
+    padding: 15,
+    elevation: 2,
+    marginTop: 20,
+    minWidth: 120,
+  },
+  successButton: {
+    backgroundColor: '#4CAF50',
+  },
+  errorButton: {
+    backgroundColor: '#FF8C42',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
 

@@ -418,6 +418,24 @@ exports.getDescription = async (req, res) => {
   }
 }
 
+exports.getGroupMemberClassTime = async (req, res) => {
+
+  const {groupid} = req.body
+
+  try {
+    const queryText = "Select startdate, starttime, endtime from class c join groupmembers gm on gm.userid = c.userid where gm.groupid = $1"
+    const existingClassTime = await db.query(queryText, [groupid])
+
+    if (existingClassTime.rows.length == 0){
+      return res.status(404).json({message: "No class time found!", success: false, classTime:existingClassTime})
+    }
+    return res.status(200).json({message: "Class time retrieved!", success:true, classTime:existingClassTime.rows})
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 
 // exports.setAssignments
 

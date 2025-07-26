@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
-import {
+import React, { useState, useEffect, useMemo, useRef, useContext, useCallback } from 'react';
+import { 
   View,
-  Text, // Keep Text imported
+  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import GrindHubHeader from './components/GrindHubHeader';
 import { jwtDecode } from "jwt-decode";
 import io from 'socket.io-client';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 
 import { AuthContext } from '../AuthContext'; // Adjust the path to your AuthContext.js file
 
@@ -33,19 +34,15 @@ const FreeTimeCard = () => (
 
 const SOCKET_SERVER_URL = 'https://grindhubchatbot-production.up.railway.app';
 
-// Moved the comment directly above the export default function
-// Removed 'route' prop comment from the function line to prevent misinterpretation
 export default function HomePage({ navigation }) {
-  const { userToken, signOut } = useContext(AuthContext); // Get userToken and signOut from AuthContext
+  const { userToken, signOut } = useContext(AuthContext);
 
-  // Decode token from context
   const decodedToken = useMemo(() => {
     if (userToken) {
       try {
         return jwtDecode(userToken);
       } catch (e) {
         console.error("Failed to decode token:", e);
-        // Handle token decoding error, maybe sign out user
         signOut();
         return null;
       }
@@ -53,15 +50,14 @@ export default function HomePage({ navigation }) {
     return null;
   }, [userToken, signOut]);
 
-  // Derive userid from decoded token
-  const userid = decodedToken?.userid; // Use optional chaining to safely access userid
+  const userid = decodedToken?.userid;
 
   const [assignments, setAssignments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [combinedData, setCombinedData] = useState([]);
   const [groups, setGroups] = useState([]);
   const [username, setUsername] = useState("");
-  const [latestMessages, setLatestMessages] = useState(new Map()); // State for latest messages
+  const [latestMessages, setLatestMessages] = useState(new Map());
 
   const [isLoading, setIsLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -70,7 +66,7 @@ export default function HomePage({ navigation }) {
     const today = new Date();
     const todayDate = new Date(today);
     todayDate.setDate(today.getDate());
-    todayDate.setHours(0, 0, 0, 0);
+    todayDate.setHours(8, 0, 0, 0);
     return todayDate;
   });
 
@@ -78,7 +74,6 @@ export default function HomePage({ navigation }) {
   const [chatInput, setChatInput] = useState('');
   const chatScrollViewRef = useRef();
 
-  // Initialize socket only if userToken (and thus userid) is available
   const socket = useMemo(() => {
     if (userid) {
       const newSocket = io(SOCKET_SERVER_URL, {
@@ -87,11 +82,11 @@ export default function HomePage({ navigation }) {
       });
       return newSocket;
     }
-    return null; // Return null if userid is not available
-  }, [userid]); // Depend on userid
+    return null;
+  }, [userid]);
 
   useEffect(() => {
-    if (!socket) return; // Don't setup listeners if socket is null
+    if (!socket) return;
 
     socket.on('connect', () => {
       console.log('Connected to Socket.IO server!');
@@ -115,7 +110,7 @@ export default function HomePage({ navigation }) {
       socket.off('disconnect');
       socket.off('chat_message');
       socket.off('connect_error');
-      socket.disconnect(); // Disconnect socket when component unmounts or socket changes
+      socket.disconnect();
     };
   }, [socket]);
 
@@ -126,8 +121,7 @@ export default function HomePage({ navigation }) {
   }, [messages]);
 
   const sendMessage = () => {
-
-    if (chatInput.trim() && socket) { // Ensure socket exists before sending
+    if (chatInput.trim() && socket) {
       const userMessage = { sender: 'User', message: chatInput.trim() };
       setMessages((prevMessages) => [...prevMessages, userMessage]);
       socket.emit('user_message', { message: chatInput.trim(), context:messages});
@@ -137,21 +131,42 @@ export default function HomePage({ navigation }) {
 
   const getDateKey = (isoString) => isoString.substring(0, 10);
 
-  const formatSectionDate = (date) => {
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    const day = date.getDate();
-    let suffix = 'th';
-    if (day === 1 || day === 21 || day === 31) suffix = 'st';
-    else if (day === 2 || day === 22) suffix = 'nd';
-    else if (day === 3 || day === 23) suffix = 'rd';
-
-    const formatted = date.toLocaleDateString('en-GB', options).replace(/(\d+)/, `$1${suffix}`);
-    return formatted;
-  };
-
-  const formatTime = (isoString) => { // This function might not be used, check usage
-    const date = new Date(isoString);
+  const formatTime = (utcMinutes) => {
+    const date = new Date();
+  
+    // Calculate UTC hours and remaining minutes
+    const utcHours = Math.floor(utcMinutes / 60);
+    const remainingUtcMinutes = utcMinutes % 60;
+  
+    date.setUTCHours(utcHours, remainingUtcMinutes, 0, 0); // Set seconds and milliseconds to 0
+  
     return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  const formatSectionDate = (dateString) => {
+    // Create a Date object from the input string.
+    const date = new Date(dateString);
+    const day = date.getDate();
+  
+  
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) {
+        suffix = 'st';
+    } else if (day === 2 || day === 22) {
+        suffix = 'nd';
+    } else if (day === 3 || day === 23) {
+        suffix = 'rd';
+    }
+  
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+  
+    // Format the date parts individually to correctly place the suffix
+    const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
+    const month = date.toLocaleDateString('en-GB', { month: 'short' });
+    const year = date.toLocaleDateString('en-GB', { year: 'numeric' });
+  
+    // Construct the string manually to insert the suffix after the day number
+    return `${weekday}, ${day}${suffix} ${month} ${year}`;
   };
 
   function formatTimeToHHMM(dateInput, timeZone = "Asia/Singapore") {
@@ -165,7 +180,7 @@ export default function HomePage({ navigation }) {
     return date.toLocaleTimeString('en-GB', options);
   }
 
-  const getAllLatestMessages = async (currentUserId) => { // Accepts userid as parameter
+  const getAllLatestMessages = async (currentUserId) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAllLatestMessages", {
         method: "POST",
@@ -174,7 +189,7 @@ export default function HomePage({ navigation }) {
       });
       const data = await response.json();
 
-      console.log("Latest messages data:", data); // Log the response data for debugging
+      console.log("Latest messages data:", data);
       return data.success ? data.messages : [];
 
     } catch (error) {
@@ -183,7 +198,7 @@ export default function HomePage({ navigation }) {
     }
   };
 
-  const getAssignments = async (currentUserId) => { // Accepts userid as parameter
+  const getAssignments = async (currentUserId) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getAssignments", {
         method: "POST",
@@ -198,7 +213,7 @@ export default function HomePage({ navigation }) {
     }
   };
 
-  const getClass = async (currentUserId) => { // Accepts userid as parameter
+  const getClass = async (currentUserId) => {
     try {
       const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getClass", {
         method: "POST",
@@ -213,64 +228,73 @@ export default function HomePage({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    // Only fetch data if userid is available
-    if (!userid) {
-        setIsLoading(false); // If no userid, ensure loading is off
-        return;
-    }
-
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [fetchedAssignments, fetchedClasses, groupsData, userData, latestMessages] = await Promise.all([
-          getAssignments(userid), // Pass userid
-          getClass(userid),       // Pass userid
-          fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userid: userid }),
-          }).then(res => res.json()),
-          fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userid: userid }),
-          }).then(res => res.json()),
-          getAllLatestMessages(userid) // Pass userid
-        ]);
-
-        const latestMessagesMap = new Map();
-        for (let i = 0; i < latestMessages.length; i++) {
-          const message = latestMessages[i];
-          latestMessagesMap.set(message.groupid, message.messagecontent);
-        }
-
-        setAssignments(fetchedAssignments);
-        setClasses(fetchedClasses);
-        setCombinedData(combineAndExtract(fetchedClasses, fetchedAssignments));
-        setLatestMessages(latestMessagesMap);
-
-        if (groupsData.success) {
-          setGroups(groupsData.groups);
-        } else if (groupsData.message !== "No groups found!") {
-          console.error("Failed to fetch groups:", groupsData.message);
-        }
-
-        if (userData.success) {
-          setUsername(userData.existingUser[0].username);
-        } else {
-          console.error("Failed to fetch username:", userData.message);
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } finally {
+  // Changed useEffect to useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      // Only fetch data if userid is available
+      if (!userid) {
         setIsLoading(false);
+        return;
       }
-    };
 
-    fetchData();
-  }, [userid]); // Depend on userid. Data refetches if userid changes.
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          const [fetchedAssignments, fetchedClasses, groupsData, userData, latestMessages] = await Promise.all([
+            getAssignments(userid),
+            getClass(userid),
+            fetch("https://grindhub-production.up.railway.app/api/auth/getGroups", {
+              method: "POST",
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userid: userid }),
+            }).then(res => res.json()),
+            fetch(`https://grindhub-production.up.railway.app/api/auth/getUser`, {
+              method: "POST",
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userid: userid }),
+            }).then(res => res.json()),
+            getAllLatestMessages(userid)
+          ]);
+
+          const latestMessagesMap = new Map();
+          for (let i = 0; i < latestMessages.length; i++) {
+            const message = latestMessages[i];
+            latestMessagesMap.set(message.groupid, message.messagecontent);
+          }
+
+          setAssignments(fetchedAssignments);
+          setClasses(fetchedClasses);
+          setCombinedData(combineAndExtract(fetchedClasses, fetchedAssignments));
+          setLatestMessages(latestMessagesMap);
+
+          if (groupsData.success) {
+            setGroups(groupsData.groups);
+          } else if (groupsData.message !== "No groups found!") {
+            console.error("Failed to fetch groups:", groupsData.message);
+          }
+
+          if (userData.success) {
+            setUsername(userData.existingUser[0].username);
+          } else {
+            console.error("Failed to fetch username:", userData.message);
+          }
+
+        } catch (error) {
+          console.error("Failed to fetch data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchData();
+
+      // Clean-up function if needed, though for data fetching, it's often not strictly necessary
+      // unless you have ongoing subscriptions or listeners tied to the data fetch itself.
+      return () => {
+        // Any cleanup when the screen loses focus (e.g., cancelling ongoing requests)
+      };
+    }, [userid]) // Depend on userid
+  );
 
   function combineAndExtract(classesArray, assignmentsArray) {
     const extractedClasses = classesArray.map(classItem => ({
@@ -296,12 +320,6 @@ export default function HomePage({ navigation }) {
     const combinedList = [...extractedClasses, ...extractedAssignments];
 
     combinedList.sort((a, b) => {
-      // Assuming 'date' is a full ISO string or similar that can be directly compared
-      // and 'time' is part of it or secondary sort. If 'time' is just "HH:MM",
-      // you need to combine date and time for proper comparison.
-      // For now, if date includes time, just comparing new Date(a.date) is sufficient.
-      // If 'time' is a separate "HH:MM", you'd need to construct a full Date object.
-      // Given your formatTimeToHHMM, it seems 'date' might be sufficient for sorting.
       return new Date(a.date) - new Date(b.date);
     });
 
@@ -309,19 +327,15 @@ export default function HomePage({ navigation }) {
   }
 
   const groupedEvents = useMemo(() => {
-    // Sort by date first, then by time within the same date
     const sorted = [...combinedData].sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
 
-        // Compare dates
         if (dateA.toDateString() !== dateB.toDateString()) {
             return dateA.getTime() - dateB.getTime();
         }
 
-        // If dates are the same, compare times
-        // Assuming time is also part of the date string or can be combined
-        const timeA = new Date(`${a.date}T${a.time}`); // Combine date and time for robust comparison
+        const timeA = new Date(`${a.date}T${a.time}`);
         const timeB = new Date(`${b.date}T${b.time}`);
         return timeA.getTime() - timeB.getTime();
     });
@@ -343,7 +357,7 @@ export default function HomePage({ navigation }) {
             {event.location && ` - ${event.location}`}
           </Text>
         </View>
-        <Text style={styles.scheduleTime}>{formatTimeToHHMM(event.date)}</Text>
+        <Text style={styles.scheduleTime}>{formatTime(event.time)}</Text>
       </View>
     );
   };
@@ -371,7 +385,6 @@ export default function HomePage({ navigation }) {
   };
 
   const leftArrowPressed = () => {
-
     setStartDate(startDate => {
       const newDay = new Date(startDate);
       newDay.setDate(startDate.getDate() - 1);
@@ -391,8 +404,7 @@ export default function HomePage({ navigation }) {
 
   const startTimer = (type) => {
     setActiveTimer(type);
-    // You might want to navigate to the TimerPage here or trigger actual timer logic
-    navigation.navigate('TimerPage'); // Navigate to timer page if it's meant to be full-screen
+    navigation.navigate('TimerPage');
   };
 
   const ProgressBar = ({ progress }) => (
@@ -415,31 +427,17 @@ export default function HomePage({ navigation }) {
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
   const formattedToday = startDate.toLocaleDateString('en-US', options);
 
-  // If isLoading or userid is null, show a full-screen loading indicator
   if (isLoading || !userid) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF8400" />
-          <Text style={{ marginTop: 10, color: "#FF8400" }}>Loading your GrindHub...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  } else {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
 
-        {/* Removed token prop from GrindHubHeader and GrindHubFooter.
-            They should also consume AuthContext directly if they need userToken/userid. */}
         <GrindHubHeader navigation={navigation} />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Greeting */}
           <View style={styles.greetingContainer}>
             <Text style={styles.greetingText}>Hello, {username}!</Text>
-            <Ionicons name="search-outline" size={24} color="#374151" />
           </View>
 
           {/* Schedule Card */}
@@ -467,7 +465,228 @@ export default function HomePage({ navigation }) {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Study Timer</Text>
               <View style={styles.timerButtons}>
-                {/* These buttons could trigger specific timer settings or just navigate */}
+                <TouchableOpacity
+                  style={[
+                    styles.timerButton,
+                    activeTimer === 'CS2030' && styles.timerButtonActive
+                  ]}
+                  onPress={() => startTimer('CS2030')}
+                >
+                  <Text style={[
+                    styles.timerButtonText,
+                    activeTimer === 'CS2030' && styles.timerButtonTextActive
+                  ]}>
+                    Start CS2030 Timer
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.timerButton,
+                    activeTimer === 'Other' && styles.timerButtonActive
+                  ]}
+                  onPress={() => startTimer('Other')}
+                >
+                  <Text style={[
+                    styles.timerButtonText,
+                    activeTimer === 'Other' && styles.timerButtonTextActive
+                  ]}>
+                    Start Other Timer
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Your Groups */}
+          <TouchableOpacity onPress={() => navigation.navigate("GroupChat")}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Your Groups</Text>
+              <View style={styles.groupsList}>
+                {groups.map((group, index) => (
+                  <View key={index} style={styles.groupItem}>
+                    <View style={styles.groupHeader}>
+                      <Text style={styles.groupName}>{group.groupname}</Text>
+                    </View>
+                    <View style={styles.groupMessage}>
+                      <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                      <Text style={styles.groupMessageText}>{latestMessages.get(group.groupid)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Your Assignments */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TrackerPage')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.card, styles.lastCard]}>
+              <Text style={styles.cardTitle}>Your Assignments</Text>
+              <View style={styles.assignmentsList}>
+                {assignments.length > 0 ? (
+                  assignments.map((assignment, index) => (
+                    <View key={index} style={styles.assignmentItem}>
+                      <View style={styles.assignmentHeader}>
+                        <Text style={styles.assignmentTitle}>
+                          {assignment.assignmentmodule} - {assignment.assignmentname}
+                        </Text>
+                        <Text style={styles.assignmentDue}>
+                        {formatSectionDate(assignment.assignmentduedate)} - {formatTime(assignment.assignmenttimeduedate)}
+                        </Text>
+                      </View>
+                      <ProgressBar progress={assignment.assignmentpercentage} />
+                    </View>
+                  ))
+                ) : (
+                  <View style={styles.noAssignmentsView}>
+                    <Text style={styles.noAssignmentsText}>
+                      No assignments at the moment!
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Modal for "Add" functionality */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={addModalVisible}
+          onRequestClose={() => setAddModalVisible(false)}>
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setAddModalVisible(false)}>
+            <View style={styles.modalView}>
+              <View style={styles.innerContainer}>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingModule") }}>
+                  <Text style={styles.itemText}>Add Module</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingClass") }}>
+                  <Text style={styles.itemText}>Add Class</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingAssignment") }}>
+                  <Text style={styles.itemText}>Add Task</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Modal>
+
+        {/* New Modal for Chatbot */}
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={chatModalVisible}
+          onRequestClose={() => setChatModalVisible(false)}>
+
+          <View style={styles.chatModalOverlay}>
+            <TouchableOpacity
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatModalVisible(false)}
+            />
+
+            <View style={styles.chatModalContainer}>
+              <View style={styles.chatHeader}>
+                <Text style={styles.chatTitle}>GrindHub Chatbot</Text>
+                <TouchableOpacity onPress={() => setChatModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#1F2937" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                style={styles.chatContent}
+                ref={chatScrollViewRef}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode={Platform.OS === 'ios' ? "interactive" : "on-drag"}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+              >
+                {messages.map((msg, index) => (
+                  <View
+                    key={index}
+                    style={msg.sender === 'Bot' ? styles.chatMessageBot : styles.chatMessageUser}
+                  >
+                    <Text style={styles.chatMessageText}>{msg.message}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+
+              <View style={styles.chatInputContainer}>
+                <TextInput
+                  style={styles.chatTextInput}
+                  placeholder="Type your message..."
+                  placeholderTextColor="#6B7280"
+                  value={chatInput}
+                  onChangeText={setChatInput}
+                  onSubmitEditing={sendMessage}
+                  returnKeyType="send"
+                />
+                <TouchableOpacity style={styles.chatSendButton} onPress={sendMessage}>
+                  <Ionicons name="send" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <View style={styles.fab}>
+          <View style={styles.fabContainer}>
+            <TouchableOpacity style={styles.fabButton} onPress={() => setChatModalVisible(true)}>
+              <Ionicons name="chatbubble" size={16} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabButtonDark}
+              onPress={() => { setAddModalVisible(true) }}
+            >
+              <Ionicons name="add" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  } else {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FF8400" barStyle="light-content" />
+
+        <GrindHubHeader navigation={navigation} />
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Greeting */}
+          <View style={styles.greetingContainer}>
+            <Text style={styles.greetingText}>Hello, {username}!</Text>
+          </View>
+
+          {/* Schedule Card */}
+          <View style={[styles.card]}>
+            <View style={styles.container2}>
+              <TouchableOpacity onPress={leftArrowPressed}>
+                <Image
+                  source={require("../../assets/Arrow to left.png")}
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+              <Text style={styles.dateText}>{formattedToday}</Text>
+              <TouchableOpacity onPress={rightArrowPressed}>
+                <Image
+                  source={require("../../assets/Arrow to right.png")}
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+            </View>
+            {renderDays({ todayDate: startDate })}
+          </View>
+
+          {/* Study Timer */}
+          <TouchableOpacity onPress={() => navigation.navigate('TimerPage')}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Study Timer</Text>
+              <View style={styles.timerButtons}>
                 <TouchableOpacity
                   style={[
                     styles.timerButton,
@@ -502,7 +721,6 @@ export default function HomePage({ navigation }) {
 
 
           {/* Your Groups */}
-          {/* No need to pass token via params anymore */}
           <TouchableOpacity onPress={() => navigation.navigate("GroupChat")}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Groups</Text>
@@ -523,7 +741,6 @@ export default function HomePage({ navigation }) {
           </TouchableOpacity>
 
           {/* Your Assignments */}
-          {/* No need to pass token via params anymore */}
           <TouchableOpacity
             onPress={() => navigation.navigate('TrackerPage')}
             activeOpacity={0.7}
@@ -539,7 +756,7 @@ export default function HomePage({ navigation }) {
                           {assignment.assignmentmodule} - {assignment.assignmentname}
                         </Text>
                         <Text style={styles.assignmentDue}>
-                          Due {formatTimeToHHMM(assignment.assignmentduedate)}
+                          {formatSectionDate(assignment.assignmentduedate)} - {formatTime(assignment.assignmenttimeduedate)}
                         </Text>
                       </View>
                       <ProgressBar progress={assignment.assignmentpercentage} />
@@ -568,7 +785,6 @@ export default function HomePage({ navigation }) {
             onPress={() => setAddModalVisible(false)}>
             <View style={styles.modalView}>
               <View style={styles.innerContainer}>
-                {/* No need to pass token via params anymore */}
                 <TouchableOpacity style={styles.itemBox} onPress={() => { setAddModalVisible(false); navigation.navigate("AddingModule") }}>
                   <Text style={styles.itemText}>Add Module</Text>
                 </TouchableOpacity>
@@ -591,14 +807,12 @@ export default function HomePage({ navigation }) {
           onRequestClose={() => setChatModalVisible(false)}>
 
           <View style={styles.chatModalOverlay}>
-            {/* Background touchable area to close modal */}
             <TouchableOpacity
               style={styles.modalBackdrop}
               activeOpacity={1}
               onPress={() => setChatModalVisible(false)}
             />
 
-            {/* Main modal content - NOT wrapped in Pressable */}
             <View style={styles.chatModalContainer}>
               <View style={styles.chatHeader}>
                 <Text style={styles.chatTitle}>GrindHub Chatbot</Text>

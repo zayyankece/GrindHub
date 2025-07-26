@@ -194,7 +194,7 @@ const UserProfile = ({navigation}) => {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <View style={styles.profilePicture} />
-          <Text style={styles.username}>{user ? user.username : 'Loading...'}</Text>
+          <Text style={styles.username}>{user ? user.username : ''}</Text>
         </View>
 
         <View style={styles.card}>

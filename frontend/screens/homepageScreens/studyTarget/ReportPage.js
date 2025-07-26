@@ -10,7 +10,9 @@ import { AuthContext } from '../../AuthContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function ReportPage({ navigation}) {
+export default function ReportPage({ navigation, route}) {
+
+  const {moduleCode} = route.params
 
   const { userToken, signOut } = useContext(AuthContext);
   // Decode token to get userid
@@ -30,6 +32,8 @@ export default function ReportPage({ navigation}) {
 
   // Derive userid and username from the decoded token
   const userid = decodedToken?.userid;
+
+  // const moduleCode = "ST2131"
 
   // const route = useRoute();
   const [targetType, setTargetType] = useState('Weekly');

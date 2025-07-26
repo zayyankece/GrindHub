@@ -136,12 +136,12 @@ exports.setClass = async(req, res) => {
 }
 
 exports.setModule = async(req, res) => {
-  const {modulename, moduletitle, credits, instructor} = req.body
+  const {modulename, moduletitle, credits, instructor, userid} = req.body
 
   try {
     const moduleid = crypto.randomUUID()
-    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor, userid) VALUES ($1, $2, $3, $4, $5) RETURNING *"
-    const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor]);
+    const queryText = "INSERT INTO modules (moduleid, modulename, moduletitle, credits, instructor, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"
+    const { rows } = await db.query(queryText, [moduleid, modulename, moduletitle, credits, instructor, userid]);
 
     if (rows.length == 0){
       return res.status(500).json({ message: 'Something went wrong', success : false});
@@ -342,6 +342,23 @@ exports.getMessages = async(req, res) => {
   }
 }
 
+exports.getAllLatestMessages = async(req, res) => {
+  const {userid} = req.body
+
+  try {
+    const queryText = "SELECT groupid, messagecontent FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY groupid ORDER BY datesent DESC, timesent DESC) AS rn FROM messagecollections WHERE userid = $1) AS subquery WHERE rn = 1"
+    const existingMessages = await db.query(queryText, [userid])
+
+    if (existingMessages.rows.length == 0){
+      return res.status(404).json({message: "No messages found!", success: false, messages:existingMessages})
+    }
+    return res.status(200).json({message: "Messages retrieved!", success:true, messages:existingMessages.rows})
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
 exports.addMessage = async(req, res) => {
   // 1. Destructure the required information from the request body.
   const { groupid, userid, messagecontent} = req.body;
@@ -396,6 +413,24 @@ exports.getDescription = async (req, res) => {
   }
 
   catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', success : false});
+  }
+}
+
+exports.getGroupMemberClassTime = async (req, res) => {
+
+  const {groupid} = req.body
+
+  try {
+    const queryText = "Select startdate, starttime, endtime from class c join groupmembers gm on gm.userid = c.userid where gm.groupid = $1"
+    const existingClassTime = await db.query(queryText, [groupid])
+
+    if (existingClassTime.rows.length == 0){
+      return res.status(404).json({message: "No class time found!", success: false, classTime:existingClassTime})
+    }
+    return res.status(200).json({message: "Class time retrieved!", success:true, classTime:existingClassTime.rows})
+  } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Something went wrong', success : false});
   }

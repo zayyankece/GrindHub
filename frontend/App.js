@@ -1,15 +1,19 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, AuthContext } from './screens/AuthContext'; // Adjust path
+import ErrorBoundary from './ErrorBoundary';
 
 import AuthStack from './screens/AuthStack';
 import AppStack from './screens/AppStack';
 
 export default function App() {
+  console.log('App opened');
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

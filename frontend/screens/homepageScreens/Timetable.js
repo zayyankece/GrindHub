@@ -139,7 +139,7 @@ const Timetable = ({navigation}) => {
     const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust for Sunday (0)
     const mondayDate = new Date(today);
     mondayDate.setDate(today.getDate() - daysToSubtract);
-    mondayDate.setHours(7, 0, 0, 0); // Set to 7 AM to ensure consistent date key
+    mondayDate.setHours(8, 0, 0, 0); // Set to 7 AM to ensure consistent date key
     return mondayDate;
   });
 
@@ -392,10 +392,26 @@ const Timetable = ({navigation}) => {
         {/* Header */}
         <GrindHubHeader navigation={navigation}/>
 
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF8C42" />
-          <Text style={styles.loadingText}>Loading your timetable...</Text>
-        </View>
+        <View style={styles.container2}>
+        {/* Interactive Left Arrow */}
+        <TouchableOpacity onPress={() => leftArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to left.png")}
+            style={styles.arrowIcon}
+          />
+        </TouchableOpacity>
+
+        {/* Date Range Text */}
+        <Text style={styles.dateText}>{displayRange}</Text>
+
+        {/* Interactive Right Arrow */}
+        <TouchableOpacity onPress={() => rightArrowPressed()}>
+          <Image
+            source={require("../../assets/Arrow to right.png")}
+            style={styles.arrowIcon}
+          />
+        </TouchableOpacity>
+      </View>
 
       </SafeAreaView>
     );

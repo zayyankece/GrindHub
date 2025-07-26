@@ -48,6 +48,7 @@ export default function AddingModule({ navigation }) {
       moduletitle: moduleTitle,
       credits: parseInt(credits, 10), // Ensure credits are sent as a number
       instructor: instructor,
+      userid: userid, // Use the decoded userid from the token
     };
 
     try {

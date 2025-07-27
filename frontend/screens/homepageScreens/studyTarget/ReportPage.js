@@ -10,7 +10,9 @@ import { AuthContext } from '../../AuthContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function ReportPage({ navigation}) {
+export default function ReportPage({ navigation, route}) {
+
+  const {moduleCode} = route.params
 
   const { userToken, signOut } = useContext(AuthContext);
   // Decode token to get userid

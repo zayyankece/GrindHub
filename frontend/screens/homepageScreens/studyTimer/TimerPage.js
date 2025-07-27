@@ -34,30 +34,42 @@ export default function TimerPage({ navigation }) {
   const [moduleTimes, setModuleTimes] = useState({});
   const [taskTimes, setTaskTimes] = useState({});
 
-  const initialModules = [
-    {
-      code: 'ST2131',
-      time: 0,
-      tasks: ['Homework 1', 'Finals Recap'],
-    },
-    {
-      code: 'CS2040',
-      time: 0,
-      tasks: ['Lab 1'],
-    },
-    {
-      code: 'CS3244',
-      time: 0,
-      tasks: ['Group Project'],
-    },
-    {
-      code: 'MA4207',
-      time: 0,
-      tasks: [],
-    },
-  ];
+  const [modules, setModules] = useState([]);
 
-  const [modules, setModules] = useState(initialModules);
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const response = await fetch('https://grindhub-production.up.railway.app/api/auth/getAllUserModules', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userid }),
+        });
+  
+        const data = await response.json();
+  
+        if (data.success) {
+          // Siapkan data sesuai struktur yang digunakan UI
+          const loadedModules = data.modules.map(mod => ({
+            code: mod,
+            time: 0,
+            tasks: [], // default kosong, bisa diubah kalau ambil dari backend juga
+          }));
+          setModules(loadedModules);
+        } else {
+          console.error('Failed to load modules:', data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching modules:', err);
+      }
+    };
+  
+    if (userid) {
+      fetchModules();
+    }
+  }, [userid]);
+  
 
   // Calculate total time from all modules
   const totalTime = modules.reduce((sum, module) => sum + module.time, 0);

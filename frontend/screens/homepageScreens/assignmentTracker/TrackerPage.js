@@ -1,5 +1,13 @@
-import React, {useContext, useMemo} from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useContext, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 import GrindHubHeader from '../components/GrindHubHeader';
@@ -19,16 +27,14 @@ const tasks = [
   { code: 'MA2002', title: 'Homework 1', progress: 0.8 },
 ];
 
-export default function TrackerPage({navigation}) {
+export default function TrackerPage({ navigation }) {
   const { userToken, signOut } = useContext(AuthContext);
-  // Decode token to get userid
   const decodedToken = useMemo(() => {
     if (userToken) {
       try {
         return jwtDecode(userToken);
       } catch (e) {
-        console.error("Failed to decode token in ChatScreen:", e);
-        // If token is invalid, sign out the user
+        console.error("Failed to decode token in TrackerPage:", e);
         signOut();
         return null;
       }
@@ -36,36 +42,43 @@ export default function TrackerPage({navigation}) {
     return null;
   }, [userToken, signOut]);
 
-  // Derive userid and username from the decoded token
-  const userid = decodedToken?.userid; 
+  const userid = decodedToken?.userid;
 
   return (
-    <View style={styles.container}>
-      <GrindHubHeader navigation={navigation}/>
-      <View style={styles.searchContainer}>
-        <TextInput placeholder="Search" style={styles.searchInput} />
-        <Ionicons name="search" size={20} color="#333" style={styles.icon} />
-        <Ionicons name="filter" size={20} color="#333" style={styles.icon} />
-      </View>
-      <ScrollView style={styles.scrollView}>
-        {tasks.map((task, idx) => (
-          <View key={idx} style={styles.taskCard}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.taskTitle}>{task.code} - {task.title}</Text>
-              <View style={styles.progressRow}>
-                <ProgressBar progress={task.progress} color="#00cc44" style={styles.progressBar} />
-                <Text>{Math.round(task.progress * 100)} % Completed</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <GrindHubHeader navigation={navigation} />
+        <View style={styles.searchContainer}>
+          <TextInput placeholder="Search" style={styles.searchInput} />
+          <Ionicons name="search" size={20} color="#333" style={styles.icon} />
+          <Ionicons name="filter" size={20} color="#333" style={styles.icon} />
+        </View>
+        <ScrollView style={styles.scrollView}>
+          {tasks.map((task, idx) => (
+            <View key={idx} style={styles.taskCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.taskTitle}>{task.code} - {task.title}</Text>
+                <View style={styles.progressRow}>
+                  <ProgressBar progress={task.progress} color="#00cc44" style={styles.progressBar} />
+                  <Text>{Math.round(task.progress * 100)} % Completed</Text>
+                </View>
               </View>
+              <Text>Due 25 May - 23.00</Text>
             </View>
-            <Text>Due 25 May - 23.00</Text>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+          ))}
+        </ScrollView>
+        {/* Optional footer */}
+        {/* <GrindHubFooter navigation={navigation} /> */}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f9f5f1',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9f5f1',

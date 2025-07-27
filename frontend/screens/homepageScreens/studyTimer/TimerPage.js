@@ -34,69 +34,42 @@ export default function TimerPage({ navigation }) {
   const [moduleTimes, setModuleTimes] = useState({});
   const [taskTimes, setTaskTimes] = useState({});
 
-  const getModules = async (currentUserId) => {
-    try {
-      // Make the POST request to your backend API
-      const response = await fetch("https://grindhub-production.up.railway.app/api/auth/getModule", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userid: currentUserId }),
-      });
+  const [modules, setModules] = useState([]);
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const response = await fetch('https://grindhub-production.up.railway.app/api/auth/getAllUserModules', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userid }),
+        });
   
-      // Check if the HTTP response was successful (status code 2xx)
-      if (!response.ok) {
-        // Attempt to parse error message from backend if available
-        const errorData = await response.json();
-        console.error("Backend error:", errorData.message || 'Failed to fetch modules due to server error.');
-        // Throw an error to be caught by the catch block
-        throw new Error(errorData.message || 'Failed to fetch modules');
+        const data = await response.json();
+  
+        if (data.success) {
+          // Siapkan data sesuai struktur yang digunakan UI
+          const loadedModules = data.modules.map(mod => ({
+            code: mod,
+            time: 0,
+            tasks: [], // default kosong, bisa diubah kalau ambil dari backend juga
+          }));
+          setModules(loadedModules);
+        } else {
+          console.error('Failed to load modules:', data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching modules:', err);
       }
+    };
   
-      // Parse the JSON response body
-      const data = await response.json();
-  
-      // The backend is expected to return an object with a 'modules' key
-      // containing an array of module objects.
-      if (data.success && Array.isArray(data.modules)) {
-        console.log(currentUserId)
-        console.log("Modules fetched successfully:", data.modules);
-        return data.modules; // Return the actual array of modules
-      } else {
-        console.warn("Backend response did not contain expected 'modules' array or was not successful:", data);
-        return []; // Return an empty array if the structure is unexpected
-      }
-  
-    } catch (error) {
-      // Log any errors that occur during the fetch operation
-      console.error("Error fetching modules:", error);
-      return []; // Return an empty array in case of an error
+    if (userid) {
+      fetchModules();
     }
-  };
-
-  const initialModules = [
-    {
-      code: 'ST2131',
-      time: 0,
-      tasks: ['Homework 1', 'Finals Recap'],
-    },
-    {
-      code: 'CS2040',
-      time: 0,
-      tasks: ['Lab 1'],
-    },
-    {
-      code: 'CS3244',
-      time: 0,
-      tasks: ['Group Project'],
-    },
-    {
-      code: 'MA4207',
-      time: 0,
-      tasks: [],
-    },
-  ];
-
-  const [modules, setModules] = useState(initialModules);
+  }, [userid]);
+  
 
   // Calculate total time from all modules
   const totalTime = modules.reduce((sum, module) => sum + module.time, 0);

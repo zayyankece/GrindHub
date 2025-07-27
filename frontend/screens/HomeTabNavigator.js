@@ -41,6 +41,7 @@ function HomeStackScreens() {
       <HomeStack.Screen name="AddingClass" component={AddingClass} />
       <HomeStack.Screen name="AddingModule" component={AddingModule} />
       <HomeStack.Screen name="AddingAssignment" component={AddingAssignment} />
+      <HomeStack.Screen name="TrackerPage" component={TrackerPage} />
     </HomeStack.Navigator>
   );
 }

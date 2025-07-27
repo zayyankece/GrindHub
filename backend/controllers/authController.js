@@ -470,3 +470,26 @@ function generateRandomString(length) {
 
   return result;
 }
+
+exports.getAllUserModules = async (req, res) => {
+  const { userid } = req.body;
+
+  try {
+    const query = `
+      SELECT DISTINCT modulename FROM modules WHERE userid = $1
+      UNION
+      SELECT DISTINCT assignmentmodule AS modulename FROM assignments WHERE userid = $1;
+    `;
+
+    const { rows } = await db.query(query, [userid]);
+
+    return res.status(200).json({
+      success: true,
+      message: 'All related modules retrieved!',
+      modules: rows.map(row => row.modulename),
+    });
+  } catch (error) {
+    console.error('Error fetching user modules:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

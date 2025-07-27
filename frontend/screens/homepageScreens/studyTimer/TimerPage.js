@@ -37,38 +37,55 @@ export default function TimerPage({ navigation }) {
   const [modules, setModules] = useState([]);
 
   useEffect(() => {
-    const fetchModules = async () => {
+    const fetchAssignmentsOnly = async () => {
       try {
-        const response = await fetch('https://grindhub-production.up.railway.app/api/auth/getAllUserModules', {
+        const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getAssignments', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userid }),
         });
   
-        const data = await response.json();
-  
-        if (data.success) {
-          // Siapkan data sesuai struktur yang digunakan UI
-          const loadedModules = data.modules.map(mod => ({
-            code: mod,
-            time: 0,
-            tasks: [], // default kosong, bisa diubah kalau ambil dari backend juga
-          }));
-          setModules(loadedModules);
-        } else {
-          console.error('Failed to load modules:', data.message);
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Assignment fetch error:', res.status, text);
+          return;
         }
+  
+        const data = await res.json();
+  
+        if (!data.success) {
+          console.error('Failed to load assignments:', data.message);
+          return;
+        }
+  
+        // Build module map directly from assignments
+        const moduleMap = {};
+  
+        data.assignments.forEach(assign => {
+          const mod = assign.assignmentmodule;
+          if (!moduleMap[mod]) {
+            moduleMap[mod] = {
+              code: mod,
+              time: 0,
+              tasks: [],
+            };
+          }
+          moduleMap[mod].tasks.push(assign.assignmentname);
+        });
+  
+        const modules = Object.values(moduleMap);
+        setModules(modules);
       } catch (err) {
-        console.error('Error fetching modules:', err);
+        console.error('Error fetching assignments:', err);
       }
     };
   
     if (userid) {
-      fetchModules();
+      fetchAssignmentsOnly();
     }
   }, [userid]);
+  
+
   
 
   // Calculate total time from all modules

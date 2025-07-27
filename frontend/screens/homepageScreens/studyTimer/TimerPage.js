@@ -37,53 +37,70 @@ export default function TimerPage({ navigation }) {
   const [modules, setModules] = useState([]);
 
   useEffect(() => {
-    const fetchAssignmentsOnly = async () => {
+    const fetchModulesAndAssignments = async () => {
       try {
-        const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getAssignments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userid }),
+        const [moduleRes, assignmentRes] = await Promise.all([
+          fetch('https://grindhub-production.up.railway.app/api/auth/getModule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid }),
+          }),
+          fetch('https://grindhub-production.up.railway.app/api/auth/getAssignments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid }),
+          }),
+        ]);
+  
+        if (!moduleRes.ok || !assignmentRes.ok) {
+          console.error('❌ Error with response:', moduleRes.status, assignmentRes.status);
+          return;
+        }
+  
+        const moduleData = await moduleRes.json();
+        const assignmentData = await assignmentRes.json();
+  
+        if (!moduleData.success || !assignmentData.success) {
+          console.error('❌ Failed response:', moduleData.message, assignmentData.message);
+          return;
+        }
+  
+        // Build a map from moduleCode to object
+        const moduleMap = {};
+        moduleData.modules.forEach((mod) => {
+          moduleMap[mod.modulename] = {
+            code: mod.modulename,
+            time: 0,
+            tasks: [],
+          };
         });
   
-        if (!res.ok) {
-          const text = await res.text();
-          console.error('Assignment fetch error:', res.status, text);
-          return;
-        }
-  
-        const data = await res.json();
-  
-        if (!data.success) {
-          console.error('Failed to load assignments:', data.message);
-          return;
-        }
-  
-        // Build module map directly from assignments
-        const moduleMap = {};
-  
-        data.assignments.forEach(assign => {
-          const mod = assign.assignmentmodule;
-          if (!moduleMap[mod]) {
-            moduleMap[mod] = {
-              code: mod,
+        // Fill the tasks from assignments
+        assignmentData.assignments.forEach((assign) => {
+          const modCode = assign.assignmentmodule;
+          if (!moduleMap[modCode]) {
+            // In case module doesn't exist from module table
+            moduleMap[modCode] = {
+              code: modCode,
               time: 0,
               tasks: [],
             };
           }
-          moduleMap[mod].tasks.push(assign.assignmentname);
+          moduleMap[modCode].tasks.push(assign.assignmentname);
         });
   
         const modules = Object.values(moduleMap);
         setModules(modules);
       } catch (err) {
-        console.error('Error fetching assignments:', err);
+        console.error('❌ Error fetching modules or assignments:', err);
       }
     };
   
     if (userid) {
-      fetchAssignmentsOnly();
+      fetchModulesAndAssignments();
     }
   }, [userid]);
+  
   
 
   

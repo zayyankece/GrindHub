@@ -8,21 +8,20 @@ import { useRoute } from '@react-navigation/native';
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from '../../AuthContext';
 
+
 const screenWidth = Dimensions.get('window').width;
 
-export default function ReportPage({ navigation, route}) {
-
-  const {moduleCode} = route.params
+export default function ReportPage({ navigation, route }) {
+  const { moduleCode } = route.params;
 
   const { userToken, signOut } = useContext(AuthContext);
-  // Decode token to get userid
+
   const decodedToken = useMemo(() => {
     if (userToken) {
       try {
         return jwtDecode(userToken);
       } catch (e) {
-        console.error("Failed to decode token in ChatScreen:", e);
-        // If token is invalid, sign out the user
+        console.error("Failed to decode token:", e);
         signOut();
         return null;
       }
@@ -30,47 +29,72 @@ export default function ReportPage({ navigation, route}) {
     return null;
   }, [userToken, signOut]);
 
-  // Derive userid and username from the decoded token
   const userid = decodedToken?.userid;
 
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [{ data: [] }],
+  });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchSessionSummary = async () => {
+    const fetchSessionChartData = async () => {
       try {
-        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  
         const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getSessionSummary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userid, start_time: today }),
+          body: JSON.stringify({ user_id: userid }),
         });
-  
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message);
-  
-        // Filter for today + matching moduleCode
-        const todayData = data.summary.filter(row => {
-          const rowDate = new Date(row.start_time).toISOString().slice(0, 10);
-          return rowDate === today && row.module_id === moduleCode;
+
+        const resData = await res.json();
+        const summary = resData.summary || [];
+
+        const today = new Date();
+        const labels = [];
+        const data = Array(7).fill(0); // Store data only for selected module
+
+        // Generate labels for past 7 days
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          labels.push(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+        }
+
+        // Fill data for only the selected module
+        summary.forEach(s => {
+          if (s.module_id === moduleCode) {
+            const date = new Date(s.session_date);
+            const dayDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+            const index = 6 - dayDiff;
+            if (index >= 0 && index <= 6) {
+              const minutes = Math.floor(s.total_duration / 60);
+              data[index] += minutes;
+            }
+          }
         });
-  
-        // Format for chart.js
-        const labels = todayData.map((row, idx) => `S${idx + 1}`);
-        const values = todayData.map(row => parseFloat(row.total_duration || 0));
-  
+
         setChartData({
           labels,
-          datasets: [{ data: values, color: () => '#FFD93D', strokeWidth: 2 }],
+          datasets: [
+            {
+              data,
+              color: () => '#FFD93D',
+              strokeWidth: 2,
+            },
+          ],
         });
-  
-      } catch (error) {
-        console.error('Error fetching session summary:', error);
+      } catch (err) {
+        console.error("Error fetching session summary:", err);
+      } finally {
+        setLoading(false);
       }
     };
-  
-    if (userid && moduleCode) {
-      fetchSessionSummary();
+
+    if (userid) {
+      fetchSessionChartData();
     }
-  }, [userid, moduleCode]);  
+  }, [userid, moduleCode]);
+  
   
 
   // const moduleCode = "ST2131"
@@ -92,11 +116,6 @@ export default function ReportPage({ navigation, route}) {
       },
     ],
   };*/
-
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [{ data: [], color: () => '#FFD93D', strokeWidth: 2 }],
-  });
   
 
   // Calculate total hours from data
@@ -169,6 +188,31 @@ export default function ReportPage({ navigation, route}) {
           /> */}
         </View>
 
+        <View style={{ width: '100%', marginTop: 10 }}>
+  {Array.from({ length: 7 }).map((_, index) => (
+    <View
+      key={index}
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderColor: '#E5E7EB',
+      }}
+    >
+      <Text style={{ color: '#1F2937', fontWeight: '500' }}>
+        {chartData.labels[index] || `Day ${index + 1}`}
+      </Text>
+      <Text style={{ color: '#1F2937' }}>
+        {(chartData.datasets?.[0]?.data?.[index] ?? 0)} min
+      </Text>
+    </View>
+  ))}
+</View>
+
+
+
+
         <TouchableOpacity 
           style={styles.setTargetBtn}
           onPress={() => setIsModalVisible(true)}
@@ -232,6 +276,40 @@ export default function ReportPage({ navigation, route}) {
                   <Text style={styles.saveButtonText}>Save</Text>
                 </Pressable>
               </View>
+
+              <View style={{ width: '100%', marginTop: 10 }}>
+  {chartData.labels.length > 0 ? (
+    chartData.labels.map((label, index) => {
+      const value = chartData.datasets[0].data[index];
+      const maxValue = Math.max(...chartData.datasets[0].data, 1); // prevent division by 0
+      const barWidth = `${(value / maxValue) * 100}%`;
+
+      return (
+        <View key={index} style={{ marginBottom: 10 }}>
+          <Text style={{ fontWeight: '600', color: '#374151' }}>{label}</Text>
+          <View style={{
+            height: 12,
+            backgroundColor: '#E5E7EB',
+            borderRadius: 6,
+            overflow: 'hidden',
+            marginTop: 4
+          }}>
+            <View style={{
+              width: barWidth,
+              height: '100%',
+              backgroundColor: '#FFD93D',
+              borderRadius: 6,
+            }} />
+          </View>
+          <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{value} min</Text>
+        </View>
+      );
+    })
+  ) : (
+    <Text style={{ textAlign: 'center', color: '#6B7280', marginTop: 20 }}>No study sessions found today.</Text>
+  )}
+</View>
+
             </View>
           </View>
         </Modal>

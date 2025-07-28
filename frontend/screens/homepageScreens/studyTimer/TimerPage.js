@@ -9,6 +9,53 @@ import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 
 export default function TimerPage({ navigation }) {
+  const MyComponent = () => {
+    // ✅ Use hooks here, inside the function component
+    const { userToken, signOut } = useContext(AuthContext);
+  
+    const decodedToken = useMemo(() => {
+      if (userToken) {
+        try {
+          return jwtDecode(userToken);
+        } catch (e) {
+          console.error("Failed to decode token:", e);
+          signOut();
+          return null;
+        }
+      }
+      return null;
+    }, [userToken, signOut]);
+  
+    const userid = decodedToken?.userid;
+  
+    useEffect(() => {
+      if (!userid) return;
+  
+      // Your API call using userid
+      const fetchSession = async () => {
+        try {
+          const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getSessionSummary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userid }),
+          });
+          const data = await res.json();
+          console.log("Session summary:", data);
+        } catch (err) {
+          console.error("Error fetching session:", err);
+        }
+      };
+  
+      fetchSession();
+    }, [userid]);
+  
+    return (
+      <View>
+        <Text>Hello from MyComponent</Text>
+      </View>
+    );
+  };
+
   const { userToken, signOut } = useContext(AuthContext);
   // Decode token to get userid
   const decodedToken = useMemo(() => {
@@ -33,42 +80,113 @@ export default function TimerPage({ navigation }) {
   const [activeTimer, setActiveTimer] = useState(null);
   const [moduleTimes, setModuleTimes] = useState({});
   const [taskTimes, setTaskTimes] = useState({});
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+
 
   const [modules, setModules] = useState([]);
 
   useEffect(() => {
-    const fetchModules = async () => {
+    const fetchModulesAndAssignments = async () => {
       try {
-        const response = await fetch('https://grindhub-production.up.railway.app/api/auth/getAllUserModules', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userid }),
+        const [moduleRes, assignmentRes] = await Promise.all([
+          fetch('https://grindhub-production.up.railway.app/api/auth/getModule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid }),
+          }),
+          fetch('https://grindhub-production.up.railway.app/api/auth/getAssignments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid }),
+          }),
+        ]);
+  
+        if (!moduleRes.ok || !assignmentRes.ok) {
+          console.error('❌ Error with response:', moduleRes.status, assignmentRes.status);
+          return;
+        }
+  
+        const moduleData = await moduleRes.json();
+        const assignmentData = await assignmentRes.json();
+  
+        if (!moduleData.success || !assignmentData.success) {
+          console.error('❌ Failed response:', moduleData.message, assignmentData.message);
+          return;
+        }
+  
+        // Build a map from moduleCode to object
+        const moduleMap = {};
+        moduleData.modules.forEach((mod) => {
+          moduleMap[mod.modulename] = {
+            code: mod.modulename,
+            time: 0,
+            tasks: [],
+          };
         });
   
-        const data = await response.json();
+        // Fill the tasks from assignments
+        assignmentData.assignments.forEach((assign) => {
+          const modCode = assign.assignmentmodule;
+          if (!moduleMap[modCode]) {
+            // In case module doesn't exist from module table
+            moduleMap[modCode] = {
+              code: modCode,
+              time: 0,
+              tasks: [],
+            };
+          }
+          moduleMap[modCode].tasks.push(assign.assignmentname);
+        });
   
-        if (data.success) {
-          // Siapkan data sesuai struktur yang digunakan UI
-          const loadedModules = data.modules.map(mod => ({
-            code: mod,
-            time: 0,
-            tasks: [], // default kosong, bisa diubah kalau ambil dari backend juga
-          }));
-          setModules(loadedModules);
-        } else {
-          console.error('Failed to load modules:', data.message);
-        }
+        const modules = Object.values(moduleMap);
+        setModules(modules);
       } catch (err) {
-        console.error('Error fetching modules:', err);
+        console.error('❌ Error fetching modules or assignments:', err);
       }
     };
   
     if (userid) {
-      fetchModules();
+      fetchModulesAndAssignments();
     }
   }, [userid]);
+  
+  const [sessionSummary, setSessionSummary] = useState([]);
+
+  const fetchSessionSummary = async () => {
+    try {
+      const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getSessionSummary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userid }),
+      });
+  
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+  
+      // Build a map of module durations
+      const summaryMap = {};
+      for (const row of data.summary) {
+        const key = row.module_id;
+        summaryMap[key] = (summaryMap[key] || 0) + parseInt(row.total_duration);
+      }
+  
+      // Update state
+      setModules(prev =>
+        prev.map(mod => ({
+          ...mod,
+          time: summaryMap[mod.code] || 0,
+        }))
+      );
+      setSessionSummary(data.summary);
+    } catch (error) {
+      console.error('Error fetching session summary:', error);
+    }
+  };
+  
+
+  useEffect(() => {
+    fetchSessionSummary(); // fetch durations from backend on mount
+  }, []);
   
 
   // Calculate total time from all modules
@@ -108,41 +226,86 @@ export default function TimerPage({ navigation }) {
     return () => clearInterval(interval);
   }, [isRunning, activeTimer]);
 
+  const logStudySession = async (duration, moduleId, assignmentId = null) => {
+    try {
+      const now = new Date();
+      const start_time = new Date(now.getTime() - duration * 1000).toISOString(); // assume session just ended
+      const end_time = now.toISOString();
+
+      console.log("📦 Sending session payload:", {
+        user_id: userid,
+        module_id: moduleId,
+        assignment_id: assignmentId,
+        start_time,
+        end_time,
+        duration,
+      });
+  
+      const res = await fetch('https://grindhub-production.up.railway.app/api/auth/addSession', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userid,                // 🔁 updated field name
+          module_id: moduleId,           // 🔁 updated field name
+          assignment_id: assignmentId,   // 🔁 updated field name
+          start_time,
+          end_time,
+          duration,
+        }),
+      });
+  
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      console.log("✅ Session logged successfully:", data);
+      fetchSessionSummary(); // Refresh durations after logging
+
+    } catch (err) {
+      console.error("❌ Error logging session:", err.message);
+    }
+  };
+  
+  
+
   const handleStartPress = (moduleCode, taskName = null) => {
-
-    const modules = getModules(userid)
-
-    console.log("hihi")
-    console.log(modules)
-    console.log("haha")
-
-    // Determine what timer we're dealing with
     const timerType = !moduleCode ? 'main' : taskName ? 'task' : 'module';
-    
-    // Check if this is the currently active timer
+  
     const isActiveTimer = (
       (timerType === 'main' && activeTimer?.type === 'main') ||
       (timerType === 'module' && activeTimer?.type === 'module' && activeTimer.moduleCode === moduleCode) ||
       (timerType === 'task' && activeTimer?.type === 'task' && activeTimer.moduleCode === moduleCode && activeTimer.taskName === taskName)
     );
-    
+  
     if (isActiveTimer) {
-      // Stop the current timer
       setIsRunning(false);
+  
+      const now = Date.now();
+  
+      // ✅ Log session before clearing
+      if (sessionStartTime && (activeTimer?.type === 'module' || activeTimer?.type === 'task')) {
+        const sessionDuration = Math.floor((now - sessionStartTime) / 1000); // seconds
+  
+        logStudySession(sessionDuration, activeTimer.moduleCode, activeTimer.taskName);
+  
+        
+      }
+  
       setActiveTimer(null);
       return;
     }
-    
-    // Start new timer
+  
+    // ⏱️ Start new timer
     setIsRunning(true);
+    setSessionStartTime(Date.now());
+  
     if (timerType === 'task') {
-      setActiveTimer({type: 'task', moduleCode, taskName});
+      setActiveTimer({ type: 'task', moduleCode, taskName });
     } else if (timerType === 'module') {
-      setActiveTimer({type: 'module', moduleCode});
+      setActiveTimer({ type: 'module', moduleCode });
     } else {
-      setActiveTimer({type: 'main'});
+      setActiveTimer({ type: 'main' });
     }
   };
+  
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);

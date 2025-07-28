@@ -493,3 +493,113 @@ exports.getAllUserModules = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.addSession = async (req, res) => {
+  const { user_id, module_id, assignment_id, start_time, end_time, duration } = req.body;
+
+  if (!user_id || !module_id || !start_time || !end_time || !duration) {
+    return res.status(400).json({ success: false, message: 'Missing required fields' });
+  }
+
+  try {
+    // Extract only the date part for comparison
+    const sessionDate = new Date(start_time).toISOString().split('T')[0];
+
+    // Check if a session for the same user, module, assignment, and day already exists
+    const checkQuery = `
+      SELECT * FROM timer
+      WHERE user_id = $1
+        AND module_id = $2
+        AND (assignment_id = $3 OR ($3 IS NULL AND assignment_id IS NULL))
+        AND DATE(start_time) = $4
+      LIMIT 1;
+    `;
+
+    const checkValues = [user_id, module_id, assignment_id || null, sessionDate];
+    const existing = await db.query(checkQuery, checkValues);
+
+    if (existing.rows.length > 0) {
+      // Update the existing session's duration and end_time
+      const updateQuery = `
+        UPDATE timer
+        SET duration = duration + $1,
+            end_time = $2
+        WHERE id = $3
+        RETURNING *;
+      `;
+      const updateValues = [duration, end_time, existing.rows[0].id];
+      const updated = await db.query(updateQuery, updateValues);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Session updated successfully!',
+        session: updated.rows[0],
+      });
+    } else {
+      // Insert a new session
+      const insertQuery = `
+        INSERT INTO timer (user_id, module_id, assignment_id, start_time, end_time, duration)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *;
+      `;
+      const insertValues = [user_id, module_id, assignment_id || null, start_time, end_time, duration];
+      const inserted = await db.query(insertQuery, insertValues);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Timer session added successfully!',
+        session: inserted.rows[0],
+      });
+    }
+  } catch (error) {
+    console.error('Error adding/updating timer session:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getSessionSummary = async (req, res) => {
+  const { user_id, start_time } = req.body;
+
+  if (!user_id) {
+    return res.status(400).json({ success: false, message: 'Missing user_id' });
+  }
+
+  try {
+    let query = `
+      SELECT 
+        module_id,
+        assignment_id,
+        DATE(start_time) AS session_date,
+        SUM(duration) AS total_duration
+      FROM timer
+      WHERE user_id = $1
+    `;
+    const params = [user_id];
+
+    if (start_time) {
+      query += ` AND DATE(start_time) >= $2::date`;
+      params.push(start_time);
+    }
+
+    query += `
+      GROUP BY module_id, assignment_id, session_date
+      ORDER BY session_date DESC, module_id;
+    `;
+
+    const { rows } = await db.query(query, params);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Session summary fetched successfully!',
+      summary: rows,
+    });
+  } catch (error) {
+    console.error('Error fetching session summary:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+
+
+

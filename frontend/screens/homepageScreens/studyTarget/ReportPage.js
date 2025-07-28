@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo, useContext, useEffect} from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, StatusBar, TextInput, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
@@ -33,6 +33,46 @@ export default function ReportPage({ navigation, route}) {
   // Derive userid and username from the decoded token
   const userid = decodedToken?.userid;
 
+  useEffect(() => {
+    const fetchSessionSummary = async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  
+        const res = await fetch('https://grindhub-production.up.railway.app/api/auth/getSessionSummary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userid, start_time: today }),
+        });
+  
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+  
+        // Filter for today + matching moduleCode
+        const todayData = data.summary.filter(row => {
+          const rowDate = new Date(row.start_time).toISOString().slice(0, 10);
+          return rowDate === today && row.module_id === moduleCode;
+        });
+  
+        // Format for chart.js
+        const labels = todayData.map((row, idx) => `S${idx + 1}`);
+        const values = todayData.map(row => parseFloat(row.total_duration || 0));
+  
+        setChartData({
+          labels,
+          datasets: [{ data: values, color: () => '#FFD93D', strokeWidth: 2 }],
+        });
+  
+      } catch (error) {
+        console.error('Error fetching session summary:', error);
+      }
+    };
+  
+    if (userid && moduleCode) {
+      fetchSessionSummary();
+    }
+  }, [userid, moduleCode]);  
+  
+
   // const moduleCode = "ST2131"
 
   // const route = useRoute();
@@ -42,7 +82,7 @@ export default function ReportPage({ navigation, route}) {
   const [tempTargetType, setTempTargetType] = useState('Weekly');
   const [tempTargetHours, setTempTargetHours] = useState('20');
 
-  const data = {
+  /*const data = {
     labels: ['21/05', '22/05', '23/05', '24/05', '25/05', '26/05', '27/05'],
     datasets: [
       {
@@ -51,10 +91,17 @@ export default function ReportPage({ navigation, route}) {
         strokeWidth: 2,
       },
     ],
-  };
+  };*/
+
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [{ data: [], color: () => '#FFD93D', strokeWidth: 2 }],
+  });
+  
 
   // Calculate total hours from data
-  const totalHours = data.datasets[0].data.reduce((sum, hours) => sum + hours, 0);
+  const totalHours = chartData.datasets[0].data.reduce((sum, hours) => sum + hours, 0);
+
   
   // Determine if on track based on target
   const isOnTrack = totalHours >= parseInt(targetHours || 0);
@@ -102,7 +149,7 @@ export default function ReportPage({ navigation, route}) {
             </Text>
           </View>
           <LineChart
-            data={data}
+            data={chartData}
             width={screenWidth * 0.85}
             height={220}
             chartConfig={{

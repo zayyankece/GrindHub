@@ -8,16 +8,20 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/GrindHub-Logo-Text.png",
+      "image": "./assets/GrindHub-App-Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFD93D"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nabilrakaiza.frontend",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Grindhub-Logo-Text.png",
+        "foregroundImage": "./assets/GrindHub-App-Logo.png",
         "backgroundColor": "#FFD93D"
       },
       "edgeToEdgeEnabled": true,

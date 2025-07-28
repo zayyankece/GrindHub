@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useContext, useEffect} from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, StatusBar, TextInput, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LineChart } from 'react-native-chart-kit';
+// import { LineChart } from 'react-native-chart-kit';
 import GrindHubFooter from '../components/GrindHubFooter';
 import GrindHubHeader from '../components/GrindHubHeader';
 import { useRoute } from '@react-navigation/native';
@@ -148,7 +148,7 @@ export default function ReportPage({ navigation, route}) {
               {statusText}
             </Text>
           </View>
-          <LineChart
+          {/* <LineChart
             data={chartData}
             width={screenWidth * 0.85}
             height={220}
@@ -166,7 +166,7 @@ export default function ReportPage({ navigation, route}) {
             }}
             bezier
             style={styles.chartStyle}
-          />
+          /> */}
         </View>
 
         <TouchableOpacity 
